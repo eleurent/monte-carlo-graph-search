@@ -8,6 +8,8 @@
 \usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage{algorithm2e}
+\usepackage{caption}
+\usepackage{subcaption}
 
 \input{mathdef.tex}
 
@@ -19,341 +21,123 @@
 
 \maketitle
 
+\tableofcontents
+
 \section{Motivation}
 
 Traditional planning algorithms sample sequences of actions by considering sequences of rewards only. Can we leverage state information during planning, to account for the fact that different sequences can lead to similar states, and hence similar future rewards?
 
-\section{Deterministic Systems with Discrete States}
+\section{Deterministic Systems}
 
-We consider an MDP with discrete state space and deterministic dynamics.
-
+We consider an MDP with discrete state space and deterministic dynamics. We plan from an initial state $s_0$?
 \begin{paragraph}{Notations}
-We denote:
-\begin{itemize}
-\item $n$ the number of expanded nodes, $\Tau_n$ the tree obtained after $n$ node expansions, and $\cL_n$ the set of its leaves.
-    \item $s(a)$ the state reached after running sequence $a$, and $\cN_n(a)$ the set of \emph{neighbours} of $a$, that lead to the same state:  \[\cN_n(a) = \{a'\in\Tau_n: s(a)=s(a')\}\]
-\end{itemize}
+At iteration $n$, we consider the graph $\Gamma_n$ that represent all the states and transitions observed so far. It contains exactly $n-1$ \emph{internal} nodes that correspond to states $s$ that have been expanded, and a set $\cS_n$ of up to $n(K-1)+1$ \emph{external} nodes (or \emph{sink} nodes) that correspond to states $s$ that have been observed but not expanded yet. Thus, these \emph{sink} nodes have no outgoing transition. Each observed transition in the graph is annotated with its reward $r(s,a)$
+We denote $s(a)$ the state reached after running a sequence of actions $a$.
 \end{paragraph}
 
 \begin{definition}[Values]
 The value of a \textbf{state} $s\in S$ is:
 \begin{equation}
-    V(s) = \max_{a\in A^\infty} \sum_{t=0}^\infty \gamma^t r(a_{1:t})
+    V(s) = \max_{a\in A^\infty} \sum_{t=0}^\infty \gamma^t r(s_t, a_t) \quad \text{with $s_0=s$},
 \end{equation}
 
 
 
-
-Then, the value of a \textbf{sequence} $a\in A^h$ is:
+and the value of a \textbf{sequence} of actions $a\in A^h$ is:
 \begin{equation}
 \label{eq:state_value}
-    V(a) = \sum_{t=0}^{h-1} \gamma^t r(a_{1:t}) + \gamma^{h} V(s(a))
+    V(a) = \sum_{t=0}^{h-1}\gamma^t r(s_t, a_t) + \gamma^{h} V(s(a)).
 \end{equation}
 \end{definition}
 
 \begin{definition}[Upper confidence bounds]
 
-We denote by $U:\Tau_n \rightarrow \Real$ an upper-bound for the state-value $V(s(a))$ that verifies:
+We denote by $U:\Gamma_n \rightarrow \Real$ an upper-bound for the state-value $V(s)$ that verifies:
 \begin{equation*}
-    \forall a\in\Tau_n, \qquad V(s(a)) \leq U(a)
+    \forall s\in\Gamma_n, \qquad V(s) \leq U(s)
 \end{equation*}
 
-For instance, since assume that the rewards are bounded in [0, 1], a trivial upper-bound on $V(s(a))$ is:
-\[V(s(a)) \leq V_{\max} = \frac{1}{1-\gamma} \]
+For instance, since we assume that the rewards are bounded in [0, 1], a trivial upper-bound on $V(s)$ is:
+\[V(s) \leq V_{\max} = \frac{1}{1-\gamma} \]
 
-The state-value bound $U$ induces an upper-bound for sequences values $B(U)$ defined as:
+The state-value bound $U$ induces an upper-bound $B(U)$ for sequences values defined as:
 \begin{equation}
 \label{eq:sequence_value}
-    V(a) \leq B(U)(a) \eqdef \sum_{t=0}^{h-1} \gamma^t r(a_{1:t}) + \gamma^{h} U(a)
+    V(a) \leq B(U)(a) \eqdef \sum_{t=0}^{h-1} \gamma^t r(s_t, a_t) + \gamma^{h} U(s(a))
 \end{equation}
 \end{definition}
 
-If a good upper-bound $U$ is available, this provides an optimistic sampling rule for sequences:
+This provides an optimistic sampling rule for the next state to expand:
 \begin{equation}
     \label{eq:sampling_rule}
-    a_{n+1} = \argmax_{a\in\cL_n} B(U)(a)
+    a_{n+1} \in \argmax_{\substack{a\in A^*\\s(a)\in\cS_n}} B(U)(a)
 \end{equation}
+
 Our goal is to make this bound $U$ as tight as possible given available information.
 
-\begin{definition}[Bellman Optimal operator]
-We define the Bellman Optimal operator $L$ over $\Real^{\Tau_n}$ as:
+\begin{definition}[Bellman Optimality operator]
+We define the Bellman Optimality operator $L$ over $\Real^{\Gamma_n}$ as:
 
 \begin{equation}
-    L(U)(a) = \begin{cases}
-    U(a) & \text{if $a\in\mathcal{L}_n$;} \\
-    \min(U(a), \max_{b\in A} r(ab) + \gamma L(U)({ab}))
-    & \text{else.}
+    L(U)(s) = \begin{cases}
+    U(s) & \text{if $s\in\cS_n$;} \\
+    \min(\max_{a\in A} r(s,a) + \gamma U({s'}),\, U(s))
+    & \text{if $(s,a,s')\in\Gamma_n$.}
     \end{cases}
 \end{equation}
 
 Note that a $\min$ was added to the traditional Bellman backup in order to maintain the upper-bound of a node if it is already  tighter than the backup of its children.
-
-It is easily seen that $L^2=L$ and:
-\begin{equation*}
-    V \leq U \implies V \leq L(U) \leq U
-\end{equation*}
-
 \end{definition}
 
-In \texttt{OPD}, they used the following bound over sequences: $B\left(L\left(V_{\max}\right)\right)$.
-
-\section{State-aware planning}
-
-We extend \texttt{OPD} to include the two following ideas:
-
-\subsection{Aggregation of state values}
-\label{sec:aggregation}
-
-Let $U\in\Real^{\Tau_n}$ a state-value upper-bound.
-
-\begin{definition}[Aggregation operator]
-If several sequences $a'\in\Tau_n$ lead to the same state $s$, their upper-bounds must all hold. This defines an aggregation operator $A$ over tree-functions as:
-    \begin{equation}
-    \label{eq:aggregation}
-        \forall a\in\mathcal{T}_n, \quad A(U)(a) = \min_{a'\in \cN_n(a)} U(a'),
-    \end{equation}
-    
-Again, we have $A^2=A$ and:
-\begin{equation*}
-    V \leq U \implies V \leq A(U) \leq U
-\end{equation*}
-\end{definition}
-
-At this stage, we have defined two operators $A$ and $L$ that operate on UCBs $U$ and can only tighten them. It is natural to try and apply them iteratively until convergence: $U = A(U) = L(U)$.
+\paragraph{Value Iteration}
+We can easily see that $L$ is a $\gamma$-contraction and that
+$
+    V \leq U \implies V \leq L(U) \leq U.
+$
+The Value Iteration algorithm applies the Bellman operator $L$ iteratively until convergence, to build the sequence $(U_k)$ such that $U_0 = V_{\max}$ and $U_{k+1} = L(U_k)$. We denote its limit as $U_\infty$, which is the tightest bound we obtain: $V\leq U_\infty\leq\dots\leq U_2 \leq U_1\leq V_{\max}$.
+Algorithm \ref{alg:state-aware} describes the corresponding algorithm.
 
 
-\begin{remark}[Interplay of backups and aggregations]
-We can notice that the sampling rule \eqref{eq:sampling_rule} only depends on the value of $U$ at the leaves $\cL_n$. Hence, it seems that:
-\begin{itemize}
-    \item applying $L$ is not useful, since information only travels upwards in the tree $\Tau_n$;
-    \item conversely, applying $A$ can update the value of any node in the tree $\Tau_n$, including leaves $\cL_n$.
-\end{itemize}
-However, $L$ becomes useful when used jointly with $A$: each $L$ backup can provide tighter bounds $U(s')$ for states $s'$ at inner-nodes which can in turn be aggregated with $A$ and propagated down in the tree, potentially affecting the leaves and future exploration. 
-\end{remark}
+\section{Regret bound}
 
-This suggests an alternating procedure of state-aggregations $A$ and Bellman-backups $L$, whose convergence, sample complexity and efficiency must be studied.
+\paragraph{Near-optimality}
 
-\begin{theorem}[Contractivity of $AL$]
-$A$ is 1-Lipschitz operator, which makes $AL$ a $\gamma$-contraction.
+We define the branching factor $\kappa(U)\in[1, K]$ of near-optimal nodes \emph{according to a state-value bound $U$} as:
+\begin{equation}
+    \kappa(U) \eqdef \limsup_{h\rightarrow\infty} \left|\left\{a\in A^h: V^* - V(a)\leq \gamma^{h}U(s(a))\right\}\right|^{1/h}.
+\end{equation}
+This branching factor shrinks as the bound $U$ gets tighter:
+\begin{lemma}
+If $U_1$ is a tighter bound that $U_2$, its corresponding effective branching factor is lower:
+\[U_1\leq U_2\implies \kappa(U_1) \leq \kappa(U_2).\]
+\end{lemma}
+
+
+\begin{theorem}
+If $U$ is a valid upper-bound on the state-value $V\leq U$, then optimistic planning with $B(U)$ gives the following simple regret bound: %$\forall \kappa>\kappa(U)$,
+\begin{align*}
+V^* - V({a_n}) = \cO\left(n^{-\frac{\log 1/\gamma}{\log \kappa(U)}}\right);
+\end{align*}
 \end{theorem}
+
+And in particular, planning with $U=U_\infty$ gives a potentially better bound $\kappa(U_\infty)$ than planning with $U=V_{\max}$ as in \texttt{OPD}.
+
 \begin{proof}
-Let $U_1, U_2\in \Real^\Tau_n, a\in\Tau_n$,
-\begin{align*}
-    (AU_1 - AU_2)(a) &= \min_{a'\in\cN_n(a)} U_1(a') - \min_{a'\in\cN_n(a)} U_2(a') \\
-    &= \min_{a'\in\cN_n(a)} U_1(a') - U_2(a^*) \\
-    &\leq U_1(a^*) - U_2(a^*) \\
-    &\leq \|U_1 - U_2\|_\infty
-\end{align*}
-Hence, $\|AU_1 - AU_2\|_\infty \leq \|U_1 - U_2\|_\infty$
+Let us consider $\Tau_n$ (and $\cL_n$), the tree (and its leaves) obtained by unrolling the graph $\Gamma_n$ from $s_0$ (and its sinks $\cS_n$).
 \end{proof}
-
-We can perform fixed-point iteration of alternating backups and aggregations starting from the trivial state-value $U_0 = V_{\max}$
-
-\begin{equation}
-    \label{eq:recursion}
-    U_k = (AL)^k(V_{\max})
-\end{equation}
-This will not converge in finite time whenever there is a loop, as shown in \autoref{fig:simple_loop}. We can decide to stop whenever a desired accuracy is reached: 
-
-\begin{proposition}[Stopping rule]
-If we have that
-\[\forall a\in\Tau_n, |U_{k+1}(a) - U_k(a)| \leq \epsilon (1-\gamma)\gamma^{-h(a)-1},\]
-then the sequence value $B(U_{\infty})$ is approximated with an accuracy of $\epsilon$.
-\end{proposition}
-\begin{proof}
-Let $a\in A^h$. We consider the sequence $(B(U_n))_{n\in\Natural}$.
-Notice that for any $U,V\in\Real^\Tau$, we have $B(U)(a)-B(V)(a)=\gamma^h(U(a)-V(a))$.
-
-Hence, if the premise holds,
-\begin{align*}
-    |B(U_{k+1})(a) - B(U_{k})(a)| &\leq \gamma^h\epsilon (1-\gamma)\gamma^{-h-1} = \epsilon (1-\gamma)\gamma^{-1}
-\end{align*}
-
-And then, 
-\begin{align*}
-|B(U_{k+1})(a) - B(U_\infty)(a)| &= \gamma^h |U_{k+1}(a) - U_\infty(a)|\\
-&\leq \gamma^{h+1}|U_{k}(a) - U_\infty(a)| \text{ since $LA$ is a $\gamma$-contraction}\\
-&\leq \gamma^{h+1}|U_{k}(a) - U_{k+1}(a)| + \gamma^{h+1}|U_{k+1}(a) - U_\infty(a)|\\
-&= \gamma|B(U_{k})(a) - B(U_{k+1})(a)| + \gamma |B(U_{k+1})(a) - B(U_\infty)(a)|\\
-&\leq \frac{1}{1-\gamma}\gamma |B(U_{k})(a) - B(U_{k+1})(a)|\\
-&\leq\epsilon
-\end{align*}
-
-\end{proof}
-
-\begin{figure}
-    \centering
-    \includegraphics[trim=2cm 2cm 2cm 2cm, clip, width=0.4\textwidth]{img/simple_loop.pdf}\\
-    \begin{tabular}{cccccc}
-         \toprule
-         & $U_0$ & $L (U_0)$ & $AL(U_0)$ & $\cdots$ & $U_k$ \\
-         \midrule
-         $a$ & $V_{\max}$ & $\gamma V_{\max}$ & $\gamma V_{\max}$ && $\gamma^k V_{\max}$\\
-         $b$ & $V_{\max}$ & $V_{\max}$ & $\gamma V_{\max}$ && $\gamma^k V_{\max}$\\
-         \bottomrule
-    \end{tabular}
-    \caption{\textbf{Top}: a looping MDP with $|S|=|A|=1$, and the corresponding expanded tree $\Tau_1$ for a single observed transition. \textbf{Bottom}: the sequence of upper-bounds $(U_n)$ when alternating $A$ and $L$. We obtain $U_k = \gamma^k V_{\max}$ that only goes to $0$ geometrically.}
-    \label{fig:simple_loop}
-\end{figure}
-
-Alternatively, we can stop after a fixed number of iterations, e.g. $k=2$.
-
-\subsection{Leaves pruning}
-\label{sec:pruning}
-
-Another observation can be made in the case where two nodes $a_1,a_2\in\Tau_n$ lead to the same state $s$:
-\begin{proposition}[Pruning rule]
-\label{prop:pruning}
-Let $a_1,a_2\in\Tau_n$ such that state $s(a_1) = s(a_2) = s$ and $U = A(U) \geq V$ an aggregated upper-bound. 
-\begin{equation}
-\label{eq:pruning}
-    \text{If } h(a_2) \geq h(a_1) \text{ and } B(U)(a_2) \geq B(U)(a_1)
-    \text{, then }V(a_2) \geq V(a_1)
-\end{equation}
-
-In particular, there is no need to ever expand the node $a_1$.
-\end{proposition}
-\begin{proof}
-Assume $h(a_2) \geq h(a_1)$.
-\begin{align*}
-    V(a_1) - V(a_2) &= R(a_1)- R(a_2) + \underbrace{\left(\gamma^{h(a_1)} - \gamma^{h(a_2)}\right)}_{\geq 0}V(s) \\
-    &\leq R(a_1)- R(a_2) + \left(\gamma^{h(a_1)} - \gamma^{h(a_2)}\right)U(s)\\
-    &= B(U)(a_1) - B(U)(a_2)
-\end{align*}
-Hence, if this last term is negative, then $V(a_1) - V(a_2)$ is as well.
-\end{proof}
-
-We propose that at each step, we detect such pairs $a_1, a_2$. Whenever $a_1$ is a leaf, we can remove it from the set $\cL_n^-\subset \cL_n $ of candidates for expansion.
-
-\subsection{Efficient implementation}
-
-We consider efficient ways to implement the aggregation/backup and pruning rules described respectively in sections \ref{sec:aggregation} and \ref{sec:pruning}.
-
-\paragraph{Aggregation and backup}
-Let us denote $U^{(n)}$ the upper-bound used in the sampling rule \eqref{eq:sampling_rule} after $n$ leaf expansions, where $U^{(n)}$ is defined as the limit of \eqref{eq:recursion}. Assume that the previous iteration $n$, we stopped at some equilibrium $U^{(n)} = L(U^{(n)}) = A(U^{(n)})$.
-
-At step $n+1$, after leaf expansion we obtain a novel tree $\Tau_{n+1}$. Instead of recomputing $U^{(n+1)}$ entirely from scratch using \eqref{eq:recursion}, we can instead initialise it with the previous value $U^{(n)}$ on $\Tau_n$ and $V_{\max}$ on the newly created leaves in $\Tau_{n+1} \setminus \Tau_n$.
-
-We can notice that if we change the value of a single node $a$, the application of $L$ will only modify $U^{(n)}$ at its parents and leave the rest of the tree unchanged. Likewise, applying $A$ will only modify the values for the nodes in $\cN_n(a)$ and leave the rest of the tree unchanged. The idea of \autoref{algo:efficient} is
-
-\paragraph{Leaves pruning}
-
-When and how should we apply the rule \eqref{eq:pruning} described in Proposition \autoref{prop:pruning}?
-
-The most straightforward way is to apply it once at every step, after the aggregations and backups.
-The procedure needs to be applied within some equivalence classes $C(a)$ of nodes $a'$ that lead to the same state $s(a')=s(a)$. If a class $C$ is of size $n_C$, then the cost of running \eqref{eq:pruning} is $\cO(n_C^2)$. This could be improved to $\cO(n_C \log n_C)$ by computing the convex hull of the candidates points in $C$. Indeed, any point $a_1$ that does not belong to the top-frontier of this hull is dominated by some $a_2$, in the sense of \eqref{eq:pruning}.
 
 
 \begin{algorithm}[htp]
+  \caption{State-aware planning}
+  \label{alg:state-aware}
   \SetAlgoLined\DontPrintSemicolon
-  \SetKwFunction{expand}{expand}
-  \SetKwFunction{update}{update}
-  \SetKwFunction{backup}{backup}
-  \SetKwProg{myalg}{Algorithm}{}{}
-  \myalg{\expand{a}}{
-  \For{action $b\in A$}{
-  \nl Simulate action $b$ from state $s(a)$, observe reward $r$ and next state $s'$\;
-  \nl Create a new node $ab$ with reward $r$,  state $s'$\;
-  }
-  \nl \update{a}\;
-  \;
-  }
-  
-  \setcounter{AlgoLine}{0}
-  \SetKwProg{myproc}{Procedure}{}{}
-  \myproc{\update{a}}{
-  \uIf{$a$ is not a leaf}{
-      \nl $U_{\text{backup}} \leftarrow \max_{b\in A} r(ab)+ \gamma U(s(ab))$\tcp*{Bellman backup $L$}
-      \nl $\Delta \leftarrow U(s(a)) -  U_{\text{backup}}$\tcp*{Is the new bound tighter?}
-      \nl \lIf{$\Delta > 0$}{$U(s(a))\leftarrow U_{\text{backup}}$\tcp*{Aggregation $A$}}
-      \For{$a'\in\cN_n(a)$\tcp*{Recursion over updated nodes}}{
-          \uIf{$a'$ is not the root and $\Delta > \epsilon(1-\gamma)\gamma^{-h(a)}$}{
-              \nl \update{parent of $a'$}
-          }
-          }
+  \For{iteration $n$}{
+  \nl Select the optimistic sequence of actions $a_{n+1}$ from \eqref{eq:sampling_rule} \;
+  \nl Expand the corresponding sink node $s = s(a_{n+1})$\;
+  \For{action $a\in A$}{
+    Observe the transition $s, a, s', r(s,a)$, and add it to the graph $\Gamma_n$
   }
   }
-  \caption{An recursive implementation of $(LA)^\infty$ with leaves pruning}
-  \label{algo:efficient}
-\end{algorithm} 
-
-
-\section{Experiments}
-
-\subsection{Full algorithm}
-
-\subsubsection{Two-armed bandit}
-
-We consider the simplest possible problem: 1 state and 2 actions, with rewards 0 and 1. The state-aware planner never expands a suboptimal node. In contrast, the tree expanded by \texttt{OPD} is quite balanced, even with such a dense reward and important gap.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.49\textwidth]{img/bandit_deterministic.pdf}
-    \includegraphics[width=0.49\textwidth]{img/bandit_state_aware.pdf}
-    \caption{Trees expanded for $n = 200$, $\gamma=0.99$}
-    \label{fig:bandit_trees}
-\end{figure}
-
-\subsubsection{Gridworld with 4 actions}
-
-The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, y) = 1 - \frac{1}{5^2}((x-10)^2 + (y-10)^2)$ clipped to [0, 1].
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.49\textwidth]{img/4_deterministic.pdf}
-    \includegraphics[width=0.49\textwidth]{img/4_kl-olop.pdf}
-    \includegraphics[width=0.49\textwidth]{img/4_state_aware.pdf}
-    \caption{Trees expanded for $n = 5460$, $\gamma=0.95$}
-    \label{fig:gw4_trees}
-\end{figure}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.49\textwidth]{img/4_occupations_deterministic.pdf}
-    \includegraphics[width=0.49\textwidth]{img/4_occupations_kl-olop.pdf}
-    \includegraphics[width=0.49\textwidth]{img/4_occupations_state_aware.pdf}
-    \caption{Number of visits for $n = 5460$, $\gamma=0.95$}
-    \label{fig:gw4_visits}
-\end{figure}
-\begin{figure}[H]
-    \centering
-    % \includegraphics[width=0.49\textwidth]{img/4_updates_deterministic.pdf}
-    % \includegraphics[width=0.49\textwidth]{img/4_updates_kl-olop.pdf}
-    \includegraphics[width=0.49\textwidth]{img/4_updates_state_aware.pdf}
-    \caption{Number of updates in the leaf expansion for $n = 5460$, $\gamma=0.95$}
-    \label{fig:gw4_updates}
-\end{figure}
-
-% \subsubsection{Gridworld with 8 actions}
-
-% We add the diagonal actions.
-
-% \begin{figure}[H]
-%     \centering
-%     \includegraphics[width=0.49\textwidth]{img/8_deterministic.pdf}
-%     \includegraphics[width=0.49\textwidth]{img/8_kl-olop.pdf}
-%     \includegraphics[width=0.49\textwidth]{img/8_state_aware.pdf}
-%     \caption{Trees expanded for $n = 4680$, $\gamma=0.95$}
-%     \label{fig:my_label}
-% \end{figure}
-% \begin{figure}[H]
-%     \centering
-%     \includegraphics[width=0.49\textwidth]{img/8_states_deterministic.pdf}
-%     \includegraphics[width=0.49\textwidth]{img/8_states_kl-olop.pdf}
-%     \includegraphics[width=0.49\textwidth]{img/8_states_state_aware.pdf}
-%     \caption{Trees expanded for $n = 4680$, $\gamma=0.95$}
-%     \label{fig:my_label}
-% \end{figure}
-
-\subsection{Effect of the stopping rule}
-
-\begin{figure}[H]
-    \centering
-    % \includegraphics[width=0.49\textwidth]{img/4_updates_deterministic.pdf}
-    % \includegraphics[width=0.49\textwidth]{img/4_updates_kl-olop.pdf}
-    \includegraphics[width=0.49\textwidth]{img/4_updates_state_aware.pdf}
-    \caption{Number of updates in the leaf expansion for $n = 5460$, $\gamma=0.95$}
-    \label{fig:gw4_updates}
-\end{figure}
-
-
-
+  \Return $\max_{a\in A} r(s_0,a) + \gamma U(s')$\;
+\end{algorithm}
 \end{document}
