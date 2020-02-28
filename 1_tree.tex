@@ -38,6 +38,12 @@ We denote:
 \end{itemize}
 \end{paragraph}
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[trim={1.8cm 1.2cm 1.9cm 1.2cm}, clip,width=0.7\linewidth]{img/tree_1}
+	\caption{Depiction of the tree $\Tau_n$. Nodes leading to the same state have the same color.}
+\end{figure}
+
 \begin{definition}[Values]
 The return of a sequence of action $a\in A^\infty$ of length $h\in\Real\cup\{\infty\}$ is:
 
@@ -135,6 +141,12 @@ We can see that $\cB^2=\cB$, that $\cB$ preserves consistency, and that $\cB$ ti
     L\leq V \leq U \implies L \leq \cB(L) \leq V \leq \cB(U) \leq U
 \end{equation*}
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[trim={1.8cm 1.4cm 1.9cm 1.9cm}, clip,width=0.7\linewidth]{img/tree_2}
+	\caption{Depiction of the Bellman backup operator $\cB$. The information is propagated upward, and the leaves are not updated.}
+\end{figure}
+
 This was already done in \texttt{OPD}, however $\cB$ alone is \emph{not valuable} for planning with \eqref{eq:sampling_rule} since  $\cB(V_{\max})$ and $V_{\max}$ coincide on $\cL_n$.
 
 
@@ -225,6 +237,12 @@ Again, we have $\cA^2=\cA$, $\cA$ preserves consistency, and:
 \end{equation*}
 \end{definition}
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[trim={1.8cm 1.8cm 1.9cm 1.8cm}, clip,width=0.7\linewidth]{img/tree_3}
+	\caption{Depiction of the aggregation operator $\cA$. Nodes can be updated anywhere in the tree $\Tau_n$, and in particular its leaves $\cL_n$.}
+\end{figure}
+
 At this stage, we have defined two operators $\cA$ and $\cB$ that operate on bounds $f$ and can only tighten them. It is natural to try and apply both of them until convergence: $f = A(f) = L(f)$.
 
 
@@ -283,7 +301,7 @@ And then,
 
 \end{proof}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \includegraphics[trim=2cm 2cm 2cm 2cm, clip, width=0.4\textwidth]{img/simple_loop.pdf}\\
     \begin{tabular}{cccccc}
@@ -329,6 +347,12 @@ Hence, if this last term is negative, then $V(a_1) - V(a_2)$ is as well.
 
 We propose that at each step, we detect such pairs $a_1, a_2$. Whenever $a_1$ is a leaf, we can remove it from the set $\cL_n^-\subset \cL_n $ of candidates for expansion.
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[trim={1.8cm 1.4cm 1.9cm 1.1cm}, clip, width=0.7\linewidth]{img/tree_4}
+	\caption{Depiction of the leaves pruning operator $\cP$. A leaf verifying the criterion of \autoref{prop:pruning} is removed from the set of leaves candidate to expansion.}
+\end{figure}
+
 \subsection{The algorithm}
 
 \begin{algorithm}[H]
@@ -360,7 +384,7 @@ The \autoref{alg:state-aware} enjoys the following regret bound:
 
 \begin{proof}
 Let $\kappa'>\kappa_\infty$. Since $\kappa(L_n,U_n)\rightarrow\kappa_\infty$, there exists $n_0\in\Natural$ such that for all $n\geq n_0$, $\kappa(L_n,U_n) \leq \kappa'$.
-We can show that at each iteration $n$, any expanded node must belong to $\Tau^\infty(L_n,U_n)$.
+We can show that at each iteration $n$, the expanded node must belong to $\Tau^\infty(L_n,U_n)$.
 Let $n\geq n_0$, and define $d_0 = \min\{d\in\Natural: \exists t \in[n_0,n], \hat{a}_t\in A^d \}$. By definition, for all $d\geq d_0$, any expanded node of depth $d$ was expanded at a time $t\geq n_0$, and thus $\hat{a}_t\in\Tau^\infty_t \subset\Tau^\infty_{n_0}$. By denoting $n_d$ the number of expanded nodes of depth $d$, we obtain:
 \[
 n = \sum_{d=0}^{d_0-1}n_d + \sum_{d=d_0}^{d_n} n_d \leq  C_0 + C_1\sum_{d=d_0}^{d_n} (\kappa')^d \leq C_0 + C_1' (\kappa')^{d_n}
@@ -376,18 +400,18 @@ And since $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$, we obtain the claimed bound.
 In this section, we consider more efficient ways to implement the aggregation/backup and pruning rules described respectively in sections \ref{sec:aggregation} and \ref{sec:pruning}.
 
 \paragraph{Aggregation and backup}
-Let us denote $U^{(n)}$ the upper-bound used in the sampling rule \eqref{eq:sampling_rule} after $n$ leaf expansions, where $U^{(n)}$ is defined as the limit of \eqref{eq:recursion}. Assume that the previous iteration $n$, we stopped at some equilibrium $U^{(n)} = L(U^{(n)}) = A(U^{(n)})$.
+Let us denote $L_n,U_n$ the bounds used in the sampling rule \eqref{eq:sampling_rule} and recommendation rule \eqref{eq:recommendation_rule} after $n$ leaf expansions, where $L_nU_n$ is defined as the limit of \eqref{eq:recursion}.
 
-At step $n+1$, after leaf expansion we obtain a novel tree $\Tau_{n+1}$. Instead of recomputing $U^{(n+1)}$ entirely from scratch using \eqref{eq:recursion}, we can instead initialise it with the previous value $U^{(n)}$ on $\Tau_n$ and $V_{\max}$ on the newly created leaves in $\Tau_{n+1} \setminus \Tau_n$.
+At step $n+1$, after leaf expansion we obtain a novel tree $\Tau_{n+1}$. Instead of recomputing $U_{(n+1)}$ entirely from scratch using \eqref{eq:recursion}, we can instead initialise it with the previous value $U_{n}$ on $\Tau_n$ and $V_{\max}$ on the newly created leaves in $\Tau_{n+1} \setminus \Tau_n$.
 
-We can notice that if we change the value of a single node $a$, the application of $L$ will only modify $U^{(n)}$ at its parents and leave the rest of the tree unchanged. Likewise, applying $A$ will only modify the values for the nodes in $\cN_n(a)$ and leave the rest of the tree unchanged. The idea of \autoref{algo:efficient} is
+We can notice that if we change the value of a single node $a$, the application of $L$ will only modify $U_{n}$ at its parents and leave the rest of the tree unchanged. Likewise, applying $A$ will only modify the values for the nodes in $\cN_n(a)$ and leave the rest of the tree unchanged. The idea of \autoref{algo:efficient} is
 
 \paragraph{Leaves pruning}
 
 When and how should we apply the rule \eqref{eq:pruning} described in \autoref{prop:pruning}?
 
 The most straightforward way is to apply it once at every step, after the aggregations and backups.
-The procedure needs to be applied within some equivalence classes $C(a)$ of nodes $a'$ that lead to the same state $s(a')=s(a)$. If a class $C$ is of size $n_C$, then the cost of running \eqref{eq:pruning} is $\cO(n_C^2)$. This could be improved to $\cO(n_C \log n_C)$ by computing the convex hull of the candidates points in $C$. Indeed, any point $a_1$ that does not belong to the top-frontier of this hull is dominated by some $a_2$, in the sense of \eqref{eq:pruning}.
+The procedure needs to be applied within some equivalence classes $\cN_n(a)$ of nodes $a'$ that lead to the same state $s(a')=s(a)$. If a class $\cN_n$ is of size $p$, then the cost of running \eqref{eq:pruning} is $\cO(p^2)$. This could be improved to $\cO(p \log p)$ by computing the convex hull of the candidates points in $\cN_n(a)$. Indeed, any point $a_1$ that does not belong to the top-frontier of this hull is dominated by some $a_2$, in the sense of \eqref{eq:pruning}.
 
 
 \begin{algorithm}[htp]
@@ -409,9 +433,9 @@ The procedure needs to be applied within some equivalence classes $C(a)$ of node
   \SetKwProg{myproc}{Procedure}{}{}
   \myproc{\update{a}}{
   \uIf{$a$ is not a leaf}{
-      \nl $U_{\text{backup}} \leftarrow \max_{b\in A} r(ab)+ \gamma U(s(ab))$\tcp*{Bellman backup $L$}
+      \nl $U_{\text{backup}} \leftarrow \max_{b\in A} r(ab)+ \gamma U(s(ab))$\tcp*{Bellman backup $\cB$}
       \nl $\Delta \leftarrow U(s(a)) -  U_{\text{backup}}$\tcp*{Is the new bound tighter?}
-      \nl \lIf{$\Delta > 0$}{$U(s(a))\leftarrow U_{\text{backup}}$\tcp*{Aggregation $A$}}
+      \nl \lIf{$\Delta > 0$}{$U(s(a))\leftarrow U_{\text{backup}}$\tcp*{Aggregation $\cA$}}
       \For{$a'\in\cN_n(a)$\tcp*{Recursion over updated nodes}}{
           \uIf{$a'$ is not the root and $\Delta > \epsilon(1-\gamma)\gamma^{-h(a)}$}{
               \nl \update{parent of $a'$}
@@ -419,7 +443,7 @@ The procedure needs to be applied within some equivalence classes $C(a)$ of node
           }
   }
   }
-  \caption{An recursive implementation of $(LA)^\infty$ with leaves pruning}
+  \caption{An recursive implementation of $(\cB\cA)^\infty$ with leaves pruning}
   \label{algo:efficient}
 \end{algorithm} 
 
