@@ -24,36 +24,34 @@
 
 \tableofcontents
 
-\section{Motivation}
+\section{Preliminary}
 
-Traditional planning algorithms sample sequences of actions by considering sequences of rewards only. Can we leverage state information during planning, to account for the fact that different sequences can lead to similar states, and hence similar future rewards?
+\subsection{Deterministic Systems}
 
-\section{Deterministic Systems with Discrete States}
-
-We consider an MDP with discrete state space and deterministic dynamics.
+We consider an MDP with deterministic dynamics and rewards.
 
 \begin{paragraph}{Notations}
 We denote:
 \begin{itemize}
-\item $n$ the number of expanded nodes, $\Tau_n$ the tree obtained after $n$ node expansions, and $\cL_n$ the set of its leaves.
-    \item $s(a)$ the state reached after running sequence $a$, and $\cN_n(a)$ the set of \emph{neighbours} of $a$, that lead to the same state:  \[\cN_n(a) = \{a'\in\Tau_n: s(a)=s(a')\}\]
+\item at iteration $n$, the planning tree $\Tau_n = \cI_n \bigcup \cL_n$, where $\cI_n$ is the set of internal (\emph{expanded}) nodes and $\cL_n$ is the set of leaves.
+\item $s(a)$ the state reached after running sequence $a$ starting from $s_0$, and $\cN_n(a)$ the set of \emph{neighbours} of $a$, that lead to the same state:  \[\cN_n(a) = \{a'\in\Tau_n: s(a)=s(a')\}\]
 \end{itemize}
 \end{paragraph}
 
 \begin{definition}[Values]
 The return of a sequence of action $a\in A^\infty$ of length $h\in\Real\cup\{\infty\}$ is:
 
-\[R(a) = \sum_{t=0}^{h-1} \gamma^t r(a_{1:t}) ,\, \text{starting from $s_0$.}\]
+\[R(s,a) = \sum_{t=0}^{h-1} \gamma^t r(a_{1:t}) ,\, \text{starting from state $s$.}\]
 
 The value of a \textbf{state} $s\in S$ is
 \begin{equation}
-    V(s) = \max_{a\in A^\infty} R(a),\, \text{starting from the state $s$.}
+    V(s) = \max_{a\in A^\infty} R(s, a)
 \end{equation}
 
 The value of a finite \textbf{sequence} of actions $a\in A^h$ is:
 \begin{equation}
 \label{eq:state_value}
-    V(a) = R(a) + \gamma^{h} V(s(a)),\, \text{starting from $s_0$.}
+    V(a) = R(s_0,a) + \gamma^{h} V(s(a))
 \end{equation}
 \end{definition}
 
@@ -64,14 +62,7 @@ We denote by $L:\Tau_n \rightarrow \Real$ and  $U:\Tau_n \rightarrow \Real$ a lo
     \forall a\in\Tau_n, \qquad L(a) \leq V(s(a)) \leq U(a)
 \end{equation*}
 
-We say a lower-bound $L$ and an upper bound $U$ are \emph{consistent} if they are respectively non-decreasing and non-increasing along sequences of actions:
-
-\begin{align*}
-\forall a\in\Tau_n\setminus\cL_n, \quad &L(a) \leq \max_{b\in A} r(ab) + \gamma L(ab)\\
-&U(a) \geq \max_{b\in A} r(ab) + \gamma U(ab)
-\end{align*}
-
-For instance, since we assume that the rewards are bounded in [0, 1], trivial consistent bounds on $V(s(a))$ are:
+For instance, since we assume that the rewards are bounded in [0, 1], trivial bounds on $V(s(a))$ are:
 \[0 \leq V(s(a)) \leq V_{\max} \eqdef \frac{1}{1-\gamma} \]
 
 The state-value bounds $L,U$ induces bounds $L^a, U^a$ for values of sequences of actions $a\in A^h$ defined as:
@@ -81,45 +72,147 @@ The state-value bounds $L,U$ induces bounds $L^a, U^a$ for values of sequences o
 \end{equation}
 \end{definition}
 
-This provides an optimistic sampling rule for sequences of actions: given a bound $U_n$, expand the node
+Given bounds $L_n, U_n$, this provides an optimistic sampling rule: expand the node
 \begin{equation}
     \label{eq:sampling_rule}
-    a_{n+1} \in \argmax_{a\in\cL_n} U_n^a(a)
+    \hat{a}_n \in \argmax_{a\in\cL_n} U_n^a(a),
+\end{equation}
+and a conservative recommendation rule:
+\begin{equation}
+    \label{eq:recommendation_rule}
+    a_n \in \argmax_{a\in\cL_n} L^a_n(a)
 \end{equation}
 
-In \texttt{OPD}, they used the trivial bound $U=V_{\max}$. Our goal is to make this bound $U$ as tight as possible given available information.
+In \texttt{OPD}, they used the trivial bounds $L=0,\,U=V_{\max}$ and proved the following regret bound.
+
+\subsection{Reminder of the \texttt{OPD} proof}
+
+\noindent\fbox{%
+	\parbox{\textwidth}{%
+		\begin{enumerate}
+			\item The recommendation $a_n$ has a maximal depth $d_n$ in the tree, and its gap $r_n = V^* - V({a_n})$ is bounded by $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$. We need to relate $d_n$ to $n$.
+			
+			\item Each expanded node belongs to $\Tau^\infty = \bigcup_{h\geq 0} \Tau_h^\infty$, where $$\Tau_h^\infty = \left\{a\in A^h: V^*-V(a) \leq \frac{\gamma^h}{1-\gamma}\right\}.$$ Introduce the difficulty measure $\kappa$ such that $|\Tau_h^\infty| = \cO(\kappa^h)$ (the smallest).
+			
+			\item In the worst case, expanded nodes fully fill the depths of $\Tau^\infty$ up to $d_n$: $n = \sum_{d=1}^{d_n} n_d \leq  C\sum_{d=1}^{d_n} \kappa^d = \begin{cases}
+			\cO(d_n) &\text{if $\kappa=1$}\\
+			\cO(\kappa^{d_n}) &\text{else.}
+			\end{cases}$\\
+			Hence $r_n = \begin{cases}
+			\cO(\gamma^n) &\text{if $\kappa=1$}\\
+			\cO(\gamma^{\frac{\log n}{\log \kappa}}) = \cO(n^{-\frac{\log 1/\gamma}{\log \kappa}}) &\text{else.}
+			\end{cases}$
+		\end{enumerate}
+	}%
+}
+
+\subsection{Motivation for improvement}
+
+The trivial bound used in \texttt{OPD} does not make use of all the available information in $\Tau_n$.
+
+\begin{definition}
+We say a lower-bound $L$ and an upper bound $U$ are \emph{consistent} if they are respectively non-decreasing and non-increasing along sequences of actions:
+\begin{align*}
+\forall a\in\Tau_n\setminus\cL_n, \quad &L(a) \leq \max_{b\in A} r(ab) + \gamma L(ab)\\
+&U(a) \geq \max_{b\in A} r(ab) + \gamma U(ab)
+\end{align*}
+\end{definition}
 
 \begin{definition}[Bellman Optimal operator]
 We define the Bellman Optimal operator $\cB$ over $\Real^{\Tau_n}$ as:
 
 \begin{equation}
     \cB(f)(a) = \begin{cases}
-    f(a) & \text{if $a\in\mathcal{L}_n$;} \\
+    f(a) & \text{if $a\in\cL_n$;} \\
     \max_{b\in A} r(ab) + \gamma \cB(f)({ab})
-    & \text{else.}
+    & \text{if $a\in\cI_n$.}
     \end{cases}
 \end{equation}
+\end{definition}
 
-It is easily seen that $\cB^2=\cB$ and, that $\cB$ preserves consistency, and that for $L,U$ consistent bounds:
+We can see that $\cB^2=\cB$, that $\cB$ preserves consistency, and that $\cB$ tightens consistent bounds $L,U$:
 \begin{equation*}
     L\leq V \leq U \implies L \leq \cB(L) \leq V \leq \cB(U) \leq U
 \end{equation*}
 
-Note that $\cB(V_{\max})$ is not more valuable than $V_{\max}$ for planning with \eqref{eq:sampling_rule}, since both are equal on $\cL_n$.
+This was already done in \texttt{OPD}, however $\cB$ alone is \emph{not valuable} for planning with \eqref{eq:sampling_rule} since  $\cB(V_{\max})$ and $V_{\max}$ coincide on $\cL_n$.
+
+
+\paragraph{Finer difficulty measure}
+
+Assume we instead have some tighter bounds $L,U$: $$0\leq L\leq V\leq U\leq V_{\max}.$$
+
+\begin{definition}[Near-optimal branching factor]
+We define the near-optimal branching factor \emph{according to the bounds $L,U$} as $$\kappa(L,U) \eqdef \limsup_{h\rightarrow\infty} \left|\Tau_h^\infty(L,U)\right|^{1/h}\in(1, K],$$ where
+\begin{equation}
+     \Tau_h^\infty(L,U)=\left\{a\in A^h: V^* - V(a)\leq \gamma^{h}(U(a)-L(a))\right\}.
+\end{equation}
 
 \end{definition}
 
-\section{Tree-based State-aware planning}
+\begin{lemma}This branching factor shrinks as the bound $L,U$ get tighter:
+\[L_2\leq L_1\leq V\leq U_1\leq U_2\implies \kappa(U_1) \leq \kappa(U_2).\]
+\end{lemma}
 
-We extend \texttt{OPD} to include the two following ideas:
+
+\begin{theorem}
+\label{thm:regret-bound-U}
+Let $L \leq V\leq U$ consistent bounds, then optimistic planning with $U^a$ and recommendation with $L^a$ gives the following simple regret bound: %$\forall \kappa>\kappa(U)$,
+\begin{align*}
+r_n = \cO\left(n^{-\frac{\log 1/\gamma}{\log \kappa(L,U)}}\right);
+\end{align*}
+\end{theorem}
+\subsubsection{Proof}
+In this proof, we temporarily assume that $U=\cB(U)$ and $L=\cB(L)$. We follow the same steps as in the proof of the regret of \texttt{OPD}.
+
+\begin{remark}
+It does not hold anymore that $a_n$ must be of maximal depth $d_n$.  This is due to the fact the exploration bonus $\gamma^h U(a)$ is not depth-wise constant: consider two nodes $a,b$ at the same depth with $R(a) > R(b)$. In \texttt{OPD}, both get the same bonus $\gamma^h/(1-\gamma)$, and the node $a$ is expanded first. But with the local bonus, $b$ could be expanded in priority rather than $a$, if its own bonus is sufficiently higher than that of $a$, precisely if $R(a)+\gamma^h U(a) < R(b)+\gamma^h U(b)$. For instance, $U(a)=0$ when $a$ is known to be a terminal state while $b$ can lead to future rewards. If after expanding and exploring the subtree of $b$ we find out that $V(b) = 0$, we still return the recommendation $a$, which is of non-maximal depth.
+\end{remark}
+
+The regret bound still holds, however. First, notice that:
+\begin{lemma}
+\label{lemma:expansion-bound}
+Whenever a node $a$ of depth $h$ is expanded by the optimistic algorithm, its first action $a_1$ enjoys a simple regret $V(a^*)-V(a_1) \leq \gamma^h(U(a)-L(a))$. 
+\end{lemma}
+\begin{proof}
+Let $t$ be the time of expansion of $a$, it holds that $U^a_t(b) \leq U^a_t(a)$ for all $b\in \cL_t$, in particular those in a branch starting by an optimal action $a^*$. Since $U=\cB(U)$ and $L=\cB(L)$, we also have $U^a_t(a^*) = \max_{b\in a^*A^*} U^a_t(b) \leq U^a_t(a)$, and $L^a_t(a_1) = \max{b\in a_1 A^*} L^a_t(b) \geq  L^a_t(a)$. Thus, $V(a^*)-V(a_1) \leq U^a_t(a^*) - L^a_t(a_1) \leq U^a_t(a) - L^a_t(a) = \gamma^h(U(a)-L(a))$.
+\end{proof}
+ 
+\begin{lemma}
+The recommended action $a_n$ has a simple regret $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$, where $d_n$ is the maximal depth of $\Tau_n$.
+\end{lemma}
+\begin{proof}
+Let $i$ a node of maximal depth $d_n$, and consider the recommended node $a_n$ at time $n$, of depth $d$. In particular, $L^a_n(a_n) \geq L^a_n(i)$, and since $(L^a_t)_t$ is non-decreasing we also have $L^a_n(i) \geq L^a_t(i)$. At the time $t$ when $i$ is expanded, we have $U^a_t(a_n) \leq U^a_t(i)$, and since $(U^a_t)_t$ is non-increasing we also have $U^a_n(a_n) \leq U^a_t(a_n)$. We can conclude with \autoref{lemma:expansion-bound} applied to $a_n$: $r_n \leq \gamma^d(U(a_n)-L(a_n) = U^a_n(a_n) - L^a_n(a_n)  \leq U^a_t(a_n) - L^a_n(i) \leq U^a_t(i) - L^a_t(i) = \gamma^{d_n}(U(i) - L(i)$, which yields the claimed bound since $U(i) - L(i) \leq V_{\max}-0$.
+\end{proof}
+
+\begin{lemma}
+\label{lemma:expansion-tree}
+Every node expanded by \eqref{eq:sampling_rule} is in $\Tau^\infty(L,U) = \bigcup_{h\geq 0} \Tau^\infty_h(L,U)$.
+\end{lemma}
+\begin{proof}
+Let $a$ be a node of depth $h$ expanded at round $n$, then $U^a_n(a) \geq U^a_n(b)$ for all $b\in\cL_n$. Thus, since $U = \cB(U)$, we have $U^a(a) = \cB(U)^a(\emptyset) = \cB(U)(s_0) \geq V(s_0) = V^*$. Thus, $V^* - V(a) \leq U^a(a) - L^a(a) = \gamma^h(U(a) - L(a))$.
+\end{proof}
+
+Finally, we can move on to the proof of \autoref{thm:regret-bound-U}.
+Let $n_d$ be the number of expanded nodes of depth $d$, by \autoref{lemma:expansion-tree} we have $n_d \leq |\Tau^\infty_d(L,U)| \leq C\kappa(L,U)^d$. Thus, 
+\[n = \sum_{d=1}^{d_n} n_d \leq C\sum_{d=0}^{d_n} \kappa(L,U)^d = C\frac{\kappa(L,U)^{d_n+1}-1}{\kappa(L,U)-1}\]
+Hence, $d_n \geq C'\frac{\log n}{\log\kappa(L,U)},$ which along with \autoref{lemma:expansion-bound} gives the claimed bound.
+
+Note that if $L,U$ are consistent bounds that do not verify, $L = \cB(L)$ and $U=\cB(U)$, then planning with $\cB(L),\cB(U)$ instead will yield the correct bound with exponent $\kappa(\cB(L),\cB(U))$, and since $L\leq\cB(L)\leq V\leq \cB(U)\leq U$ we have $\kappa(\cB(L),\cB(U)) \leq \kappa(L,U)$, which still gives \begin{align*}
+r_n = \cO\left(n^{-\frac{\log 1/\gamma}{\log \kappa(L,U)}}\right);
+\end{align*}
+
+\section{State-aware planning}
+
+Our goal is to make these bounds $L,U$ as tight as possible. We extend \texttt{OPD} to include the two following ideas:
 
 \subsection{Aggregation of state values}
 \label{sec:aggregation}
 
-Let $L,U\in\Real^{\Tau_n}$ some state-value lower and upper-bounds.
+Let $L\leq V\leq U\in\Real^{\Tau_n}$ some bounds.
 
 \begin{definition}[Aggregation operator]
-If several sequences $a'\in\Tau_n$ lead to the same state $s$, their bounds must all hold. This defines an aggregation operator $\cA$ as:
+If several sequences $a'\in\Tau_n$ all lead to the same state $s$, their respective bounds must all hold. This suggests an aggregation operator $\cA$ as:
     \begin{align}
     \label{eq:aggregation}
         \forall a\in\mathcal{T}_n, \quad &\cA(L)(a) = \max_{a'\in \cN_n(a)} L(a'),\\
@@ -136,15 +229,10 @@ At this stage, we have defined two operators $\cA$ and $\cB$ that operate on bou
 
 
 \begin{remark}[Interplay of backups and aggregations]
-We can notice that the sampling rule \eqref{eq:sampling_rule} only depends on the value of $U$ at the leaves $\cL_n$. Hence, it seems that:
-\begin{itemize}
-    \item applying $\cB$ alone is not useful, since information only travels upwards in the tree $\Tau_n$;
-    \item conversely, applying $\cA$ can update the value of any node in the tree $\Tau_n$, including leaves $\cL_n$.
-\end{itemize}
-Hence, the aggregation $\cA$ makes the backup $\cB$ useful: each $L$ backup can provide tighter bounds $U(s')$ for states $s'$ at inner-nodes which can in turn be aggregated with $\cA$ and propagated down in the tree, potentially affecting the leaves and future exploration. 
+As observed earlier, the sampling rule \eqref{eq:sampling_rule} only depends on the value of $U$ at the leaves $\cL_n$, which makes applying $\cB$ alone useless since information only travels upwards in the tree $\Tau_n$. Conversely, applying $\cA$ can update the value of any node in the tree $\Tau_n$, including the leaves $\cL_n$. Hence, the aggregation $\cA$ makes the backup $\cB$ useful: each $\cB$ backup can provide tighter bounds at inner-nodes which can in turn be aggregated with $\cA$ and propagated down in the tree, potentially affecting the leaves and future exploration. 
 \end{remark}
 
-This suggests an alternating procedure of state-aggregations $\cA$ and Bellman-backups $\cB$, whose convergence, sample complexity and efficiency must be studied.
+This suggests an alternating procedure of aggregations $\cA$ and backups $\cB$, whose convergence, sample complexity and efficiency must be studied.
 
 \begin{proposition}[Contractivity of $\cA\cB$] $\cA$ is a 1-Lipschitz operator, which makes $\cA\cB$ a $\gamma$-contraction.
 \end{proposition}
@@ -164,14 +252,14 @@ We can perform a fixed-point iteration of alternating backups and aggregations s
 
 \begin{equation}
     \label{eq:recursion}
-    L_k = (\cA \cB)^k(0), \qquad
-    U_k = (\cA \cB)^k(V_{\max})
+    L^k = (\cA \cB)^k(0), \qquad
+    U^k = (\cA \cB)^k(V_{\max})
 \end{equation}
-$(U_k)$ (resp. $(L_k)$) is non-increasing (resp. non-decreasing) and converges at a rate $\gamma^k$, but can converge in infinite time whenever there is a loop, as shown in \autoref{fig:simple_loop}. We can decide to stop whenever a desired accuracy is reached: 
+$(U^k)$ (resp. $(L^k)$) is non-increasing (resp. non-decreasing) and converges at a rate $\gamma^k$, but can converge in infinite time whenever there is a loop, as shown in \autoref{fig:simple_loop}. We can decide to stop whenever a desired accuracy is reached: 
 
 \begin{proposition}[Early stopping]
 If we have that
-\[\forall a\in\Tau_n, |U_{k+1}(a) - U_k(a)| \leq \epsilon (1-\gamma)\gamma^{-h(a)-1},\]
+\[\forall a\in\Tau_n, |U^{k+1}(a) - U^k(a)| \leq \epsilon (1-\gamma)\gamma^{-h(a)-1},\]
 then the sequence value $U^a_{\infty}$ is approximated with an accuracy of $\epsilon$.
 \end{proposition}
 \begin{proof}
@@ -183,7 +271,7 @@ Hence, if the premise holds,
     |U^a_{k+1}(a) - U^a_{k}(a)| &\leq \gamma^h\epsilon (1-\gamma)\gamma^{-h-1} = \epsilon (1-\gamma)\gamma^{-1}
 \end{align*}
 
-And then, 
+And then,
 \begin{align*}
 |U^a_{k+1}(a) - U^a_\infty(a)| &= \gamma^h |U_{k+1}(a) - U_\infty(a)|\\
 &\leq \gamma^{h+1}|U_{k}(a) - U_\infty(a)| \text{ since $LA$ is a $\gamma$-contraction}\\
@@ -241,93 +329,43 @@ Hence, if this last term is negative, then $V(a_1) - V(a_2)$ is as well.
 
 We propose that at each step, we detect such pairs $a_1, a_2$. Whenever $a_1$ is a leaf, we can remove it from the set $\cL_n^-\subset \cL_n $ of candidates for expansion.
 
-\subsection{The Algorithm}
+\subsection{The algorithm}
 
-\begin{algorithm}[htp]
+\begin{algorithm}[H]
 	\caption{State-aware planning}
 	\label{alg:state-aware}
 	\SetAlgoLined\DontPrintSemicolon
 	\For{iteration $n$}{
-		\nl Given $\Tau_n$, compute $L_n = (\cA\cB)^\infty(0)$ and $U_n = (\cA\cB)^\infty(V_{\max})$\;
-		\nl Select the optimistic sequence of actions $a_{n+1}$ from \eqref{eq:sampling_rule} \;
-		\nl Expand the corresponding leaf node:\;
-		\For{action $a\in A$}{
-			Add the child $a_{n+1}a$ to the tree $\Gamma_{n+1}$ and observe its reward.
+		\nl Given $\Tau_n$, compute $L_n = (\cA_n\cB_n)^\infty(0)$ and $U_n = (\cA_n\cB_n)^\infty(V_{\max})$.\;
+		\nl Select the optimistic sequence of actions $\hat{a}_{n}$ from \eqref{eq:sampling_rule}.\;
+		\For(\tcp*[h]{Expand the corresponding leaf node}){action $a\in A$}{
+			Add the child $\hat{a}_{n}a$ to the tree $\Gamma_{n+1}$ and observe its reward.
 		}
+		\nl Prune the tree: $\cL_{n+1}^- = \cP(\cL_{n+1})$.\;
 	}
-	\Return $\max_{a\in A} L_n(a)$\;
+	\Return the recommendation $a_{n+1}$ from \eqref{eq:recommendation_rule}.\;
 \end{algorithm}
 
 \section{Regret bound}
 
-\subsection{Reminder of the \texttt{OPD} proof}
+In \autoref{thm:regret-bound-U}, we assumed that some bounds $L,U$ were revealed by and oracle and available from the onset for planning. In this section, we instead built a non-increasing (in the sense of inclusion) sequence of bounds $(L_n,U_n)_n\geq 0$, i.e. that verify $L_n\geq L_{n-1}\geq \dots\geq L_0\geq 0$ and $U_n\leq U_{n-1}\leq \dots\leq U_0\leq V_{\max}$.
 
-\noindent\fbox{%
-	\parbox{\textwidth}{%
-		\begin{enumerate}
-			\item The recommendation $a_n$ has a maximal depth $d_n$ in the tree, and its gap is bounded by $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$.
-			\item Each expanded node belongs to $\Tau^\infty = \bigcup_{h\geq 0} \Tau_h^\infty$, where $$\Tau_h^\infty = \left\{a\in A^h: V^*-V(a) \leq \frac{\gamma^h}{1-\gamma}\right\}$$.\\ Introduce the difficulty measure $\kappa$: the smallest number such that $$|\Tau_h^\infty| = \cO(\kappa^h).$$
-			\item $n = \sum_{d=1}^{d_n} n_d \leq  C\sum_{d=1}^{d_n} \kappa^d = \begin{cases}
-			\cO(d_n) &\text{if $\kappa=1$}\\
-			\cO(\kappa^{d_n}) &\text{else.}
-			\end{cases}$\\
-			Hence $r_n = \begin{cases}
-			\cO(\gamma^n) &\text{if $\kappa=1$}\\
-			\cO(\gamma^{\frac{\log n}{\log \kappa}}) = \cO(n^{-\frac{\log 1/\gamma}{\log \kappa}}) &\text{else.}
-			\end{cases}$
-		\end{enumerate}
-	}%
-}
-\subsection{Adaptation to the state-aware case}
-\paragraph{Difficulty measure}
-
-We define the branching factor $\kappa(U)\in[1, K]$ of near-optimal nodes \emph{according to a state-value bound $U$} as:
-\begin{equation}
-    \kappa(U) \eqdef \limsup_{h\rightarrow\infty} \left|\left\{a\in A^h: V^* - V(a)\leq \gamma^{h}U(a)\right\}\right|^{1/h}.
-\end{equation}
-This branching factor shrinks as the bound $U$ gets tighter:
-\begin{lemma}
-If $U_1$ is a tighter bound that $U_2$, its corresponding effective branching factor is lower:
-\[U_1\leq U_2\implies \kappa(U_1) \leq \kappa(U_2).\]
-\end{lemma}
-
-
+We can consider the sequence $\kappa_n = \kappa(L_n, U_n)$. It is non-increasing and lower-bounded by $1$, thus converges to some $\kappa_\infty\in[1,K]$.
 \begin{theorem}
-If $(U_n)$ is sequence of valid upper-bounds on the state-value $V\leq U_n, \forall n$, then optimistic planning with $U_n^a$ gives the following simple regret bound: %$\forall \kappa>\kappa(U)$,
+The \autoref{alg:state-aware} enjoys the following regret bound: 
 \begin{align*}
-V^* - V({a_n}) = \cO\left(n^{-\frac{\log 1/\gamma}{\log \kappa(U)}}\right);
+\forall \kappa'>\kappa_\infty, \quad r_n = \cO\left(n^{-\frac{\log 1/\gamma}{\log \kappa'}}\right)
 \end{align*}
 \end{theorem}
 
-And in particular, planning with $U_n^\infty=(\cA\cB)^\infty(V_{\max})$ gives a potentially better bound $\kappa(U_n^\infty)$ than planning with $U_n=V_{\max}$ as in \texttt{OPD}.
-
 \begin{proof}
-	
-	
-	As in \citep[][Theorem 2]{Hren2008}, we first show that the simple regret $r_n$ is bounded by $\frac{\gamma^{d_n}}{1 - \gamma}$ where $d_n$ is the depth of $\mathcal{T}_n$. This properties relies on the fact that the returned action belongs to the deepest explored branch, which we can show likewise by contradiction: if there exist some node $i$ of depth $d_n$ and $j$ of depth $d<d_n$ such that $L_j(n) < L_i(n)$, there exists a time $t<n$ where node $i$ was expanded, which means $B(U)_i(t) \geq B(U)_j(t)$. But this is impossible since $B(U)_i(t) = L_i(t) + \gamma^d_n U_i(n) \leq L_i(n) + \gamma^{d_n} U_i(n) < L_j(n) + \gamma^d U_j(n) = B(U)_j(n) \leq B(U)_j(t)$.
-	
-	This yields directly that the returned action $a = i_0$ where $i$ is some node of maximal depth $d_n$ expanded at round $t\leq n$, which by selection rule verifies $B_a(t) = B_i(t) = \max_{x\in\mathcal{A}} B_x(t)$ and:
-	\begin{align*}
-	\label{eq:Rndn}
-	V - V_a = V_{a^{\star}} - V_a  \leq B_{a^{\star}}(t) - V_a &\leq B_{a}(t) - U_a(t) \\
-	&= B_{i}(t) - U_i(t) \\
-	&= \frac{\gamma^{d_n}}{1-\gamma}.
-	\end{align*}
-	
-	Secondly, they bound the depth $d_n$ of $\mathcal{T}_n$ with respect to $K$. To that end, they show that the expanded nodes always belong to the sub-tree $\mathcal{T}_\infty$ of all the nodes of depth $d$ that are $\frac{\gamma^d}{1-\gamma}$-optimal. Indeed, if a node $i$ of depth $d$ is expanded at round $k$, then $B_i(t) \geq B_j(t)$ for all $j\in \mathcal{L}_n$ by selection rule, thus the max-backups of \eqref{eq:robust-b-values} up to the root yield $B^r_i(t) = B_\emptyset(t)$. Moreover, by Lemma \ref{lemma:uvb} we have that $B_\emptyset(t) \geq V_\emptyset = V$ and so $V_i \geq U_i(t) = B_i(t) - \frac{\gamma^d}{1-\gamma} \geq V - \frac{\gamma^d}{1-\gamma}$, thus $i \in \mathcal{T}_\infty$.
-	
-	Then from the definition of $\kappa$ applied to nodes in $\mathcal{T}_\infty$, there exists $d_0$ and $c$ such that the number $n_d$ of nodes of depth $d \geq d_0$ in $\mathcal{T}_\infty$ is bounded by $c\kappa^d$. As a consequence, 
-	\begin{eqnarray*}
-		K &= \sum_{d=0}^{d_n} n_d = n_0 + \sum_{d=d_0+1}^{d_n} n_d \leq n_0 + c\sum_{d={d_0+1}}^{d_n} \kappa^d.
-	\end{eqnarray*}
-	
-	\begin{itemize}
-		\item If $\kappa > 1$, then $K \leq n_0 + c\kappa^{d_0+1}\frac{\kappa^{d_n-d_0}-1}{\kappa-1}$ and thus $d_n \geq d_0 + \log_\kappa \frac{(K-n_0)(\kappa - 1)}{c\kappa^{d_0+1}}$.
-		
-		We conclude that $r_n \leq \frac{\gamma^{d_n}}{1-\gamma} = \frac{1}{1-\gamma} \left( \frac{(K-n_0)(\kappa - 1)}{c\kappa^{d_0+1}} \right)^\frac{\log \gamma}{\log \kappa} = \cO\left(K^{-\frac{\log 1/\gamma}{\log \kappa}}\right)$.
-		
-		\item If $\kappa = 1$, then $K \leq n_0 + c(d_n-d_0)$, hence we have $r_n = O\left(\gamma^{Kc}\right)$.
-	\end{itemize}
+Let $\kappa'>\kappa_\infty$. Since $\kappa(L_n,U_n)\rightarrow\kappa_\infty$, there exists $n_0\in\Natural$ such that for all $n\geq n_0, \kappa(L_n,U_n) \leq \kappa'$.
+We can show that at each iteration $n$, any expanded node must belong to $\Tau^\infty(L_n,U_n)$.
+Let $n\geq n_0$, and define $d_0 = \min\{d\in\Natural: \exists t \in[n_0,n], \hat{a}_t\in A^d \}$. By definition, for all $d\geq d_0$, any expanded node of depth $d$ was expanded at a time $t\geq n_0$, and thus $\hat{a}_t\in\Tau^\infty_t \subset\Tau^\infty_{n_0}$. By denoting $n_d$ the number of expanded nodes of depth $d$, we obtain:
+\[
+n = \sum_{d=0}^{d_0-1}n_d + \sum_{d=d_0}^{d_n} n_d \leq  C_0 + C_1\sum_{d=d_0}^{d_n} (\kappa')^d \leq C_0 + C_1' (\kappa')^{d_n}
+\]
+And since $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$, we obtain the claimed bound.
 \end{proof}
 
 \section{Efficient implementation}
@@ -346,7 +384,7 @@ We can notice that if we change the value of a single node $a$, the application 
 
 \paragraph{Leaves pruning}
 
-When and how should we apply the rule \eqref{eq:pruning} described in Proposition \autoref{prop:pruning}?
+When and how should we apply the rule \eqref{eq:pruning} described in \autoref{prop:pruning}?
 
 The most straightforward way is to apply it once at every step, after the aggregations and backups.
 The procedure needs to be applied within some equivalence classes $C(a)$ of nodes $a'$ that lead to the same state $s(a')=s(a)$. If a class $C$ is of size $n_C$, then the cost of running \eqref{eq:pruning} is $\cO(n_C^2)$. This could be improved to $\cO(n_C \log n_C)$ by computing the convex hull of the candidates points in $C$. Indeed, any point $a_1$ that does not belong to the top-frontier of this hull is dominated by some $a_2$, in the sense of \eqref{eq:pruning}.
@@ -498,24 +536,5 @@ The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, 
     \end{subfigure}
     \caption{Updates and occupancies for various values of $\epsilon$, for $n = 5460$, $\gamma=0.95$}
 \end{figure}
-
-
-\section{Extension to Stochastic MDPs}
-
-If the transitions and rewards are stochastic, we can define 
-state-aware upper/lower confidence bounds on the values in the following way. At each planning iteration,
-\begin{enumerate}
-    \item Make the graph of observed states and transitions $N(s), N(s,a), N(s,a,s'), R(s,a,s')$
-    \item Unseen transitions $(s,a)$ go to the anonymous state $s_\emptyset$
-    \item Estimate $r(s,a)$ and $p(s,a,s')$ based on previous observed samples
-    \item Initialise $U_0 = V_{\max}, L_0 = 0$
-    \item Backup each $(s,a)$ with $U_{k+1}(s) = \min(U_k(s), u(s,a) + \overline{p}_{s,a} U_k, U_k)$, until convergence (same resp. for $L$)
-    \end{enumerate}
-The memory complexity of iteration $n$ corresponds to maintaining a set of $n < |\mathcal{S}|$ state estimates and $nKB$ transitions. The planning algorithm then samples the next sequence based on the obtained intervals: start from the root and follow a BAI / Optimistic policy.
-
-TODO: try on sailing env? or gridworld with noise: e.g. 0.5 chance of uneffective action. Plot the state occupancy: number of times a state was expanded ($N(s) > 1$)
-    
-
-
 
 \end{document}

@@ -23,13 +23,10 @@
 
 \tableofcontents
 
-\section{Motivation}
-
-Traditional planning algorithms sample sequences of actions by considering sequences of rewards only. Can we leverage state information during planning, to account for the fact that different sequences can lead to similar states, and hence similar future rewards?
 
 \section{Deterministic Systems}
 
-We consider an MDP with discrete state space and deterministic dynamics. We plan from an initial state $s_0$?
+We consider a deterministic MDP. We plan from an initial state $s_0$?
 \begin{paragraph}{Notations}
 At iteration $n$, we consider the graph $\Gamma_n$ that represent all the states and transitions observed so far. It contains exactly $n-1$ \emph{internal} nodes that correspond to states $s$ that have been expanded, and a set $\cS_n$ of up to $n(K-1)+1$ \emph{external} nodes (or \emph{sink} nodes) that correspond to states $s$ that have been observed but not expanded yet. Thus, these \emph{sink} nodes have no outgoing transition. Each observed transition in the graph is annotated with its reward $r(s,a)$
 We denote $s(a)$ the state reached after running a sequence of actions $a$.
@@ -140,4 +137,22 @@ Let us consider $\Tau_n$ (and $\cL_n$), the tree (and its leaves) obtained by un
   }
   \Return $\max_{a\in A} r(s_0,a) + \gamma U(s')$\;
 \end{algorithm}
+
+
+\section{Extension to Stochastic MDPs}
+
+If the transitions and rewards are stochastic, we can define 
+state-aware upper/lower confidence bounds on the values in the following way. At each planning iteration,
+\begin{enumerate}
+    \item Make the graph of observed states and transitions $N(s), N(s,a), N(s,a,s'), R(s,a,s')$
+    \item Unseen transitions $(s,a)$ go to the anonymous state $s_\emptyset$
+    \item Estimate $r(s,a)$ and $p(s,a,s')$ based on previous observed samples
+    \item Initialise $U_0 = V_{\max}, L_0 = 0$
+    \item Backup each $(s,a)$ with $U_{k+1}(s) = \min(U_k(s), u(s,a) + \overline{p}_{s,a} U_k, U_k)$, until convergence (same resp. for $L$)
+    \end{enumerate}
+The memory complexity of iteration $n$ corresponds to maintaining a set of $n < |\mathcal{S}|$ state estimates and $nKB$ transitions. The planning algorithm then samples the next sequence based on the obtained intervals: start from the root and follow a BAI / Optimistic policy.
+
+TODO: try on sailing env? or gridworld with noise: e.g. 0.5 chance of uneffective action. Plot the state occupancy: number of times a state was expanded ($N(s) > 1$)
+    
+
 \end{document}
