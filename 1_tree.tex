@@ -12,7 +12,8 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{natbib}
-
+\usepackage[dvipsnames]{xcolor}
+\usepackage{bm}
 
 \input{mathdef.tex}
 
@@ -90,28 +91,27 @@ and a conservative recommendation rule:
 \end{equation}
 
 In \texttt{OPD}, they used the trivial bounds $L=0,\,U=V_{\max}$ and proved the following regret bound.
+
+\begin{definition}[Difficulty measure]
+We define the problem-dependent measure $\hlrb{\kappa}$ as the smallest quantity such that $|\Tau_h^\infty| = \hlrb{\cO(\kappa^h)}$, where $\Tau^\infty$ is the subtree of near-optimal nodes $$\Tau_h^\infty = \left\{a\in A^h: V^*-V(a) \leq \frac{\gamma^h}{1-\gamma}\right\}.$$
+\end{definition}
+\noindent\fbox{%
+	\parbox{\textwidth}{%
 \begin{theorem}[Regret bound of \texttt{OPD}]
-\label{thm:regret-opd}
-
-Define the near-optimal tree $$\Tau_h^\infty = \left\{a\in A^h: V^*-V(a) \leq \frac{\gamma^h}{1-\gamma}\right\}.$$ Introduce the difficulty measure $\kappa$ such that $|\Tau_h^\infty| = \cO(\kappa^h)$ (the smallest).
-
-Then, the action $a_n$ recommended by \texttt{OPD} has a simple regret bounded by:
+\label{thm:regret-opd}The action $a_n$ recommended by \texttt{OPD} has a simple regret bounded by:
 \begin{align*}
-r_n = \cO\left(n^{-\frac{\log 1/\gamma}{\log \kappa}}\right);
+r_n = \cO\left( n^{-\log \frac{1}{\gamma}/\hlrb{\log\kappa}}\right).
 \end{align*}
 \end{theorem}
+}}
 
 
 \section{Motivation for improvement}
 
-The trivial bound used in \texttt{OPD} does not make use of all the available information in $\Tau_n$.
+The trivial bound used in \texttt{OPD} does not make use of all the available information in $\Tau_n$. Assume that we had access to some tighter bounds $L,\,U$ provided by an oracle: $$0\leq L\leq V\leq U\leq V_{\max}.$$
 
-\paragraph{Finer difficulty measure}
-
-Assume we instead have some tighter bounds $L,\,U$: $$0\leq L\leq V\leq U\leq V_{\max}.$$
-
-\begin{definition}[Near-optimal branching factor]
-We define the near-optimal branching factor \emph{according to the bounds $L,\,U$} as $$\kappa(L,U) \eqdef \limsup_{h\rightarrow\infty} \left|\Tau_h^\infty(L,U)\right|^{1/h}\in(1, K],$$ where
+\begin{definition}[A finer difficulty measure]
+We define the near-optimal branching factor \emph{according to the bounds $L,\,U$} as $$\hlbb{\kappa(L,U) \eqdef \limsup_{h\rightarrow\infty} \left|\Tau_h^\infty(L,U)\right|^{1/h}}\in(1, K],$$ where
 \begin{equation}
      \Tau_h^\infty(L,U)=\left\{a\in A^h: V^* - V(a)\leq \gamma^{h}(U(a)-L(a))\right\}.
 \end{equation}
@@ -123,13 +123,16 @@ We define the near-optimal branching factor \emph{according to the bounds $L,\,U
 \end{lemma}
 
 
+\noindent\fbox{%
+	\parbox{\textwidth}{%
 \begin{theorem}
 \label{thm:regret-bound-U}
-Let $L \leq V\leq U$ consistent bounds, then planning with $L^a,\,U^a$ gives the following simple regret bound: %$\forall \kappa>\kappa(U)$,
-\begin{align*}
-r_n = \cO\left(n^{-\frac{\log 1/\gamma}{\log \kappa(L,U)}}\right);
-\end{align*}
+Let $L \leq V\leq U$ consistent bounds, then planning with $L^a,\,U^a$ yields the following simple regret bound: %$\forall \kappa>\kappa(U)$,
+\begin{equation*}
+r_n = \cO\left(n^{-\log \frac{1}{\gamma}/\hlbb{\log \kappa(L,U)}}\right).
+\end{equation*}
 \end{theorem}
+}}
 
 \section{State-aware planning}
 
@@ -167,20 +170,19 @@ $\cB$ verifies, $\cB^2=\cB$, $\cB$ preserves consistency, and $\cB$ tightens con
 	\caption{Depiction of the Bellman backup operator $\cB$. The information is propagated upward, and the leaves are not updated.}
 \end{figure}
 
-This was already done in \texttt{OPD}, however $\cB$ alone is \emph{not valuable} for planning with \eqref{eq:sampling_rule} since  $\cB(V_{\max})$ and $V_{\max}$ coincide on $\cL_n$.
-We extend \texttt{OPD} to include the two following ideas:
+$\cB$ was already used in \texttt{OPD}, however it is \emph{not valuable} on its own for planning with \eqref{eq:sampling_rule}, since  $\cB(V_{\max})$ and $V_{\max}$ coincide on $\cL_n$.
+We extend \texttt{OPD} with two ideas.
 
 \subsection{Aggregation of state values}
 \label{sec:aggregation}
 
-Let $L\leq V\leq U\in\Real^{\Tau_n}$ some bounds.
+%Let $L\leq V\leq U\in\Real^{\Tau_n}$ some bounds.
 
 \begin{definition}[Aggregation operator]
 If several sequences $a'\in\Tau_n$ all lead to the same state $s$, their respective bounds must hold simultaneously. This suggests an aggregation operator $\cA$ as:
     \begin{align}
     \label{eq:aggregation}
-        \forall a\in\mathcal{T}_n, \quad &\cA(L)(a) = \max_{a'\in \cN_n(a)} L(a'),\\
-        &\cA(U)(a) = \min_{a'\in \cN_n(a)} U(a')                                         
+        \forall a\in\mathcal{T}_n, \qquad &\cA(L)(a) = \max_{a'\in \cN_n(a)} L(a'),\qquad \cA(U)(a) = \min_{a'\in \cN_n(a)} U(a').                                   
     \end{align}
 \end{definition}
 
@@ -191,13 +193,13 @@ If several sequences $a'\in\Tau_n$ all lead to the same state $s$, their respect
 \end{figure}
 
 \begin{lemma}
-Again, we have $\cA^2=\cA$, $\cA$ preserves consistency, and:
+Again, we have $\cA^2=\cA$, $\cA$ preserves consistency, and tightens bounds:
 \begin{equation*}
     L\leq V \leq U \implies L\leq \cA(L) \leq V \leq \cA(U) \leq U
 \end{equation*}
 \end{lemma}
 
-At this stage, we have defined two operators $\cA$ and $\cB$ that operate on bounds $f$ and can only tighten them. It is natural to try and apply both of them until convergence: $f = A(f) = L(f)$.
+At this stage, we have defined two operators $\cA$ and $\cB$ that operate on bounds $f$ and can only tighten them.
 
 
 \begin{remark}[Interplay of backups and aggregations]
@@ -224,7 +226,7 @@ $(U^k)$ (resp. $(L^k)$) is non-increasing (resp. non-decreasing) and converges a
 \label{prop:early-stopping}
 If we have that
 \[\forall a\in\Tau_n, |U^{k+1}(a) - U^k(a)| \leq \epsilon (1-\gamma)\gamma^{-h(a)-1},\]
-then the sequence value $U^a_{\infty}$ is approximated with an accuracy of $\epsilon$.
+then the sequence value $(U^{\infty})^a$ is approximated with an accuracy of $\epsilon$.
 \end{proposition}
 
 \subsection{Leaves pruning}
@@ -251,8 +253,7 @@ We propose that at each step, we detect such pairs $a_1, a_2$. Whenever $a_1$ is
 	\caption{Depiction of the leaves pruning operator $\cP$. A leaf verifying the criterion of \autoref{prop:pruning} is removed from the set of leaves candidate to expansion.}
 \end{figure}
 
-\paragraph{The algorithm}
-~\\
+The full algorithm is described in \autoref{alg:state-aware}.\\
 \begin{algorithm}[H]
 	\caption{State-aware planning}
 	\label{alg:state-aware}
@@ -272,23 +273,21 @@ We propose that at each step, we detect such pairs $a_1, a_2$. Whenever $a_1$ is
 
 In \autoref{thm:regret-bound-U}, we assumed that some bounds $L,U$ were revealed by and oracle and available from the onset for planning. In \autoref{alg:state-aware}, we instead built a non-increasing (in the sense of inclusion) sequence of bounds $(L_n,U_n)_n\geq 0$, i.e. that verify $L_n\geq L_{n-1}\geq \dots\geq L_0\geq 0$ and $U_n\leq U_{n-1}\leq \dots\leq U_0\leq V_{\max}$.
 
-We can consider the sequence $\kappa_n = \kappa(L_n, U_n)$. It is non-increasing and lower-bounded by $1$, thus converges to some $\kappa_\infty\in[1,K]$.
+We can consider the sequence $\kappa_n = \kappa(L_n, U_n)$. It is non-increasing and lower-bounded by $1$, thus converges. Let $\hlgb{\kappa_\infty = \lim_{n\rightarrow\infty} \kappa(L_n, U_n)} \in[1,K]$.
 \begin{theorem}
 \label{thm:regret-state-aware}
 The \autoref{alg:state-aware} enjoys the following regret bound: 
 \begin{align*}
-\forall \kappa'>\kappa_\infty, \quad r_n = \cO\left(n^{-\frac{\log 1/\gamma}{\log \kappa'}}\right)
+\forall \hlgb{\kappa' > \kappa_\infty}, \quad r_n = \cO\left(n^{-\log \frac{1}{\gamma}/\hlgb{\log \kappa'}}\right)
 \end{align*}
 \end{theorem}
 
 
-\section{Experiments}
+\section{Numerical Experiments}
 
-\subsection{Full algorithm}
+\paragraph{Two-armed bandit}
 
-\subsubsection{Two-armed bandit}
-
-We consider the simplest possible problem: 1 state and 2 actions, with rewards 0 and 1. The state-aware planner never expands a suboptimal node. In contrast, the tree expanded by \texttt{OPD} is quite balanced, even with such a dense reward and important gap.
+We consider the simplest possible problem: 1 state and 2 actions, with rewards 0 and 0.7. The state-aware planner never expands a suboptimal node. In contrast, the tree expanded by \texttt{OPD} is quite balanced, even with such a dense reward and important gap.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.49\textwidth]{img/bandit_deterministic.pdf}
@@ -297,7 +296,7 @@ We consider the simplest possible problem: 1 state and 2 actions, with rewards 0
     \label{fig:bandit_trees}
 \end{figure}
 
-\subsubsection{Gridworld with 4 actions}
+\paragraph{Gridworld with 4 actions}
 
 The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, y) = 1 - \frac{1}{5^2}((x-10)^2 + (y-10)^2)$ clipped to [0, 1].
 
@@ -334,7 +333,7 @@ The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, 
 
 \section{Proofs}
 \subsection{Proof of \autoref{thm:regret-opd}}
-
+Sketch of proof.\\
 \noindent\fbox{%
 	\parbox{\textwidth}{%
 		\begin{enumerate}
