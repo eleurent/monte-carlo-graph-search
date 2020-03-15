@@ -27,7 +27,8 @@
 
 \tableofcontents
 
-\section{Preliminary: Planning for Deterministic Systems}
+\section{Preliminary}
+\subsection{Planning for Deterministic Systems}
 
 We consider an MDP with deterministic dynamics and rewards.
 
@@ -106,7 +107,7 @@ r_n = \cO\left( n^{-\log \frac{1}{\gamma}/\hlrb{\log\kappa}}\right).
 }}
 
 
-\section{Motivation for improvement}
+\subsection{Motivation for improvement}
 
 The trivial bound used in \texttt{OPD} does not make use of all the available information in $\Tau_n$. Assume that we had access to some tighter bounds $L,\,U$ provided by an oracle: $$0\leq L\leq V\leq U\leq V_{\max}.$$
 
@@ -120,6 +121,7 @@ We define the near-optimal branching factor \emph{according to the bounds $L,\,U
 
 \begin{lemma}This branching factor shrinks as the bounds $L,\,U$ get tighter:
 \[L_2\leq L_1\leq V\leq U_1\leq U_2\implies \kappa(L_1,U_1) \leq \kappa(L_2,U_2).\]
+In particular, $\hlbb{\kappa(L,U)} \leq \hlrb{\kappa}$.
 \end{lemma}
 
 
@@ -203,14 +205,14 @@ At this stage, we have defined two operators $\cA$ and $\cB$ that operate on bou
 
 
 \begin{remark}[Interplay of backups and aggregations]
-As observed earlier, the sampling rule \eqref{eq:sampling_rule} only depends on the value of $U$ at the leaves $\cL_n$, which makes applying $\cB$ alone useless since information only travels upwards in the tree $\Tau_n$. Conversely, applying $\cA$ can update the value of any node in the tree $\Tau_n$, including the leaves $\cL_n$. These tightened bounds at the leaves can in turn be propagated up to the root with Bellman backups $\cB$, and so forth.
+As observed earlier, the sampling rule \eqref{eq:sampling_rule} only depends on the value of $U$ at the leaves $\cL_n$, which makes applying $\cB$ alone useless since information only travels upwards in the tree $\Tau_n$. Conversely, applying $\cA$ can update the value of any node in the tree $\Tau_n$, including the leaves $\cL_n$. These tightened bounds at the leaves can then be propagated upward with Bellman backups $\cB$ to update inner nodes, which can in turn be aggregated with other leaf nodes, and so forth.
 \end{remark}
 
-This suggests an alternating procedure of aggregations $\cA$ and backups $\cB$, whose convergence, sample complexity and efficiency must be studied.
+This suggests an alternating procedure of aggregations $\cA$ and backups $\cB$, whose convergence must be studied.
 
 \begin{proposition}[Contractivity of $\cA\cB$]
 \label{prop:contractivity}
-$\cA$ is a 1-Lipschitz operator, which makes $\cA\cB$ a $\gamma$-contraction.
+$\cA\cB$ a $\gamma$-contraction.
 \end{proposition}
 
 We can perform a fixed-point iteration of alternating backups and aggregations starting from the trivial bounds $L_0=0$, $U_0 = V_{\max}$.
@@ -224,9 +226,9 @@ $(U^k)$ (resp. $(L^k)$) is non-increasing (resp. non-decreasing) and converges a
 
 \begin{proposition}[Early stopping]
 \label{prop:early-stopping}
-If we have that
+Provided that
 \[\forall a\in\Tau_n, |U^{k+1}(a) - U^k(a)| \leq \epsilon (1-\gamma)\gamma^{-h(a)-1},\]
-then the sequence value $(U^{\infty})^a$ is approximated with an accuracy of $\epsilon$.
+then the sequence upper-bound $U^{a,\infty}$ is approximated by $U^{a,k+1}$ with an accuracy of $\epsilon$.
 \end{proposition}
 
 \subsection{Leaves pruning}
@@ -271,7 +273,7 @@ The full algorithm is described in \autoref{alg:state-aware}.\\
 
 \subsection{Regret bound}
 
-In \autoref{thm:regret-bound-U}, we assumed that some bounds $L,U$ were revealed by and oracle and available from the onset for planning. In \autoref{alg:state-aware}, we instead built a non-increasing (in the sense of inclusion) sequence of bounds $(L_n,U_n)_n\geq 0$, i.e. that verify $L_n\geq L_{n-1}\geq \dots\geq L_0\geq 0$ and $U_n\leq U_{n-1}\leq \dots\leq U_0\leq V_{\max}$.
+In \autoref{thm:regret-bound-U}, we assumed that some bounds $L,\,U$ were revealed by and oracle and available from the onset for planning. In \autoref{alg:state-aware}, we instead built a non-increasing (in the sense of inclusion) \emph{sequence} of bounds $(L_n,U_n)_{n\geq 0}$, i.e. that verify $0\leq \dots\leq L_{n-1}\leq L_n\leq V\leq U_n\leq U_{n-1}\leq \dots\leq V_{\max}$.
 
 We can consider the sequence $\kappa_n = \kappa(L_n, U_n)$. It is non-increasing and lower-bounded by $1$, thus converges. Let $\hlgb{\kappa_\infty = \lim_{n\rightarrow\infty} \kappa(L_n, U_n)} \in[1,K]$.
 \begin{theorem}
@@ -282,12 +284,19 @@ The \autoref{alg:state-aware} enjoys the following regret bound:
 \end{align*}
 \end{theorem}
 
+\subsection{Illustrative example}
+\label{sec:illustrative-example}
+We consider the simplest possible problem: an MDP $\cM$ with only one state and two actions, with respective rewards $0\leq r_1 < r_2 < 1$. 
+
+% \begin{proposition}
+% \label{prop:illustrative-example}
+% The example problem $\cM$ verifies $\hlgb{\kappa_\infty = 1}$ and $\hlrb{\kappa = 2}$.
+% \end{proposition}
 
 \section{Numerical Experiments}
 
-\paragraph{Two-armed bandit}
-
-We consider the simplest possible problem: 1 state and 2 actions, with rewards 0 and 0.7. The state-aware planner never expands a suboptimal node. In contrast, the tree expanded by \texttt{OPD} is quite balanced, even with such a dense reward and important gap.
+\paragraph{Illustrative example}
+We consider the example problem of \autoref{sec:illustrative-example} with $r_1=0$ and $r_2 = 0.7$. As expected from \autoref{prop:illustrative-example}, the tree expanded by \texttt{OPD} is quite balanced, even with such a dense reward and important gap. In contrast, The state-aware planner never expands a suboptimal node.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.49\textwidth]{img/bandit_deterministic.pdf}
@@ -450,6 +459,13 @@ Let $n\geq n_0$, and define $d_0 = \min\{d\in\Natural: \exists t \in[n_0,n], \ha
 n = \sum_{d=0}^{d_0-1}n_d + \sum_{d=d_0}^{d_n} n_d \leq  C_0 + C_1\sum_{d=d_0}^{d_n} (\kappa')^d \leq C_0 + C_1' (\kappa')^{d_n}
 \]
 And since $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$, we obtain the claimed bound.
+\end{proof}
+
+\subsection{Proof of \autoref{prop:illustrative-example}}
+
+\begin{proof}
+By definition, we have $V(s) = \frac{r_2}{1-\gamma}$ and $V(a) = R(a) + \frac{\gamma^h r_2}{1-\gamma}$
+
 \end{proof}
 
 \section{Convergence of $(\cA\cB)^k$}
