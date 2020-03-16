@@ -1,8 +1,15 @@
-\documentclass{article}
-\usepackage{fullpage}
-\usepackage[utf8]{inputenc}
+% This is samplepaper.tex, a sample chapter demonstrating the
+% LLNCS macro package for Springer Computer Science proceedings;
+% Version 2.20 of 2017/10/04
+%
+\documentclass[runningheads]{llncs}
+%
 \usepackage{graphicx}
-\usepackage{amsthm}
+% Used for displaying a sample figure. If possible, figure files should
+% be included in EPS format.
+
+\usepackage[utf8]{inputenc}
+%\usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{float}
@@ -15,17 +22,51 @@
 \usepackage[dvipsnames]{xcolor}
 \usepackage{bm}
 
-\input{mathdef.tex}
 
-\title{Planning with States}
-\author{Edouard Leurent \and Odalric-Ambrym Maillard}
-\date{October 2019}
+\usepackage{todonotes}
+\newcommand{\oam}[1]{\todo[inline,color=orange!40]{{\textbf{OM:}~}#1}}
+\newcommand{\el}[1]{\todo[inline,color=green!40]{{\textbf{EL:}~}#1}}
+
+\input{mathdef.tex}
+% If you use the hyperref package, please uncomment the following line
+% to display URLs in blue roman font according to Springer's eBook style:
+ \renewcommand\UrlFont{\color{blue}\rmfamily}
 
 \begin{document}
 
-\maketitle
 
-\tableofcontents
+\title{Planning with States}
+%
+%\titlerunning{Abbreviated paper title}
+% If the paper title is too long for the running head, you can set
+% an abbreviated paper title here
+%
+\author{Edouard Leurent\inst{1,2}\orcidID{0000-1111-2222-3333} \and Odalric-Ambrym Maillard\inst{1}\orcidID{1111-2222-3333-4444}}
+%
+\authorrunning{E. Leurent and O-A. Maillard}
+% First names are abbreviated in the running head.
+% If there are more than two authors, 'et al.' is used.
+%
+\institute{SequeL team, INRIA Lille - Nord Europe, France\\
+\email{$\{$edouard.leurent,odalric.maillard$\}$@inria.fr}\and
+Renault Group, France
+%\\
+%\email{edouard.leurent@renault.com}
+}
+%
+\maketitle              % typeset the header of the contribution
+%
+\begin{abstract}
+	The abstract should briefly summarize the contents of the paper in
+	150--250 words.
+	
+	\keywords{First keyword  \and Second keyword \and Another keyword.}
+\end{abstract}
+%
+%
+%
+
+\section{Introduction}
 
 \section{Preliminary}
 \subsection{Planning for Deterministic Systems}
@@ -91,10 +132,16 @@ and a conservative recommendation rule:
     a_n \in \argmax_{a\in\cL_n} L^a_n(a)
 \end{equation}
 
+\oam{Examples for $L_n,U_n$ ? here or give ref to example detailed later in this document.}
+
 In \texttt{OPD}, they used the trivial bounds $L=0,\,U=V_{\max}$ and proved the following regret bound.
 
 \begin{definition}[Difficulty measure]
-We define the problem-dependent measure $\hlrb{\kappa}$ as the smallest quantity such that $|\Tau_h^\infty| = \hlrb{\cO(\kappa^h)}$, where $\Tau^\infty$ is the subtree of near-optimal nodes $$\Tau_h^\infty = \left\{a\in A^h: V^*-V(a) \leq \frac{\gamma^h}{1-\gamma}\right\}.$$
+We define the problem-dependent measure $\hlrb{\kappa}$ as the smallest quantity such that $|\Tau_h^\infty| = \hlrb{\cO(\kappa^h)}$, 
+
+\oam{Notation $\cO()$ is slightly ambiguous here. Mention this is with respect to $h\to\infty$?}
+
+where $\Tau^\infty$ is the subtree of near-optimal nodes $$\Tau_h^\infty = \left\{a\in A^h: V^*-V(a) \leq \frac{\gamma^h}{1-\gamma}\right\}.$$
 \end{definition}
 \noindent\fbox{%
 	\parbox{\textwidth}{%
@@ -106,6 +153,9 @@ r_n = \cO\left( n^{-\log \frac{1}{\gamma}/\hlrb{\log\kappa}}\right).
 \end{theorem}
 }}
 
+\oam{Add intuition about $\kappa$ ? When is it typically big, small ?
+Recall some examples from literature.}
+\oam{Add discussion regarding literature scarcity on the topic}
 
 \subsection{Motivation for improvement}
 
@@ -135,6 +185,9 @@ r_n = \cO\left(n^{-\log \frac{1}{\gamma}/\hlbb{\log \kappa(L,U)}}\right).
 \end{equation*}
 \end{theorem}
 }}
+
+
+\oam{Provide some table showing comparison values for $\kappa(L,U)$ vs $\kappa$ on some simple example (or bounds on them).}
 
 \section{State-aware planning}
 
@@ -284,44 +337,79 @@ The \autoref{alg:state-aware} enjoys the following regret bound:
 \end{align*}
 \end{theorem}
 
+\oam{What is a bit odd is that
+nowhere in the document you seem to define precisely the $L$ and $U$ bounds. I think you should discuss a full example, with precise values for each quantity.
+Perhaps also provide a complete pseudo-code of the whole procedure (at least in appendix).
+}
+\el{The pseudocode is provided in Algorithm 1, where the bounds $L_n, U_n$ used are written line 1. But it could be made clearer after Proposition 1.}
+
+
 \subsection{Illustrative example}
 \label{sec:illustrative-example}
-We consider the simplest possible problem: an MDP $\cM$ with only one state and two actions, with respective rewards $0\leq r_1 < r_2 < 1$. 
+We consider the MDP $\cM$ with three states and $K\geq 3$ actions shown in \autoref{fig:mdp}. The transitions are described visually while the rewards are defined as follows: let $0\leq r^*\leq \gamma$, and $ r^- = r^* - \frac{\gamma}{1-\gamma} S$, $r^+ = r^* + S$ with $S = r^*\left(\frac{1}{\gamma} - 1\right).$ Note that the choice of $S$ ensures that $r^*, r^-$ and $r^+$ are all in $[0, 1]$.
 
-% \begin{proposition}
-% \label{prop:illustrative-example}
-% The example problem $\cM$ verifies $\hlgb{\kappa_\infty = 1}$ and $\hlrb{\kappa = 2}$.
-% \end{proposition}
+\begin{figure}[htp]
+    \centering
+    \includegraphics{img/mdp.pdf}
+    \caption{A toy MDP with three states and $K \geq 3$ actions. We start in the top state. The first action $a_1$ is represented with \textcolor{OliveGreen}{green} arrows, and any other action $a_2 \dots a_K$ is represented with \textcolor{red}{red} arrows. The rewards are shown next to the transitions.}
+    \label{fig:mdp}
+\end{figure}
+
+\begin{proposition}[Comparison of branching factors]
+\label{prop:illustrative-example}
+The MDP $\cM$ verifies:
+\begin{enumerate}
+    \item $\hlrb{\kappa = K-1}$;
+    \item $\hlgb{\kappa_\infty = 1}$.
+\end{enumerate}
+In particular, $\hlgb{\kappa_\infty} < \hlrb{\kappa}$.
+\end{proposition}
+
+\oam{Explain what is natural/expected in this result.  What is perhaps surprising/novel/non-trivial? What impact on practitioners? }
+\oam{Explain here what you used precisely for bounds $U,L$ in these implementations}
+
+\section{Extension}
+
+
+\subsection{Graphical version}
+
+\subsection{Stochastic systems}
+
+
+
+By tightening the bounds, we preserve the guarantees that rely on their validity and rate of convergence. 
 
 \section{Numerical Experiments}
 
-\paragraph{Illustrative example}
-We consider the example problem of \autoref{sec:illustrative-example} with $r_1=0$ and $r_2 = 0.7$. As expected from \autoref{prop:illustrative-example}, the tree expanded by \texttt{OPD} is quite balanced, even with such a dense reward and important gap. In contrast, The state-aware planner never expands a suboptimal node.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.49\textwidth]{img/bandit_deterministic.pdf}
-    \includegraphics[width=0.49\textwidth]{img/bandit_state_aware.pdf}
-    \caption{Trees expanded for $n = 200$, $\gamma=0.99$}
-    \label{fig:bandit_trees}
-\end{figure}
+\oam{Better explain the figures shown in this section}
 
-\paragraph{Gridworld with 4 actions}
+% \paragraph{Illustrative example}
+% We consider the example problem of \autoref{sec:illustrative-example} with $r_1=0$ and $r_2 = 0.7$. As expected from \autoref{prop:illustrative-example}, the tree expanded by \texttt{OPD} is quite balanced, even with such a dense reward and important gap. In contrast, The state-aware planner never expands a suboptimal node.
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.49\textwidth]{img/bandit_deterministic.pdf}
+%     \includegraphics[width=0.49\textwidth]{img/bandit_state_aware.pdf}
+%     \caption{Trees expanded for $n = 200$, $\gamma=0.99$}
+%     \label{fig:bandit_trees}
+% \end{figure}
+
+\paragraph{Gridworld}
 
 The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, y) = 1 - \frac{1}{5^2}((x-10)^2 + (y-10)^2)$ clipped to [0, 1].
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.49\textwidth]{img/4_deterministic.pdf}
-    \includegraphics[width=0.49\textwidth]{img/4_kl-olop.pdf}
-    \includegraphics[width=0.49\textwidth]{img/4_state_aware.pdf}
+    \includegraphics[width=0.7\textwidth]{img/4_deterministic.pdf}
+    \includegraphics[width=0.7\textwidth]{img/4_kl-olop.pdf}
+    \includegraphics[width=0.7\textwidth]{img/4_state_aware.pdf}
     \caption{Trees expanded for $n = 5460$, $\gamma=0.95$}
     \label{fig:gw4_trees}
 \end{figure}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.49\textwidth]{img/4_occupations_deterministic.pdf}
-    \includegraphics[width=0.49\textwidth]{img/4_occupations_kl-olop.pdf}
-    \includegraphics[width=0.49\textwidth]{img/4_occupations_state_aware.pdf}
+    \includegraphics[width=0.7\textwidth]{img/4_occupations_deterministic.pdf}
+    \includegraphics[width=0.7\textwidth]{img/4_occupations_kl-olop.pdf}
+    \includegraphics[width=0.7\textwidth]{img/4_occupations_state_aware.pdf}
     \caption{Number of visits for $n = 5460$, $\gamma=0.95$}
     \label{fig:gw4_visits}
 \end{figure}
@@ -329,10 +417,12 @@ The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, 
     \centering
     % \includegraphics[width=0.49\textwidth]{img/4_updates_deterministic.pdf}
     % \includegraphics[width=0.49\textwidth]{img/4_updates_kl-olop.pdf}
-    \includegraphics[width=0.49\textwidth]{img/4_updates_state_aware.pdf}
+    \includegraphics[width=0.7\textwidth]{img/4_updates_state_aware.pdf}
     \caption{Number of updates in the leaf expansion for $n = 5460$, $\gamma=0.95$}
     \label{fig:gw4_updates}
 \end{figure}
+
+\paragraph{Sailing}
 
 
 
@@ -463,8 +553,13 @@ And since $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$, we obtain the claimed bound.
 
 \subsection{Proof of \autoref{prop:illustrative-example}}
 
+
+
+\begin{lemma}
+
+\end{lemma}
+
 \begin{proof}
-By definition, we have $V(s) = \frac{r_2}{1-\gamma}$ and $V(a) = R(a) + \frac{\gamma^h r_2}{1-\gamma}$
 
 \end{proof}
 
