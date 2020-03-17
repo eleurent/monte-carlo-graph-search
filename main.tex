@@ -21,7 +21,7 @@
 \usepackage{natbib}
 \usepackage[dvipsnames]{xcolor}
 \usepackage{bm}
-
+\usepackage[makeroom]{cancel}
 
 \usepackage{todonotes}
 \newcommand{\oam}[1]{\todo[inline,color=orange!40]{{\textbf{OM:}~}#1}}
@@ -136,6 +136,8 @@ and a conservative recommendation rule:
 
 In \texttt{OPD}, they used the trivial bounds $L=0,\,U=V_{\max}$ and proved the following regret bound.
 
+\el{Such bounds $(L_n,\,U_n)$  can also be used to incorporate prior knowledge over the state value. For instance, terminal states can be handled by setting $L_n(a) = U_n(a) = 0$.}
+
 \begin{definition}[Difficulty measure]
 We define the problem-dependent measure $\hlrb{\kappa}$ as the smallest quantity such that $|\Tau_h^\infty| = \hlrb{\cO(\kappa^h)}$, 
 
@@ -156,6 +158,7 @@ r_n = \cO\left( n^{-\log \frac{1}{\gamma}/\hlrb{\log\kappa}}\right).
 \oam{Add intuition about $\kappa$ ? When is it typically big, small ?
 Recall some examples from literature.}
 \oam{Add discussion regarding literature scarcity on the topic}
+\el{OK.}
 
 \subsection{Motivation for improvement}
 
@@ -188,6 +191,8 @@ r_n = \cO\left(n^{-\log \frac{1}{\gamma}/\hlbb{\log \kappa(L,U)}}\right).
 
 
 \oam{Provide some table showing comparison values for $\kappa(L,U)$ vs $\kappa$ on some simple example (or bounds on them).}
+\el{Can I simply refer to \autoref{sec:illustrative-example}?}
+\oam{I guess so, but since there is only one example, perhaps you can also say you show in this section an example for which $\kappa=K-1$ while $\kappa_\infty=1$.}
 
 \section{State-aware planning}
 
@@ -240,6 +245,9 @@ If several sequences $a'\in\Tau_n$ all lead to the same state $s$, their respect
         \forall a\in\mathcal{T}_n, \qquad &\cA(L)(a) = \max_{a'\in \cN_n(a)} L(a'),\qquad \cA(U)(a) = \min_{a'\in \cN_n(a)} U(a').                                   
     \end{align}
 \end{definition}
+
+\oam{This is ambiguous $\cA(f)$ is either LHS or RHS of \eqref{eq:aggregation}. How do you decide which one? Don't you need some $\cA_{+}$and $\cA_{-}$?
+}
 
 \begin{figure}[H]
 	\centering
@@ -342,15 +350,17 @@ nowhere in the document you seem to define precisely the $L$ and $U$ bounds. I t
 Perhaps also provide a complete pseudo-code of the whole procedure (at least in appendix).
 }
 \el{The pseudocode is provided in Algorithm 1, where the bounds $L_n, U_n$ used are written line 1. But it could be made clearer after Proposition 1.}
+\oam{Indeed, it is a bit unclear. Especially, I see the definition of $\cA$ and $\cB$, but not of $\cA_n$ and $\cB_n$. Also the precise meaning of $\cA\cB$ is slightly ambiguous due to the ambiguous definition of $\cA$. Perhaps you can refer to the equation numbers/defs where each term is defined.
+}
 
 
 \subsection{Illustrative example}
 \label{sec:illustrative-example}
-We consider the MDP $\cM$ with three states and $K\geq 3$ actions shown in \autoref{fig:mdp}. The transitions are described visually while the rewards are defined as follows: let $0\leq r^*\leq \gamma$, and $ r^- = r^* - \frac{\gamma}{1-\gamma} S$, $r^+ = r^* + S$ with $S = r^*\left(\frac{1}{\gamma} - 1\right).$ Note that the choice of $S$ ensures that $r^*, r^-$ and $r^+$ are all in $[0, 1]$.
+We consider the MDP $\cM$ with three states and $K\geq 3$ actions shown in \autoref{fig:mdp}. The transitions are described visually while the rewards are defined as follows: let $0\leq r^*\leq \gamma$, and $ r^- = r^* - \frac{\gamma}{1-\gamma} S$, $r^+ = r^* + S$ with $S = r^*\left(\frac{1}{\gamma} - 1\right).$ Note that the choice ensures that $r^*, r^-, r^+$ and $S$ are all in $[0, 1]$.
 
 \begin{figure}[htp]
     \centering
-    \includegraphics{img/mdp.pdf}
+    \includegraphics[width=0.5\textwidth]{img/mdp.pdf}
     \caption{A toy MDP with three states and $K \geq 3$ actions. We start in the top state. The first action $a_1$ is represented with \textcolor{OliveGreen}{green} arrows, and any other action $a_2 \dots a_K$ is represented with \textcolor{red}{red} arrows. The rewards are shown next to the transitions.}
     \label{fig:mdp}
 \end{figure}
@@ -383,6 +393,10 @@ By tightening the bounds, we preserve the guarantees that rely on their validity
 
 \oam{Better explain the figures shown in this section}
 
+\oam{On top of the illustrative pictures, would it be possible to compute some simple score, say 
+for each $k\in\mathbb{N}$,  count the number $o_k$ of occupancies  at distance $k$ from the goal, then look at a weighted sum, $\sum_{k} w_k o_k$,
+where $w_k$ is decreasing ($1/k$, or $\alpha^k$, etc.) ?
+}
 % \paragraph{Illustrative example}
 % We consider the example problem of \autoref{sec:illustrative-example} with $r_1=0$ and $r_2 = 0.7$. As expected from \autoref{prop:illustrative-example}, the tree expanded by \texttt{OPD} is quite balanced, even with such a dense reward and important gap. In contrast, The state-aware planner never expands a suboptimal node.
 % \begin{figure}[H]
@@ -399,17 +413,17 @@ The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{img/4_deterministic.pdf}
-    \includegraphics[width=0.7\textwidth]{img/4_kl-olop.pdf}
-    \includegraphics[width=0.7\textwidth]{img/4_state_aware.pdf}
+    \includegraphics[width=0.32\textwidth]{img/4_deterministic.pdf}
+    \includegraphics[width=0.32\textwidth]{img/4_kl-olop.pdf}
+    \includegraphics[width=0.32\textwidth]{img/4_state_aware.pdf}
     \caption{Trees expanded for $n = 5460$, $\gamma=0.95$}
     \label{fig:gw4_trees}
 \end{figure}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{img/4_occupations_deterministic.pdf}
-    \includegraphics[width=0.7\textwidth]{img/4_occupations_kl-olop.pdf}
-    \includegraphics[width=0.7\textwidth]{img/4_occupations_state_aware.pdf}
+    \includegraphics[width=0.32\textwidth]{img/4_occupations_deterministic.pdf}
+    \includegraphics[width=0.32\textwidth]{img/4_occupations_kl-olop.pdf}
+    \includegraphics[width=0.32\textwidth]{img/4_occupations_state_aware.pdf}
     \caption{Number of visits for $n = 5460$, $\gamma=0.95$}
     \label{fig:gw4_visits}
 \end{figure}
@@ -466,14 +480,14 @@ Whenever a node $a$ of depth $h$ is expanded by the optimistic algorithm, its fi
 \end{lemma}
 \begin{proof}
 Let $t$ be the time of expansion of $a$, it holds that $U^a_t(b) \leq U^a_t(a)$ for all $b\in \cL_t$, in particular those in a branch starting by an optimal action $a^*$. Since $U=\cB(U)$ and $L=\cB(L)$, we also have $U^a_t(a^*) = \max_{b\in a^*A^*} U^a_t(b) \leq U^a_t(a)$, and $L^a_t(a_1) = \max{b\in a_1 A^*} L^a_t(b) \geq  L^a_t(a)$. Thus, $V(a^*)-V(a_1) \leq U^a_t(a^*) - L^a_t(a_1) \leq U^a_t(a) - L^a_t(a) = \gamma^h(U(a)-L(a))$.
-\end{proof}
+\qed\end{proof}
  
 \begin{lemma}
 The recommended action $a_n$ has a simple regret $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$, where $d_n$ is the maximal depth of $\Tau_n$.
 \end{lemma}
 \begin{proof}
 Let $i$ a node of maximal depth $d_n$, and consider the recommended node $a_n$ at time $n$, of depth $d$. In particular, $L^a_n(a_n) \geq L^a_n(i)$, and since $(L^a_t)_t$ is non-decreasing we also have $L^a_n(i) \geq L^a_t(i)$. At the time $t$ when $i$ is expanded, we have $U^a_t(a_n) \leq U^a_t(i)$, and since $(U^a_t)_t$ is non-increasing we also have $U^a_n(a_n) \leq U^a_t(a_n)$. We can conclude with \autoref{lemma:expansion-bound} applied to $a_n$: $r_n \leq \gamma^d(U(a_n)-L(a_n) = U^a_n(a_n) - L^a_n(a_n)  \leq U^a_t(a_n) - L^a_n(i) \leq U^a_t(i) - L^a_t(i) = \gamma^{d_n}(U(i) - L(i)$, which yields the claimed bound since $U(i) - L(i) \leq V_{\max}-0$.
-\end{proof}
+\qed\end{proof}
 
 \begin{lemma}
 \label{lemma:expansion-tree}
@@ -481,7 +495,7 @@ Every node expanded by \eqref{eq:sampling_rule} is in $\Tau^\infty(L,U) = \bigcu
 \end{lemma}
 \begin{proof}
 Let $a$ be a node of depth $h$ expanded at round $n$, then $U^a_n(a) \geq U^a_n(b)$ for all $b\in\cL_n$. Thus, since $U = \cB(U)$, we have $U^a(a) = \cB(U)^a(\emptyset) = \cB(U)(s_0) \geq V(s_0) = V^*$. Thus, $V^* - V(a) \leq U^a(a) - L^a(a) = \gamma^h(U(a) - L(a))$.
-\end{proof}
+\qed\end{proof}
 
 Finally, we can move on to the proof of \autoref{thm:regret-bound-U}.
 Let $n_d$ be the number of expanded nodes of depth $d$, by \autoref{lemma:expansion-tree} we have $n_d \leq |\Tau^\infty_d(L,U)| \leq C\kappa(L,U)^d$. Thus, 
@@ -503,7 +517,7 @@ Let $U_1, U_2\in \Real^\Tau_n, a\in\Tau_n$,
 \end{align*}
 where $a^-\in \argmin_{a'\in\cN_n(a)} U_2(a')$. 
 Hence, $\|\cA U_1 - \cA U_2\|_\infty \leq \|U_1 - U_2\|_\infty$
-\end{proof}
+\qed\end{proof}
 
 \subsection{Proof of \autoref{prop:early-stopping}}
 
@@ -525,7 +539,7 @@ And then,
 &\leq \frac{\gamma}{1-\gamma} |U^a_{k}(a) - U^a_{k+1}(a)|\\
 &\leq\epsilon
 \end{align*}
-\end{proof}
+\qed\end{proof}
 
 \subsection{Proof of \autoref{prop:pruning}}
 
@@ -537,7 +551,7 @@ Assume $h(a_2) \geq h(a_1)$.
     &= U^a(a_1) - U^a(a_2)
 \end{align*}
 Hence, if this last term is negative, then $V(a_1) - V(a_2)$ is as well.
-\end{proof}
+\qed\end{proof}
 
 \subsection{Proof of \autoref{thm:regret-state-aware}}
 
@@ -549,19 +563,35 @@ Let $n\geq n_0$, and define $d_0 = \min\{d\in\Natural: \exists t \in[n_0,n], \ha
 n = \sum_{d=0}^{d_0-1}n_d + \sum_{d=d_0}^{d_n} n_d \leq  C_0 + C_1\sum_{d=d_0}^{d_n} (\kappa')^d \leq C_0 + C_1' (\kappa')^{d_n}
 \]
 And since $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$, we obtain the claimed bound.
-\end{proof}
+\qed\end{proof}
 
 \subsection{Proof of \autoref{prop:illustrative-example}}
 
+The \autoref{fig:mdp-tree} shows the planning tree corresponding to the MDP $\cM$. Whenever the action $a_1$ is taken \textcolor{OliveGreen}{(in green)} the resulting subtree is represented by a leaf node $s^*$ of value $V^* = \frac{r^*}{1-\gamma}$. When, in contrast, we take a sequence of actions among $a_2\dots a_K$ \textcolor{red}{(in red)}, we stay in the state $s^+$ and denote $V_h$ the corresponding value at depth $h$.
 
-
+\begin{figure}
+    \centering
+    \includegraphics[trim={3.5cm 2cm 0.5cm 0.5cm}, clip, width=0.6\textwidth]{img/mdp_tree.pdf}
+    \caption{Planning tree of the MDP $\cM$ of \autoref{fig:mdp}}.
+    \label{fig:mdp-tree}
+\end{figure}
 \begin{lemma}
-
+ Any sequence of actions in $\cA\setminus{a_1}$ is in $\Tau^\infty$.
 \end{lemma}
-
 \begin{proof}
+Any such sequence of actions yields the sequence of rewards $r^-, r^+, \dots,r^+$. and end up in the state $s^+$ with value at least $V^*$ (obtained by further taking $a_1$ indefinitely). Thus its value $V_h$ verifies, 
+\begin{align*}
+    V_h &\geq \sum_{t=0}^{h-1} \gamma^t r_t + \gamma^h V^*\\
+    &= r^- - r^+ + \sum_{t=0}^{h-1} \gamma^t r^+ + \gamma^h V^* \\
+    &= (-\frac{\gamma}{1-\gamma} - 1)S + \frac{1-\gamma^h}{1-\gamma} (r^* + S) + \gamma^h V^*\\
+    &= (-\frac{\gamma}{1-\gamma} - 1)S + \frac{1-\gamma^h}{1-\gamma} (r^* + S) + \gamma^h V^*\\
+    &= V^* - S\frac{\gamma^h}{1-\gamma} \geq V^* - \frac{\gamma^h}{1-\gamma}
+\end{align*}
+\qed\end{proof}
 
-\end{proof}
+We can directly conclude that $\kappa \geq \limsup{|\{a_2,\dots,a_K\}^h|^{1/h}} = K-1$.
+
+Now, consider the nodes expanded by \autoref{alg:state-aware}. The first expansion is that of the root, which discovers $s^*$ and $s^+$. In the absence of information on these two state, the bound $V_{\max}$ is used and the first action $a_1$ gets a higher $U^a$ that any other action $a_2,\dots,a_K$ since $r^* \geq r^-$. Hence, at the second iteration, the node $a_1$ gets expanded. At this point, the self-loop of the state $s^*$ is discovered, which means that form now on the bounds verify $L_n(a_1) = V^* = U_n(a_1)$ for $n\geq2$, which means that $L_n(a_1A^*)-U_n(a_1A^*) = 0$. The nodes $a_2,\dots,a_K$ can be expanded at most once until the entire MDP is discovered and $L_n=V=U_n$ over the entire tree, which means that $\Tau_n^\infty$ is the set of optimal nodes, that is the nodes in the only optimal sequence $a_1^*$. Hence, $\kappa_\infty = 1.$ 
 
 \section{Convergence of $(\cA\cB)^k$}
 \label{sec:convergence}
