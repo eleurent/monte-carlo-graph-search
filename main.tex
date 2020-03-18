@@ -22,11 +22,22 @@
 \usepackage{bm}
 \usepackage[makeroom]{cancel}
 
-% \usepackage{natbib}
-% \bibliographystyle{splncs04nat}
-\newcommand{\citep}[1]{\cite{#1}}
-\newcommand{\citet}[1]{\cite{#1}}
-\bibliographystyle{splncs04}
+\usepackage[%
+square,        % for square brackets
+comma,         % use commas as separators
+%  numbers,       % for numerical citations;
+%  sort,          % orders multiple citations into the sequence in which they appear in the list of references;
+sort&compress, % as sort but in addition multiple numerical citations
+% are compressed if possible (as 3-6, 15);
+]{natbib}
+% In the bibliography, references have to be formatted as 1., 2., ... not [1], [2], ...
+\renewcommand{\bibnumfmt}[1]{#1.}
+
+\renewcommand{\bibsection}{\section*{References}} % requried for natbib to have "References" printed and as section*, not chapter*
+% Use natbib compatbile splncsnat style.
+% It does provide all features of splncs03, but is developed in a clean way.
+% Source: http://phaseportrait.blogspot.de/2011/02/natbib-compatible-bibtex-style-bst-file.html
+\bibliographystyle{splncsnat}
 
 \usepackage{todonotes}
 \newcommand{\oam}[1]{\todo[inline,color=orange!40]{{\textbf{OM:}~}#1}}
