@@ -18,10 +18,13 @@
 \usepackage{algorithm2e}
 \usepackage{caption}
 \usepackage{subcaption}
-\usepackage{natbib}
 \usepackage[dvipsnames]{xcolor}
 \usepackage{bm}
 \usepackage[makeroom]{cancel}
+
+\usepackage{natbib}
+\bibliographystyle{splncs04nat}
+%\bibliographystyle{splncs04nat}
 
 \usepackage{todonotes}
 \newcommand{\oam}[1]{\todo[inline,color=orange!40]{{\textbf{OM:}~}#1}}
@@ -170,7 +173,7 @@ and a conservative recommendation rule:
 \oam{Examples for $L_n,U_n$ ? here or give ref to example detailed later in this document.}
 \el{Example of the trivial bounds, used in OPD. Such bounds $(L_n,\,U_n)$  can also be used to incorporate prior knowledge over the state value. For instance, terminal states can be handled by setting $L_n(a) = U_n(a) = 0$.}
 
-For instance, in \texttt{OPD}, \citet{opd} used the trivial bounds $L=0,\,U=V_{\max}$ and proved the following regret bound.
+For instance, in \texttt{OPD}, \citet{hren2008optimistic} used the trivial bounds $L=0,\,U=V_{\max}$ and proved the following regret bound.
 
 
 \begin{definition}[Difficulty measure]
@@ -485,7 +488,7 @@ The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, 
 
 \section*{Conclusion}
 
-\bibliographystyle{splncs04}
+
 \bibliography{references}
 
 
