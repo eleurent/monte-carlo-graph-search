@@ -22,9 +22,11 @@
 \usepackage{bm}
 \usepackage[makeroom]{cancel}
 
-\usepackage{natbib}
-\bibliographystyle{splncs04nat}
-%\bibliographystyle{splncs04nat}
+% \usepackage{natbib}
+% \bibliographystyle{splncs04nat}
+\newcommand{\citep}[1]{\cite{#1}}
+\newcommand{\citet}[1]{\cite{#1}}
+\bibliographystyle{splncs04}
 
 \usepackage{todonotes}
 \newcommand{\oam}[1]{\todo[inline,color=orange!40]{{\textbf{OM:}~}#1}}
@@ -80,9 +82,8 @@ The quality of that action is assessed in terms of the simple regret
 	r_n \eqdef V(s) - Q(s, {a}_n), \; \mbox{where} \; V(s) \eqdef  \max_a Q^\star(s, a).
 \end{align*}
 
-\paragraph{Related work} The sample complexity of Monte-Carlo planning was first studied in the work of \cite{Kearns02SS}, who proposed the first tree-based algorithm for planning in MDPs, called Sparse Sampling.
-\cite{Feldman14BRUE} introduced BRUE, a uniform sampling but better estimation strategies.
-A first family of algorithms rely on the Optimism in the Face of Uncertainty principle \citep[surveyed by][]{SurveyRemiMCTS}.
+\paragraph{Tree-based planning} algorithms were first studied in the work of \cite{Kearns02SS}, who proposed a uniform sampling approach for planning in MDPs, called \texttt{Sparse} \texttt{Sampling}. This uniform exploration strategy was further analysed with the \texttt{BRUE} algorithm
+\cite{Feldman14BRUE} providing an enhanced value estimation procedure. Another family of sampling strategies rely on the principle Optimism in the Face of Uncertainty principle \citep[surveyed by][]{SurveyRemiMCTS}, inspired from the Multi-Armed Bandit problem. This principle was first used in the context of planning in the \texttt{CrazyStone} software \citep{Coulom2006} for computer Go playing. It was later analysed as the \texttt{UCT} algorithm 
 OPD: \citep{hren2008optimistic} for deterministic sytems, 
 the \emph{open loop} setting, for stochastic rewards and deterministic dynamics \citep{bubeck2010open,leurent2019practical}
 
