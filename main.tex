@@ -51,19 +51,19 @@ sort&compress, % as sort but in addition multiple numerical citations
 \begin{document}
 
 
-\title{Graph-based Optimistic Planning}
+\title{Graph-Based Optimistic Planning}
 %
 %\titlerunning{Abbreviated paper title}
 % If the paper title is too long for the running head, you can set
 % an abbreviated paper title here
 %
-\author{Edouard Leurent\inst{1,2}\orcidID{0000-1111-2222-3333} \and Odalric-Ambrym Maillard\inst{1}\orcidID{1111-2222-3333-4444}}
+\author{Edouard Leurent\inst{1,2}\and Odalric-Ambrym Maillard\inst{1}}
 %
 \authorrunning{E. Leurent and O-A. Maillard}
 % First names are abbreviated in the running head.
 % If there are more than two authors, 'et al.' is used.
 %
-\institute{SequeL team, INRIA Lille - Nord Europe, France\\
+\institute{SequeL project, INRIA Lille - Nord Europe, France\\
 \email{$\{$edouard.leurent,odalric.maillard$\}$@inria.fr}\and
 Renault Group, France
 %\\
@@ -73,9 +73,9 @@ Renault Group, France
 \maketitle              % typeset the header of the contribution
 %
 \begin{abstract}
-	We consider the problem of planning in a Markov Decision Process (MDP) with a generative model and limited computational budget. Despite the underlying MDP transitions having a graph structure, the popular \emph{tree-based} planning algorithms actually use a tree structure to represent their value estimates. That is, they either ignore the states crossed along a trajectory, or they do not identify with each other two similar states met at different places in the tree. In this work, we explore taking into account state similarity by proposing a \emph{graph-based} planning algorithm. For the sake of analysis and explicit comparison with tree-based planners, we first study how to augment such tree-based planners with a \emph{state aggregation} operator, in the simple case of deterministic systems. We provide a regret bound that depends on a novel problem-dependent measure of difficulty. This measure improves on the previous one in MDPs where the trajectories overlap, and recovers it otherwise. Then, we reformulate our algorithm in the more natural graphical setting where the state aggregation is implicit, and show that it can be adapted to planning with stochastic systems. Finally, numerical simulations illustrate the benefits of our approach.
+	We consider the problem of planning in a Markov Decision Process (MDP) with a generative model and limited computational budget. Despite the underlying MDP transitions having a graph structure, the popular \emph{tree-based} planning algorithms such as \texttt{UCT} rely on a tree structure to represent their value estimates. That is, they either ignore the states crossed along a trajectory, or they do not identify with each other two similar states met at different places in the tree. In this work, we explore taking into account state similarity by proposing a \emph{graph-based} planning algorithm. For the sake of analysis and explicit comparison with tree-based planners, we first study how to augment such tree-based planners with a \emph{state aggregation} operator, in the simple case of deterministic systems. We provide a regret bound that depends on a novel problem-dependent measure of difficulty. This measure improves on the previous one in MDPs where the trajectories overlap, and recovers it otherwise. Then, we reformulate our algorithm in the more natural graphical setting where the state aggregation is implicit, and show that it can be adapted to planning with stochastic systems. Finally, numerical simulations illustrate the benefits of our approach.
 	
-	%\keywords{Planning  \and Second keyword \and Another keyword.} % TODO
+	\keywords{Planning  \and Tree-search \and Online learning.} % TODO
 \end{abstract}
 %
 %
@@ -83,42 +83,42 @@ Renault Group, France
 
 \section{Introduction}
 
-In a Markov Decision Process, the agent observes a state $s\in S$, takes an action $a\in A$ and collects a bounded reward $r(s, a)\in[0, 1]$ before transitioning to a nest state $s'\in S$. The goal of the agent is choose its actions so as to maximise in expectation its cumulative discounted rewards $\sum_{t=0}^\infty \gamma^t r(s_t, a_t)$, where $\gamma\in(0, 1)$ is a discount factor. This amounts to choosing at each step the action that maximises the state-action value function $Q$ defined as:
+In a \emph{Markov Decision Process} (MDP), an agent observes its current state $s$ from a state space $S$ and picks an action $a$ from an action space $A$, before transitioning to a next state $s'$ drawn from a transition kernel $\probability{s'\condbar s,a}$ and receiving a bounded reward $r\in[0, 1]$ drawn from a reward kernel $\probability{r \condbar s, a}$. The transition kernel can be seen as a \emph{graph}, where the nodes correspond to states $s\in S$, and the edges to transition probabilities between two states. The goal of the agent is act so as to maximise in expectation its cumulative discounted rewards $\sum_{t=0}^\infty \gamma^t r(s_t, a_t)$, where $\gamma\in(0, 1)$ is a discount factor. This amounts to choosing at each step the action that maximises the state-action value function $Q$ defined as:
 \begin{align*}
 Q(s, a) &= \max_\pi  \expectedvalue_\tau \left[\sum_{t=0}^\infty \gamma^t r(s_t, a_t)\condbar s_0 = s, a_0 = a\right]
 \end{align*}
-where $\pi$ is a policy mapping states to actions and $\tau = (s_0, a_0, \dots)$ is a trajectory generated by following $\pi$. In Reinforcement Learning, the challenge is that the MDP is \emph{unknown} to the agent, which can only learn by interaction. In this work, we consider the setting where the agent has access to a \emph{generative model} allowing them to \emph{plan} before acting. To that end, the agent can generate a limited number $n$ of trajectories starting from its current state so as to identify a good action $a_n$ to take next.
-The quality of that action is assessed in terms of the simple regret
-\begin{align*}
-	r_n \eqdef V(s) - Q(s, {a}_n), \; \mbox{where} \; V(s) \eqdef  \max_a Q^\star(s, a).
-\end{align*}
+where $\pi$ is a policy mapping states to actions and $\tau = (s_0, a_0, \dots)$ is a trajectory generated by following $\pi$. In an \emph{online planning} setting, the underlying MDP is \emph{unknown} to the agent which only has access to a \emph{generative model} that provides samples $s'$ of $\probability{s' \condbar s, a}$ when queried. Then, under computational constraints known as \emph{fixed-budget}, the agent is allowed to generate a limited number $n$ of trajectories starting from its current state before recommending a good action $a_n$ to take next.
+The quality of that action is assessed in terms of the \emph{simple regret}
+\begin{align}
+	r_n \eqdef V(s) - Q(s, {a}_n), \; \mbox{where} \; V(s) \eqdef  \max_a Q(s, a).
+\end{align}
 
-\paragraph{Tree-based planning} algorithms were first studied in the work of \cite{Kearns02SS}, who proposed a uniform sampling approach for planning in MDPs, called \texttt{Sparse} \texttt{Sampling}. This uniform exploration strategy was further analysed with the \texttt{BRUE} algorithm
-\cite{Feldman14BRUE} providing an enhanced value estimation procedure. Another family of sampling strategies rely on the principle Optimism in the Face of Uncertainty principle \citep[surveyed by][]{SurveyRemiMCTS}, inspired from the Multi-Armed Bandit problem. This principle was first used in the context of planning in the \texttt{CrazyStone} software \citep{Coulom2006} for computer Go playing. It was later analysed as the \texttt{UCT} algorithm 
-OPD: \citep{hren2008optimistic} for deterministic sytems, 
-the \emph{open loop} setting, for stochastic rewards and deterministic dynamics \citep{bubeck2010open,leurent2019practical}
-
+Tree-based planning algorithms. They date back to the work of \citet{Kearns02SS}, who proposed a uniform sampling approach for planning in MDPs, called \texttt{Sparse} \texttt{Sampling}. This uniform exploration strategy was further analysed with the \texttt{BRUE} algorithm
+\citep{Feldman14BRUE} providing an enhanced value estimation procedure. Another family of algorithms rely on the principle of \emph{Optimism in the Face of Uncertainty} \citep[surveyed by][]{SurveyRemiMCTS}, inspired from the Multi-Armed Bandit problem. This principle was first used in the context of planning in the \texttt{CrazyStone} software \citep{Coulom2006} for computer Go. It was later analysed as the \texttt{UCT} algorithm \citep{Kocsis06UCT}, but was shown by \citet{Coquelin2007} to have a doubly-exponential complexity in the worst case. The {Optimistic Planning for Deterministic Systems} (\texttt{OPD}) algorithm introduced by \citet{hren2008optimistic} was the first to provide a polynomial regret bound, but was limited to sytems with deterministic rewards and dynamics. It was then extended to the {open-loop} setting to handle stochastic rewards \citep{bubeck2010open,leurent2019practical}.
 MDP with known parameters \citep{busoniu2012optimistic}.
-
 For MDPs with stochastic and unknown transitions, polynomial sample complexities have been obtained for StOP \citep{STOP14}, TrailBlazer \citep{TrailBlazer16} and SmoothCruiser \citep{SmoothCruiser19} but the three algorithms suffer from numerical inefficiency.
 
-\paragraph{States}
 
-% There are different ways to store and  update the confidence bounds on the $Q$-value according to how we merge information across states. The most obvious one, suggested by previous work \citep{bubeck2010open,leurent2019practical,busoniu2012optimistic} (and also implemented for our experiments) does not merge information at all and builds a search \emph{tree} in which a node $(s_h,a_h)$ at depth $h$ is identified with the sequence of $h$ states and actions that leads to it. It leads to a very simple update: after each trajectory, one only needs to update the confidence bounds, $U_h(s_h,a_h)$ and $L_h(s_h,a_h)$, of the visited action-state pairs, see Algorithm~\ref{alg:OptimisticVItraj}. %The complexity of this value iteration is only of order $O(KBH)$ in time and $O(H)$ in space (since we only need to keep the last trajectory).
+
+\emph{All} the planning algorithms mentioned so far have one thing in common: they \emph{do not merge information across states}.
+% A node is identified with the sequence of $h$ states and actions that leads to it. It leads to a very simple update: after each trajectory, one only needs to update the confidence bounds, $U_h(s_h,a_h)$ and $L_h(s_h,a_h)$, of the visited action-state pairs, see Algorithm~\ref{alg:OptimisticVItraj}. %The complexity of this value iteration is only of order $O(KBH)$ in time and $O(H)$ in space (since we only need to keep the last trajectory).
 % Another option is to merge information for the same states and a fixed depth. But in this case the search tree becomes a \emph{graph} and after each trajectory we need to re-compute the values $U_h(s_h,a_h)$ for all stored state action pairs $(s_h,a_h)$ at each depth, see
 % %we thus need to update  perform a complete optimistic value iteration to update the confidence bounds, see
 % Algorithm~\ref{alg:OptimisticVIcompl}.
 % %The complexity of this algorithm is of order $O(KBH)$ in time and $O(H)$.
 
 
-If two trajectories $\tau_1$, $\tau_2$ lead to the same state $s$, the latter is actually modelled as two different states $s^1$ and $s^2$ and the information is not shared between the two trajectories
+If two trajectories $\tau_1$, $\tau_2$ lead to the same state $s$, the latter is actually modelled as two different states $s^1$ and $s^2$ and the information is not shared between the two trajectories. A local update can require to propagate information through the entire tree.
 
 \paragraph{Contributions}
 
 \paragraph{Outline}
 
 
+
+
 \section{Preliminary}
+\oam{Add some text here}
 \subsection{Planning for Deterministic Systems}
 
 We consider an MDP with deterministic dynamics and rewards.
@@ -154,7 +154,10 @@ The value of a finite \textbf{sequence} of actions $a\in A^h$ is:
 \end{equation}
 \end{definition}
 
-\begin{definition}[Upper confidence bounds]
+
+\oam{Q: Is "confidence" the right term here? }
+\el{No}
+\begin{definition}[Upper bounds]
 
 We denote by $L:\Tau_n \rightarrow \Real$ and  $U:\Tau_n \rightarrow \Real$ a lower-bound and upper-bound for the state-value $V(s(a))$, that verify:
 \begin{equation*}
@@ -193,6 +196,7 @@ We define the problem-dependent measure $\hlrb{\kappa}$ as the smallest quantity
 
 \oam{Notation $\cO()$ is slightly ambiguous here. Mention this is with respect to $h\to\infty$?}
 \el{OK. In OLOP they define it differently: $\kappa = \limsup_{h\rightarrow\infty} |\Tau_h^\infty|^{1/h}$, which is more explicit. But then you can only conclude that $\forall \kappa'>\kappa$, the regret bound holds with $\kappa'$, which feels a little more complicated to read. But it is actually closer to our Theorem 3 so it might be better?}
+\oam{Ok. The more precise the better.}
 
 where $\Tau^\infty$ is the subtree of near-optimal nodes $$\Tau_h^\infty = \left\{a\in A^h: V^*-V(a) \leq \frac{\gamma^h}{1-\gamma}\right\}.$$
 \end{definition}
@@ -211,7 +215,8 @@ Recall some examples from literature.}
 \oam{Add discussion regarding literature scarcity on the topic}
 \el{OK.}
 
-\subsection{Motivation for improvement}
+\subsection{Motivation for improving the sample-efficiency}
+\oam{for improvement of what? can be more precise}
 
 The trivial bound used in \texttt{OPD} does not make use of all the available information in $\Tau_n$. Assume that we had access to some tighter bounds $L,\,U$ provided by an oracle: $$0\leq L\leq V\leq U\leq V_{\max}.$$
 
@@ -246,6 +251,8 @@ r_n = \cO\left(n^{-\log \frac{1}{\gamma}/\hlbb{\log \kappa(L,U)}}\right).
 \oam{I guess so, but since there is only one example, perhaps you can also say you show in this section an example for which $\kappa=K-1$ while $\kappa_\infty=1$.}
 \el{Except that $\kappa_\infty$ is not a $\kappa(L, U)$ but a limit of $\kappa(L_n, U_n)$. Of course, the result holds for $L=U=V$, but writing this feels a bit like cheating.
 We need to convey the intuition that $\kappa_\infty$ will be much lower than $\kappa$ in problems where trajectories overlap a lot, for instance problems where two actions cancel-each other out (e.g. moving left or right), or when the outcome of several actions does not depend on the order (e.g. placing pawns on a board game). But this property concerns $\kappa_\infty$ thanks to the aggregation operator providing the bounds $L_n, U_n$, I do not think we can provide more intuition with arbitrary bounds $L,U$.}
+\el{Ici: expliquer que le thm 2 nous dit qu'on peut potentiellement avoir une amélioration mais qu'il ne dit pas comment obtenir des bornes U, L. Pour cela la section 3, on détaille une méthode pour construire une séquence de bornes de plus en plus fines. Ajouter un renvoi au résultat final Thm3}
+
 
 \section{State-aware planning}
 
@@ -255,6 +262,7 @@ Our goal is to make these bounds $L,\,U$ as tight as possible.
 We define the Bellman Optimal operator $\cB$ over $\Real^{\Tau_n}$ as:
 
 \begin{equation}
+\label{eq:bellman}
     \cB(f)(a) = \begin{cases}
     f(a) & \text{if $a\in\cL_n$;} \\
     \max_{b\in A} r(ab) + \gamma \cB(f)({ab})
@@ -295,7 +303,7 @@ We extend \texttt{OPD} with two ideas.
 If several sequences $a'\in\Tau_n$ all lead to the same state $s$, their respective bounds must hold simultaneously. This suggests an aggregation operator $\cA$ as:
     \begin{align}
     \label{eq:aggregation}
-        \forall a\in\mathcal{T}_n, \qquad &\cA(L)(a) = \max_{a'\in \cN_n(a)} L(a'),\qquad \cA(U)(a) = \min_{a'\in \cN_n(a)} U(a').                                   
+        \forall a\in\mathcal{T}_n, \qquad &\cA_n^-(L)(a) = \max_{a'\in \cN_n(a)} L(a'),\qquad \cA_n^+(U)(a) = \min_{a'\in \cN_n(a)} U(a').                                   
     \end{align}
 \end{definition}
 
@@ -346,7 +354,7 @@ Provided that
 then the sequence upper-bound $U^{a,\infty}$ is approximated by $U^{a,k+1}$ with an accuracy of $\epsilon$.
 \end{proposition}
 
-\subsection{Leaves pruning}
+\subsection{Pruning of leaves}
 \label{sec:pruning}
 
 Another observation can be made in the case where two nodes $a_1,a_2\in\Tau_n$ lead to the same state $s$:
@@ -376,7 +384,7 @@ The full algorithm is described in \autoref{alg:state-aware}.\\
 	\label{alg:state-aware}
 	\SetAlgoLined\DontPrintSemicolon
 	\For{iteration $n$}{
-		\nl Given $\Tau_n$, compute $L_n = (\cA_n\cB_n)^\infty(0)$ and $U_n = (\cA_n\cB_n)^\infty(V_{\max})$.\;
+		\nl Given $\Tau_n$, compute $L_n = (\cA_n^-\cB_n)^\infty(0)$ and $U_n = (\cA_n^+\cB_n)^\infty(V_{\max})$ with \eqref{eq:aggregation} and \eqref{eq:bellman}.\;
 		\nl Select the optimistic sequence of actions $\hat{a}_{n}$ from \eqref{eq:sampling_rule}.\;
 		\For(\tcp*[h]{Expand the corresponding leaf node}){action $a\in A$}{
 			Add the child $\hat{a}_{n}a$ to the tree $\Gamma_{n+1}$ and observe its reward.
@@ -433,12 +441,10 @@ In particular, if $K\geq 3$ then $\hlgb{\kappa_\infty} < \hlrb{\kappa}$.
 \oam{Explain what is natural/expected in this result.  What is perhaps surprising/novel/non-trivial? What impact on practitioners? }
 \oam{Explain here what you used precisely for bounds $U,L$ in these implementations}
 
-\section{Extension}
+\section{Graphical version}
 
 
-\subsection{Graphical version}
-
-\subsection{Stochastic systems}
+\section{Extension to stochastic systems}
 
 Whenever a planning algorithm is based on bounds over the values, our approach can be applied to tighten these bounds while preserving their validity. In particular, when the rewards and/or transitions are stochastic, many algorithms rely on confidence intervals to build statistical bounds on the values that hold with high probability.
 
