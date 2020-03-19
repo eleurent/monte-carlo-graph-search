@@ -133,10 +133,10 @@ In this work, we will be comparing two data structures for planning in an MDP: t
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[trim={1.8cm 1.2cm 1.9cm 1.2cm}, clip,width=0.4\linewidth]{img/tree_1}
+	\includegraphics[trim={1.8cm 1.2cm 1.9cm 1.2cm}, clip,width=0.44\linewidth]{img/tree_1}
 	\hfill
-	\includegraphics[trim={1.8cm 1.2cm 1.9cm 1.2cm}, clip,width=0.4\linewidth]{img/tree_1}
-	\caption{Depiction of the tree $\Tau_n$ (left) and the graph $\cG_n$. In the tree, the nodes leading to the same state have the same color.}
+	\includegraphics[trim={1.8cm 1.2cm 1.9cm 0.9cm}, clip,width=0.44\linewidth]{img/graph_1}
+	\caption{Depiction of the tree $\Tau_n$ (left) and the graph $\cG_n$ (right) built with the same observed transitions. In the tree, two nodes of the same colour lead to the same state.}
 \end{figure}
 
 \paragraph{In a graph,} the nodes represent states $s\in S$, and the edges represent transitions between states. The \textit{source} of the tree corresponds to the initial state $s_0$. At iteration $n$, we denote the current graph as $\cG_n$, its set of internal nodes as $\mathring{\cG}_n$ and its set of \textit{sinks} as $\overline{\cG}_n$.
@@ -217,7 +217,9 @@ $0 \leq V(s) \leq V_{\max} \eqdef \frac{1}{1-\gamma}$. But these trivial bounds 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[trim={1.8cm 1.4cm 1.9cm 1.9cm}, clip,width=0.4\linewidth]{img/tree_2}
+	\includegraphics[trim={1.8cm 1.4cm 1.9cm 1.9cm}, clip,width=0.42\linewidth]{img/tree_2}
+	\hfill
+	\includegraphics[trim={1.8cm 1.4cm 1.9cm 1.9cm}, clip,width=0.46\linewidth]{img/graph_2}
 	\caption{Depiction of the Bellman backup operators $B$ and $\cB$.}
 \end{figure}
 
