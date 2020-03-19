@@ -78,9 +78,9 @@ Renault Group, France
 \maketitle              % typeset the header of the contribution
 %
 \begin{abstract}
-	We consider the problem of planning in a Markov Decision Process (MDP) with a generative model and limited computational budget. Despite the underlying MDP transitions having a graph structure, the popular \emph{tree-based} planning algorithms such as \texttt{UCT} rely on a tree structure to represent their value estimates. That is, they either ignore the states crossed along a trajectory, or they do not identify with each other two similar states met at different places in the tree. In this work, we explore taking into account state similarity by proposing a \emph{graph-based} planning algorithm. For the sake of analysis and explicit comparison with tree-based planners, we first study how to augment such tree-based planners with a \emph{state aggregation} operator, in the simple case of deterministic systems. We provide a regret bound that depends on a novel problem-dependent measure of difficulty. This measure improves on the previous one in MDPs where the trajectories overlap, and recovers it otherwise. Then, we reformulate our algorithm in the more natural graphical setting where the state aggregation is implicit, and show that it can be adapted to planning with stochastic systems. Finally, numerical simulations illustrate the benefits of our approach.
+	We consider the problem of planning in a Markov Decision Process (MDP) with a generative model and limited computational budget. Despite the underlying MDP transitions having a graph structure, the popular \emph{tree-based} planning algorithms such as \texttt{UCT} rely on a tree structure to represent their value estimates. That is, they either ignore the states crossed along a trajectory, or they do not identify with each other two similar states met at different places in the tree. In this work, we explore taking into account state similarity by proposing a \emph{graph-based} planning algorithm. For the sake of analysis and explicit comparison with tree-based planners, we first study how to augment such tree-based planners with a \emph{state merge} operator, in the simple case of deterministic systems. We provide a regret bound that depends on a novel problem-dependent measure of difficulty. This measure improves on the previous one in MDPs where the trajectories overlap, and recovers it otherwise. Then, we show that this methodology can be adapted to existing planning algorithms that deal with stochastic systems. Finally, numerical simulations illustrate the benefits of our approach.
 	
-	\keywords{Planning  \and Tree-search \and Online learning.} % TODO
+	\keywords{Planning  \and Tree-search \and Online learning.}
 \end{abstract}
 %
 %
@@ -172,7 +172,7 @@ But how to choose the sampling and recommendation rule? \todo{Etoffer}
 
 \subsection{Optimistic planning}
 
-The principle of \emph{Optimism in the Face of Uncertainty} consists in exploring the option that maximises an upper-bound of the true objective. It has been applied in the context of planning by forming bounds on the value function $V$ (or $Q$).
+The principle of \emph{Optimism in the Face of Uncertainty} (OFU) consists in exploring the option that maximises an upper-bound of the true objective. It has been applied in the context of planning by forming bounds on the value function $V$ (or $Q$).
 
 \begin{definition}[Value bounds]
 \paragraph{On trees.} We denote by $L:\Tau_n \rightarrow \Real$ and  $U:\Tau_n \rightarrow \Real$ a lower-bound and upper-bound for the state-value $V(s(a))$ defined on the tree $\Tau_n$, such that
