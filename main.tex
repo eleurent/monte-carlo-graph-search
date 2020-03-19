@@ -9,18 +9,23 @@
 % be included in EPS format.
 
 \usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
 %\usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage{booktabs}
-\usepackage{algorithm2e}
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage[dvipsnames]{xcolor}
 \usepackage{bm}
 \usepackage[makeroom]{cancel}
+
+\usepackage[ruled,vlined]{algorithm2e}
+%\newcommand\mycommfont[1]{\footnotesize\ttfamily\textcolor{blue}{#1}}
+%\SetCommentSty{mycommfont}
+\SetKwComment{Comment}{$\triangleright$\ }{}
 
 \usepackage[%
 square,        % for square brackets
@@ -115,90 +120,207 @@ If two trajectories $\tau_1$, $\tau_2$ lead to the same state $s$, the latter is
 \paragraph{Outline}
 
 
+\section{Graph-Based Planning for Deterministic Systems}
 
+We consider the simple setting of MDPs with deterministic dynamics and rewards.
+We start by giving some background on the interplay of data structures and optimistic planning algorithms.
 
-\section{Preliminary}
-\oam{Add some text here}
-\subsection{Planning for Deterministic Systems}
+\subsection{Data structures}
 
-We consider an MDP with deterministic dynamics and rewards.
+In this work, we will be comparing two data structures for planning in an MDP: the tree, and the (directed) graph. In order to differentiate them, we use Roman symbols when referring to the trees, e.g. $T, U, L, B$ and calligraphic symbols when referring to the graphs, e.g. $\cG, \cU, \cL, \cB$.
 
-\begin{paragraph}{Notations}
-We denote:
-\begin{itemize}
-\item at iteration $n$, the planning tree $\Tau_n = \cI_n \bigcup \cL_n$, where $\cI_n$ is the set of internal (\emph{expanded}) nodes and $\cL_n$ is the set of leaf nodes.
-\item $s(a)$ the state reached after running sequence $a$ starting from $s_0$, and $\cN_n(a)$ the set of \emph{neighbours} of $a$, that lead to the same state:  \[\cN_n(a) = \{a'\in\Tau_n: s(a)=s(a')\}\]
-\end{itemize}
-\end{paragraph}
+\paragraph{In a tree,} a node of depth $h$ represents a sequence of actions $a\in A^h$. The \textit{root} of the tree corresponds to the empty action sequence, and hence to the initial state $s_0\in S$. At iteration $n$, we denote the current tree as $\Tau_n$. Borrowing notations from topology, we denote its set of internal nodes as $\mathring{\Tau}_n$ and its set of \textit{leaves} as $\overline{\Tau}_n$. Note that since the MDP is deterministic, a sequence of action $a$ is associated with its terminal state denoted $s(a)$, but this association is not one-to-one: several sequences of action can lead to the same state, and the latter will be represented several times in the tree. Thus, we denote $N_n(a)$ the set of \emph{neighbours} of a sequence of action $a\in A^h$, that lead to the same state:  $N_n(a) = \{a'\in\Tau_n: s(a)=s(a')\}.$
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[trim={1.8cm 1.2cm 1.9cm 1.2cm}, clip,width=0.4\linewidth]{img/tree_1}
-	\caption{Depiction of the tree $\Tau_n$. Nodes leading to the same state have the same color.}
+	\hfill
+	\includegraphics[trim={1.8cm 1.2cm 1.9cm 1.2cm}, clip,width=0.4\linewidth]{img/tree_1}
+	\caption{Depiction of the tree $\Tau_n$ (left) and the graph $\cG_n$. In the tree, the nodes leading to the same state have the same color.}
 \end{figure}
 
-\begin{definition}[Values]
-The return of a sequence of action $a\in A^\infty$ of length $h\in\Real\cup\{\infty\}$ is:
+\paragraph{In a graph,} the nodes represent states $s\in S$, and the edges represent transitions between states. The \textit{source} of the tree corresponds to the initial state $s_0$. At iteration $n$, we denote the current graph as $\cG_n$, its set of internal nodes as $\mathring{\cG}_n$ and its set of \textit{sinks} as $\overline{\cG}_n$.
 
-\[R(s,a) = \sum_{t=0}^{h-1} \gamma^t r(a_{1:t}) ,\, \text{starting from state $s$.}\]
+Both structures are built iteratively from a single starting node, by selecting an exterior node (leaf or sink) to \emph{expand}. The expansion of a node $a$ or $s$ refers to calling the generative model to sample the reward $r$ and next state $s'$ for each action $a\in A$, and adding child nodes to the data structure. In a tree, the expansion of a node $a\in A^h$ always lead to the creation of new leaf nodes that represent the suffix sequence of action $ab\in A^{h+1},\, b\in A$. In contrast, in a graph the next state $s'$ reached from $s,a$ might already be present in $\cG_n$, in which case we add the edge between $s$ and $s'$ without creating a new node.
 
-The value of a \textbf{state} $s\in S$ is
-\begin{equation}
-    V(s) = \max_{a\in A^\infty} R(s, a)
-\end{equation}
+These data structures can be used to store information about the MDP, such as its rewards $r(s, a)$, so that 
+
+
+\subsection{Planning algorithms}
+
+A planning algorithm is typically composed of two main rules:
+\begin{enumerate}
+	\item A \emph{sampling rule}, that selects a promising exterior node (leaf or sink) to expand at each iteration $n$.
+	\item A \emph{recommendation rule}, that recommends a first good action to take at the last iteration $n$.
+\end{enumerate}
+The pseudo-code of such a planning algorithm is given in \autoref{alg:generic}.
+\begin{algorithm}
+	\caption{A generic planning algorithm}
+	\label{alg:generic}
+	\DontPrintSemicolon
+	\For{each iteration $n$}{
+		Select the node $\hat{a}_n$ (or $\hat{s_n}$) to expand according to the sampling rule.\;
+		\For(\Comment*[f]{Node expansion}){action $a\in A$}{
+			Simulate the transition $r, s' \sim \probability{r, s' \condbar s, a}$ from the generative model.\;
+			Insert the observed transition to the data structure accordingly.
+		}
+	}
+	\Return the recommended action $a_{n}$ according to the recommendation rule.\;
+\end{algorithm}
+
+But how to choose the sampling and recommendation rule? \todo{Etoffer}
+
+\subsection{Optimistic planning}
+
+The principle of \emph{Optimism in the Face of Uncertainty} consists in exploring the option that maximises an upper-bound of the true objective. It has been applied in the context of planning by forming bounds on the value function $V$ (or $Q$).
+
+\begin{definition}[Value bounds]
+\paragraph{On trees.} We denote by $L:\Tau_n \rightarrow \Real$ and  $U:\Tau_n \rightarrow \Real$ a lower-bound and upper-bound for the state-value $V(s(a))$ defined on the tree $\Tau_n$, such that
+\begin{equation*}
+    \forall a\in\Tau_n, \qquad L(a) \leq V(s(a)) \leq U(a).
+\end{equation*}
+
+\paragraph{On graphs.} Likewise, we denote by $\cL:\cG_n \rightarrow \Real$ and  $\cU:\cG_n \rightarrow \Real$ a lower-bound and upper-bound for the state-value $V(s(a))$ defined on the graph $\cG_n$, such that
+\begin{equation*}
+\forall s\in\cG_n, \qquad \cL(s) \leq V(s) \leq \cU(s).
+\end{equation*}
+\end{definition}
+
+Following the OFU principle, at iteration $n$ we leverage available information to design an upper-bound $U_n$ on $V$, which should be as tight as possible. Then, the sampling rule will select an exterior node by starting from the root / source and following an optimistic strategy of always selecting the action which maximises $U_n$, until reaching an optimistic leaf / sink to expand.
+
+For instance, since we assume that the rewards are bounded in [0, 1], trivial bounds on $V(s)$ are
+$0 \leq V(s) \leq V_{\max} \eqdef \frac{1}{1-\gamma}$. But these trivial bounds are the same for every node, which makes them non-informative, and do not make use of the observed information. However, they can be used as a valid starting point. Every observed transition stored in the graph / can then be used to tightened these bounds, by using the Bellman Optimal operator.
+
+\begin{definition}[Bellman Optimal operator]
+	\paragraph{On trees.} We define the Bellman Optimal operator $B_n$ on the tree $\Tau_n$ as:
+	\begin{equation}
+	\label{eq:bellman}
+	B_n(f)(a) = \begin{cases}
+	f(a) & \text{if $a\in\overline{\Tau}_n$;} \\
+	\max_{b\in A} r(ab) + \gamma f({ab})
+	& \text{if $a\in\mathring{\Tau}_n$.}
+	\end{cases}
+	\end{equation}
+	
+	\paragraph{On graphs.} Likewise, we define the Bellman Optimal operator $\cB_n$ on the graph $\cG_n$ as:
+	\begin{equation}
+	\label{eq:bellman}
+	\cB_n(f)(s) = \begin{cases}
+	f(s) & \text{if $s\in\overline{\cG}_n$;} \\
+	\max_{b\in A} r(s, b) + \gamma f(s')
+	& \text{if $s\in\mathring{\cG}_n$.}
+	\end{cases}
+	\end{equation}
+	where $s'$ is the next state obtained from $s$ by taking action $b$.
+\end{definition}
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[trim={1.8cm 1.4cm 1.9cm 1.9cm}, clip,width=0.4\linewidth]{img/tree_2}
+	\caption{Depiction of the Bellman backup operators $B$ and $\cB$.}
+\end{figure}
+
+This Bellman Operator $\cB$ was already used in the \texttt{OPD} algorithm \citet{hren2008optimistic}
+Define $L_n, U_n$.\todo{Etoffer}
+
+\begin{algorithm}
+	\caption{The \emph{Optimistic Planning for Deterministic Systems} (\OPD) algorithm from \citep{hren2008optimistic}.}
+	\label{alg:opd}
+	\DontPrintSemicolon
+	\For{each iteration $n$}{
+		Compute the bounds $L_n = B_n^\infty(0)$ and $U_n = B_n^\infty(V_{\max})$.\; 
+		
+		$\hat{a}_n$ = $\emptyset$\;
+		\While{$\hat{a}_n\in\mathring{\Tau}_n$}{
+			$\hat{a}_n\gets \displaystyle\argmax_{a'\in \hat{a}_n A} r(a') + \gamma U(a')$ \Comment*[r]{Optimistic sampling rule}
+		}
+		\For(\Comment*[f]{Node expansion}){action $a\in A$}{
+			Simulate $r, s' \sim \probability{r, s' \condbar s(\hat{a}_n), a}$.\;
+			Add a new leaf $\hat{a}_n a$ to $\Tau_{n+1}$, with associated reward $r$.
+		}
+	}
+	\Return $\displaystyle\argmax_{a\in A} r(s, a) + \gamma L(a)$. \Comment*[r]{Conservative recommendation rule}\;
+\end{algorithm}
+
+Note that $B^\infty$ actually converges in a finite time $d_n$, where $d_n$ is the depth of $\Tau_n$. Indeed, since the updates only travel the tree upward, once the information from the deepest leaf has been propagated up to the root, the obtained bound is invariant by $B$.
+
+Likewise, we propose \autoref{alg:gbop} which follows the same approach, but on a graph structure.
+
+\begin{algorithm}
+	\caption{Our proposed \emph{Graph-Based Optimistic Planning} algorithm.}
+	\label{alg:gbop}
+	\DontPrintSemicolon
+	\For{each iteration $n$}{
+		Compute the bounds $\cL_n = \cB_n^\infty(0)$ and $\cU_n = \cB_n^\infty(V_{\max})$.\; 
+		
+		$\hat{s}_n$ = $s_0$\;
+		\While{$\hat{s}_n\in\mathring{\cG}_n$}{
+			$\hat{s}_n\gets \displaystyle\argmax_{s'} r(s, a) + \gamma \cU(s')$ \Comment*[r]{Optimistic sampling rule}
+		}
+		\For(\Comment*[f]{Node expansion}){action $a\in A$}{
+			Simulate $r, s' \sim \probability{r, s' \condbar s, a}$.\;
+			Get or create a node $s'$ in $\cG_{n+1}$, and add the transition $(s,a) \rightarrow s', r$.
+		}
+	}
+	\Return $\displaystyle\argmax_{a\in A} r(s,a) + \gamma \cL(s(a))$. \Comment*[r]{Conservative recommendation rule}
+\end{algorithm}
+
+Though Algorithms \ref{alg:opd} and \ref{alg:gbop} look very similar, we claim that...
+
+\section{Analysis} 
+
+Comparing Algorithms \ref{alg:opd} and \ref{alg:gbop} directly is difficult since the two algorithms do not involve the same structures, which entails implicit differences in their behaviours. In order to leverage the previous analyses of regret bounds, we need to frame our \autoref{alg:gbop} as a tree-based planning algorithm and make these differences explicit. To account for the difference between the Bellman operators $B$ and $\cB$, we represent $\cB$ as tree backup $B$ augmented with \emph{merge} operator $M$, which enforces every node in the tree with similar states to share the same value.
+
+First, we recall the analysis of \OPD.
+
+\subsection{Background on the sample complexity of \OPD}
+
+\begin{definition}[Sequence values]
+
+%
+%The value of a \textbf{state} $s\in S$ is
+%\begin{equation}
+%    V(s) = \max_{a\in A^\infty} R(s, a)
+%\end{equation}
 
 The value of a finite \textbf{sequence} of actions $a\in A^h$ is:
 \begin{equation}
 \label{eq:state_value}
-    V(a) = R(s_0,a) + \gamma^{h} V(s(a))
+    V(a) = R(s_0,a) + \gamma^{h} V(s(a)),
 \end{equation}
+where $R(s, a) = \sum_{t=0}^{h-1} \gamma^t r(a_{1:t})$ is the return of the sequence $a$ starting from the state $s$.
 \end{definition}
-
-
-\oam{Q: Is "confidence" the right term here? }
-\el{No}
-\begin{definition}[Upper bounds]
-
-We denote by $L:\Tau_n \rightarrow \Real$ and  $U:\Tau_n \rightarrow \Real$ a lower-bound and upper-bound for the state-value $V(s(a))$, that verify:
-\begin{equation*}
-    \forall a\in\Tau_n, \qquad L(a) \leq V(s(a)) \leq U(a)
-\end{equation*}
-
-For instance, since we assume that the rewards are bounded in [0, 1], trivial bounds on $V(s(a))$ are:
-\[0 \leq V(s(a)) \leq V_{\max} \eqdef \frac{1}{1-\gamma} \]
 
 The state-value bounds $L,U$ induces bounds $L^a, U^a$ for values of sequences of actions $a\in A^h$ defined as:
 \begin{equation}
 \label{eq:sequence_value}
-    \underbrace{R(a) + \gamma^{h} L(a)}_{L^a(a)} \leq V(a) \leq \underbrace{R(a) + \gamma^{h} U(a)}_{U^a(a)}
+\underbrace{R(a) + \gamma^{h} L(a)}_{L^a(a)} \leq V(a) \leq \underbrace{R(a) + \gamma^{h} U(a)}_{U^a(a)}
 \end{equation}
-\end{definition}
+%\end{definition}
 
-Given bounds $L_n, U_n$ available at iteration $n$, this provides an optimistic sampling rule: expand the node
+
+Optimistic planning algorithms leverage bounds $L_n, U_n$ available at iteration $n$ to  \todo{where ?}
 \begin{equation}
-    \label{eq:sampling_rule}
-    \hat{a}_n \in \argmax_{a\in\cL_n} U_n^a(a),
+\label{eq:sampling_rule}
+\hat{a}_n \in \argmax_{a\in\cL_n} U_n^a(a),
 \end{equation}
 and a conservative recommendation rule:
 \begin{equation}
-    \label{eq:recommendation_rule}
-    a_n \in \argmax_{a\in\cL_n} L^a_n(a)
+\label{eq:recommendation_rule}
+a_n \in \argmax_{a\in\cL_n} L^a_n(a)
 \end{equation}
-
-\oam{Examples for $L_n,U_n$ ? here or give ref to example detailed later in this document.}
-\el{Example of the trivial bounds, used in OPD. Such bounds $(L_n,\,U_n)$  can also be used to incorporate prior knowledge over the state value. For instance, terminal states can be handled by setting $L_n(a) = U_n(a) = 0$.}
-
-For instance, in \texttt{OPD}, \citet{hren2008optimistic} used the trivial bounds $L=0,\,U=V_{\max}$ and proved the following regret bound.
 
 
 \begin{definition}[Difficulty measure]
-We define the problem-dependent measure $\hlrb{\kappa}$ as the smallest quantity such that $|\Tau_h^\infty| = \hlrb{\cO(\kappa^h)}$, 
+We define the problem-dependent measure $\hlrb{\kappa}$ as$$\hlrb{\kappa} = \limsup_{h\rightarrow\infty} |\hlrb{\Tau_h^\infty}|^{1/h}$$ 
+% the smallest quantity such that $|\Tau_h^\infty| = \hlrb{\cO(\kappa^h)}$, 
 
-\oam{Notation $\cO()$ is slightly ambiguous here. Mention this is with respect to $h\to\infty$?}
-\el{OK. In OLOP they define it differently: $\kappa = \limsup_{h\rightarrow\infty} |\Tau_h^\infty|^{1/h}$, which is more explicit. But then you can only conclude that $\forall \kappa'>\kappa$, the regret bound holds with $\kappa'$, which feels a little more complicated to read. But it is actually closer to our Theorem 3 so it might be better?}
-\oam{Ok. The more precise the better.}
+%\oam{Notation $\cO()$ is slightly ambiguous here. Mention this is with respect to $h\to\infty$?}
+%\el{OK. In OLOP they define it differently: $\kappa = \limsup_{h\rightarrow\infty} |\Tau_h^\infty|^{1/h}$, which is more explicit. But then you can only conclude that $\forall \kappa'>\kappa$, the regret bound holds with $\kappa'$, which feels a little more complicated to read. But it is actually closer to our Theorem 3 so it might be better?}
+%\oam{Ok. The more precise the better.}
 
-where $\Tau^\infty$ is the subtree of near-optimal nodes $$\Tau_h^\infty = \left\{a\in A^h: V^*-V(a) \leq \frac{\gamma^h}{1-\gamma}\right\}.$$
+where $\hlrb{\Tau^\infty}$ is the subtree of near-optimal nodes $$\hlrb{\Tau_h^\infty} = \left\{a\in A^h: V^*-V(a) \leq \frac{\gamma^h}{1-\gamma}\right\}.$$
 \end{definition}
 \noindent\fbox{%
 	\parbox{\textwidth}{%
@@ -215,15 +337,14 @@ Recall some examples from literature.}
 \oam{Add discussion regarding literature scarcity on the topic}
 \el{OK.}
 
-\subsection{Motivation for improving the sample-efficiency}
-\oam{for improvement of what? can be more precise}
+\subsection{Motivation for an improved regret bound}
 
 The trivial bound used in \texttt{OPD} does not make use of all the available information in $\Tau_n$. Assume that we had access to some tighter bounds $L,\,U$ provided by an oracle: $$0\leq L\leq V\leq U\leq V_{\max}.$$
 
 \begin{definition}[A finer difficulty measure]
 We define the near-optimal branching factor \emph{according to the bounds $L,\,U$} as $$\hlbb{\kappa(L,U) \eqdef \limsup_{h\rightarrow\infty} \left|\Tau_h^\infty(L,U)\right|^{1/h}}\in(1, K],$$ where
 \begin{equation}
-     \Tau_h^\infty(L,U)=\left\{a\in A^h: V^* - V(a)\leq \gamma^{h}(U(a)-L(a))\right\}.
+     \hlbb{\Tau_h^\infty(L,U)}=\left\{a\in A^h: V^* - V(a)\leq \gamma^{h}(U(a)-L(a))\right\}.
 \end{equation}
 
 \end{definition}
@@ -245,122 +366,91 @@ r_n = \cO\left(n^{-\log \frac{1}{\gamma}/\hlbb{\log \kappa(L,U)}}\right).
 \end{theorem}
 }}
 
-
-\oam{Provide some table showing comparison values for $\kappa(L,U)$ vs $\kappa$ on some simple example (or bounds on them).}
-\el{Can I simply refer to \autoref{sec:illustrative-example}?}
-\oam{I guess so, but since there is only one example, perhaps you can also say you show in this section an example for which $\kappa=K-1$ while $\kappa_\infty=1$.}
-\el{Except that $\kappa_\infty$ is not a $\kappa(L, U)$ but a limit of $\kappa(L_n, U_n)$. Of course, the result holds for $L=U=V$, but writing this feels a bit like cheating.
-We need to convey the intuition that $\kappa_\infty$ will be much lower than $\kappa$ in problems where trajectories overlap a lot, for instance problems where two actions cancel-each other out (e.g. moving left or right), or when the outcome of several actions does not depend on the order (e.g. placing pawns on a board game). But this property concerns $\kappa_\infty$ thanks to the aggregation operator providing the bounds $L_n, U_n$, I do not think we can provide more intuition with arbitrary bounds $L,U$.}
 \el{Ici: expliquer que le thm 2 nous dit qu'on peut potentiellement avoir une amélioration mais qu'il ne dit pas comment obtenir des bornes U, L. Pour cela la section 3, on détaille une méthode pour construire une séquence de bornes de plus en plus fines. Ajouter un renvoi au résultat final Thm3}
 
 
-\section{State-aware planning}
+\subsection{Merging the states}
 
-Our goal is to make these bounds $L,\,U$ as tight as possible. 
-
-\begin{definition}[Bellman Optimal operator]
-We define the Bellman Optimal operator $\cB$ over $\Real^{\Tau_n}$ as:
-
-\begin{equation}
-\label{eq:bellman}
-    \cB(f)(a) = \begin{cases}
-    f(a) & \text{if $a\in\cL_n$;} \\
-    \max_{b\in A} r(ab) + \gamma \cB(f)({ab})
-    & \text{if $a\in\cI_n$.}
-    \end{cases}
-\end{equation}
-\end{definition}
 \begin{definition}
-We say that a lower-bound $L$ and an upper bound $U$ are \emph{consistent} if they are respectively non-decreasing and non-increasing along sequences of actions:
-\begin{align*}
-\forall a\in\Tau_n\setminus\cL_n, \quad &L(a) \leq \max_{b\in A} r(ab) + \gamma L(ab)\\
-&U(a) \geq \max_{b\in A} r(ab) + \gamma U(ab)
-\end{align*}
+	We say that a lower-bound $L$ and an upper bound $U$ are \emph{consistent} if they are respectively non-decreasing and non-increasing along sequences of actions:
+	\begin{align*}
+	\forall a\in\Tau_n\setminus\cL_n, \quad &L(a) \leq \max_{b\in A} r(ab) + \gamma L(ab)\\
+	&U(a) \geq \max_{b\in A} r(ab) + \gamma U(ab)
+	\end{align*}
 \end{definition}
 
 \begin{lemma}
-$\cB$ verifies, $\cB^2=\cB$, $\cB$ preserves consistency, and $\cB$ tightens consistent bounds $L,U$:
-\begin{equation*}
-    L\leq V \leq U \implies L \leq \cB(L) \leq V \leq \cB(U) \leq U
-\end{equation*}
+	$B$ verifies $B^{\infty}=B^{d_n}$, $B$ preserves consistency, and $B$ tightens consistent bounds $L,U$:
+	\begin{equation*}
+	L\leq V \leq U \implies L \leq B(L) \leq V \leq B(U) \leq U
+	\end{equation*}
 \end{lemma}
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[trim={1.8cm 1.4cm 1.9cm 1.9cm}, clip,width=0.4\linewidth]{img/tree_2}
-	\caption{Depiction of the Bellman backup operator $\cB$. The information is propagated upward, and the leaves are not updated.}
-\end{figure}
+As shown in \ref{fig:bellman}, in a tree the Bellman operator $B$ only propagates the information upward, and the leaves cannot be updated.
 
-$\cB$ was already used in \texttt{OPD}, however it is \emph{not valuable} on its own for planning with \eqref{eq:sampling_rule}, since  $\cB(V_{\max})$ and $V_{\max}$ coincide on $\cL_n$.
-We extend \texttt{OPD} with two ideas.
+Applying $B$ is \emph{not valuable} on its own for planning with \eqref{eq:sampling_rule}, since  $B(V_{\max})$ and $V_{\max}$ coincide on $\cL_n$.
 
-\subsection{Aggregation of state values}
-\label{sec:aggregation}
-
-%Let $L\leq V\leq U\in\Real^{\Tau_n}$ some bounds.
-
-\begin{definition}[Aggregation operator]
-If several sequences $a'\in\Tau_n$ all lead to the same state $s$, their respective bounds must hold simultaneously. This suggests an aggregation operator $\cA$ as:
+\begin{definition}[Merge operator]
+If several sequences $a'\in\Tau_n$ all lead to the same state $s$, their respective bounds must hold simultaneously. This suggests a merge operator $M$ as:
     \begin{align}
     \label{eq:aggregation}
-        \forall a\in\mathcal{T}_n, \qquad &\cA_n^-(L)(a) = \max_{a'\in \cN_n(a)} L(a'),\qquad \cA_n^+(U)(a) = \min_{a'\in \cN_n(a)} U(a').                                   
+        \forall a\in\mathcal{T}_n, \qquad &M_n^-(L)(a) = \max_{a'\in \cN_n(a)} L(a'),\qquad M_n^+(U)(a) = \min_{a'\in \cN_n(a)} U(a').                                   
     \end{align}
 \end{definition}
 
-\oam{This is ambiguous $\cA(f)$ is either LHS or RHS of \eqref{eq:aggregation}. How do you decide which one? Don't you need some $\cA_{+}$and $\cA_{-}$?
+\oam{This is ambiguous $M(f)$ is either LHS or RHS of \eqref{eq:aggregation}. How do you decide which one? Don't you need some $M_{+}$and $M_{-}$?
 }
 \el{Right, I can't find a notation that is both rigorous and simple. Introducing A+ and A- is pretty good but we need to keep this distinction everywhere, which is a bit tedious. Maybe A could operate on pairs (L,U) of bounds instead? Not great either...}
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[trim={1.8cm 1.8cm 1.9cm 1.8cm}, clip,width=0.4\linewidth]{img/tree_3}
-	\caption{Depiction of the aggregation operator $\cA$. Nodes can be updated anywhere in the tree $\Tau_n$, and in particular its leaves $\cL_n$.}
+	\caption{Depiction of the aggregation operator $M$. Nodes can be updated anywhere in the tree $\Tau_n$, and in particular its leaves $\cL_n$.}
 \end{figure}
 
 \begin{lemma}
-Again, we have $\cA^2=\cA$, $\cA$ preserves consistency, and tightens bounds:
+We have $M^2=M$, $M$ preserves consistency, and tightens bounds:
 \begin{equation*}
-    L\leq V \leq U \implies L\leq \cA(L) \leq V \leq \cA(U) \leq U
+    L\leq V \leq U \implies L\leq M^-(L) \leq V \leq M^+(U) \leq U
 \end{equation*}
 \end{lemma}
 
-At this stage, we have defined two operators $\cA$ and $\cB$ that operate on bounds $f$ and can only tighten them.
+At this stage, we have defined two operators $M$ and $B$ that operate on bounds $f$ and can only tighten them.
 
 
 \begin{remark}[Interplay of backups and aggregations]
-As observed earlier, the sampling rule \eqref{eq:sampling_rule} only depends on the value of $U$ at the leaves $\cL_n$, which makes applying $\cB$ alone useless since information only travels upwards in the tree $\Tau_n$. Conversely, applying $\cA$ can update the value of any node in the tree $\Tau_n$, including the leaves $\cL_n$. These tightened bounds at the leaves can then be propagated upward with Bellman backups $\cB$ to update inner nodes, which can in turn be aggregated with other leaf nodes, and so forth.
+As observed earlier, the sampling rule \eqref{eq:sampling_rule} only depends on the value of $U$ at the leaves $\cL_n$, which makes applying $B$ alone useless since information only travels upwards in the tree $\Tau_n$. Conversely, applying $M$ can update the value of any node in the tree $\Tau_n$, including the leaves $\cL_n$. These tightened bounds at the leaves can then be propagated upward with Bellman backups $B$ to update inner nodes, which can in turn be aggregated with other leaf nodes, and so forth.
 \end{remark}
 
-This suggests an alternating procedure of aggregations $\cA$ and backups $\cB$, whose convergence must be studied.
+This suggests an alternating procedure of aggregations $M$ and backups $B$, whose convergence must be studied.
 
-\begin{proposition}[Contractivity of $\cA\cB$]
+\begin{proposition}[Contractivity of $MB$]
 \label{prop:contractivity}
-$\cA\cB$ a $\gamma$-contraction.
+$M B$ a $\gamma$-contraction.
 \end{proposition}
 
 We can perform a fixed-point iteration of alternating backups and aggregations starting from the trivial bounds $L_0=0$, $U_0 = V_{\max}$.
 
 \begin{equation}
     \label{eq:recursion}
-    L^k = (\cA \cB)^k(0), \qquad
-    U^k = (\cA \cB)^k(V_{\max})
+    L^k = (M B)^k(0), \qquad
+    U^k = (M B)^k(V_{\max})
 \end{equation}
 $(U^k)$ (resp. $(L^k)$) is non-increasing (resp. non-decreasing) and converges at a rate $\gamma^k$, but can converge in infinite time whenever there is a loop, as shown in \autoref{sec:convergence}. We can decide to stop whenever a desired accuracy is reached: 
 
 \begin{proposition}[Early stopping]
 \label{prop:early-stopping}
 Provided that
-\[\forall a\in\Tau_n, |U^{k+1}(a) - U^k(a)| \leq \epsilon (1-\gamma)\gamma^{-h(a)-1},\]
+\[\forall a\in\Tau_n,\; |U^{k+1}(a) - U^k(a)| \leq \epsilon (1-\gamma)\gamma^{-h(a)-1},\]
 then the sequence upper-bound $U^{a,\infty}$ is approximated by $U^{a,k+1}$ with an accuracy of $\epsilon$.
 \end{proposition}
 
-\subsection{Pruning of leaves}
-\label{sec:pruning}
+\paragraph{Pruning of leaves}
 
 Another observation can be made in the case where two nodes $a_1,a_2\in\Tau_n$ lead to the same state $s$:
 \begin{proposition}[Pruning rule]
 \label{prop:pruning}
-Let $a_1,a_2\in\Tau_n$ such that state $s(a_1) = s(a_2) = s$ and $U = \cA(U) \geq V$ an aggregated upper-bound. 
+Let $a_1,a_2\in\Tau_n$ such that state $s(a_1) = s(a_2) = s$ and $U = M(U) \geq V$ an aggregated upper-bound. 
 \begin{equation}
 \label{eq:pruning}
     \text{If } h(a_2) \geq h(a_1) \text{ and } U^a(a_2) \geq U^a(a_1)
@@ -384,7 +474,7 @@ The full algorithm is described in \autoref{alg:state-aware}.\\
 	\label{alg:state-aware}
 	\SetAlgoLined\DontPrintSemicolon
 	\For{iteration $n$}{
-		\nl Given $\Tau_n$, compute $L_n = (\cA_n^-\cB_n)^\infty(0)$ and $U_n = (\cA_n^+\cB_n)^\infty(V_{\max})$ with \eqref{eq:aggregation} and \eqref{eq:bellman}.\;
+		\nl Given $\Tau_n$, compute $L_n = (M_n^-B_n)^\infty(0)$ and $U_n = (M_n^+B_n)^\infty(V_{\max})$ with \eqref{eq:aggregation} and \eqref{eq:bellman}.\;
 		\nl Select the optimistic sequence of actions $\hat{a}_{n}$ from \eqref{eq:sampling_rule}.\;
 		\For(\tcp*[h]{Expand the corresponding leaf node}){action $a\in A$}{
 			Add the child $\hat{a}_{n}a$ to the tree $\Gamma_{n+1}$ and observe its reward.
@@ -394,11 +484,16 @@ The full algorithm is described in \autoref{alg:state-aware}.\\
 	\Return the recommendation $a_{n+1}$ from \eqref{eq:recommendation_rule}.\;
 \end{algorithm}
 
-\subsection{Regret bound}
+\subsection{Main result}
 
 In \autoref{thm:regret-bound-U}, we assumed that some bounds $L,\,U$ were revealed by and oracle and available from the onset for planning. In \autoref{alg:state-aware}, we instead built a non-increasing (in the sense of inclusion) \emph{sequence} of bounds $(L_n,U_n)_{n\geq 0}$, i.e. that verify $0\leq \dots\leq L_{n-1}\leq L_n\leq V\leq U_n\leq U_{n-1}\leq \dots\leq V_{\max}$.
 
 We can consider the sequence $\kappa_n = \kappa(L_n, U_n)$. It is non-increasing and lower-bounded by $1$, thus converges. Let $\hlgb{\kappa_\infty = \lim_{n\rightarrow\infty} \kappa(L_n, U_n)} \in[1,K]$.
+
+\begin{proposition}
+	\el{We need to convey the intuition that $\kappa_\infty$ will be much lower than $\kappa$ in problems where trajectories overlap a lot, for instance problems where two actions cancel-each other out (e.g. moving left or right), or when the outcome of several actions does not depend on the order (e.g. placing pawns on a board game). But this property concerns $\kappa_\infty$ thanks to the aggregation operator providing the bounds $L_n, U_n$, I do not think we can provide more intuition with arbitrary bounds $L,U$.}
+\end{proposition}
+
 \begin{theorem}
 \label{thm:regret-state-aware}
 The \autoref{alg:state-aware} enjoys the following regret bound: 
@@ -412,7 +507,7 @@ nowhere in the document you seem to define precisely the $L$ and $U$ bounds. I t
 Perhaps also provide a complete pseudo-code of the whole procedure (at least in appendix).
 }
 \el{The pseudocode is provided in Algorithm 1, where the bounds $L_n, U_n$ used are written line 1. But it could be made clearer after Proposition 1.}
-\oam{Indeed, it is a bit unclear. Especially, I see the definition of $\cA$ and $\cB$, but not of $\cA_n$ and $\cB_n$. Also the precise meaning of $\cA\cB$ is slightly ambiguous due to the ambiguous definition of $\cA$. Perhaps you can refer to the equation numbers/defs where each term is defined.
+\oam{Indeed, it is a bit unclear. Especially, I see the definition of $M$ and $\cB$, but not of $M_n$ and $\cB_n$. Also the precise meaning of $M\cB$ is slightly ambiguous due to the ambiguous definition of $M$. Perhaps you can refer to the equation numbers/defs where each term is defined.
 }
 \el{The $n$ comes from the fact that A and B actually depend on $\Tau_n$, but I omitted it everywhere for simplicity. I will add a remark on that when I introduce the operators. I will add more references.}
 
@@ -441,16 +536,21 @@ In particular, if $K\geq 3$ then $\hlgb{\kappa_\infty} < \hlrb{\kappa}$.
 \oam{Explain what is natural/expected in this result.  What is perhaps surprising/novel/non-trivial? What impact on practitioners? }
 \oam{Explain here what you used precisely for bounds $U,L$ in these implementations}
 
-\section{Graphical version}
-
-
 \section{Extension to stochastic systems}
 
 Whenever a planning algorithm is based on bounds over the values, our approach can be applied to tighten these bounds while preserving their validity. In particular, when the rewards and/or transitions are stochastic, many algorithms rely on confidence intervals to build statistical bounds on the values that hold with high probability.
 
-
-
 By tightening the bounds, we preserve the guarantees that rely on their validity and rate of convergence. 
+
+\subsection{Stochastic rewards}
+
+KL-OLOP
+
+\subsection{Stochastic dynamics}
+
+MDP-GapE ?
+
+Other closed loop algorithms are not runnable, except BRUE which is not optimistic and does not involve bounds.
 
 \section{Numerical Experiments}
 
@@ -536,7 +636,7 @@ Sketch of proof.\\
 }
 
 \subsection{Proof of \autoref{thm:regret-bound-U}}
-In this proof, we temporarily assume that $U=\cB(U)$ and $L=\cB(L)$. We follow the same steps as in the proof of the regret of \texttt{OPD}.
+In this proof, we temporarily assume that $U=B(U)$ and $L=B(L)$. We follow the same steps as in the proof of the regret of \texttt{OPD}.
 
 \begin{remark}
 It does not hold anymore that $a_n$ must be of maximal depth $d_n$.  This is due to the fact the exploration bonus $\gamma^h U(a)$ is not depth-wise constant: consider two nodes $a,b$ at the same depth with $R(a) > R(b)$. In \texttt{OPD}, both get the same bonus $\gamma^h/(1-\gamma)$, and the node $a$ is expanded first. But with the local bonus, $b$ could be expanded in priority rather than $a$, if its own bonus is sufficiently higher than that of $a$, precisely if $R(a)+\gamma^h U(a) < R(b)+\gamma^h U(b)$. For instance, $U(a)=0$ when $a$ is known to be a terminal state while $b$ can lead to future rewards. If after expanding and exploring the subtree of $b$ we find out that $V(b) = 0$, we still return the recommendation $a$, which is of non-maximal depth.
@@ -548,7 +648,7 @@ The regret bound still holds, however. First, notice that:
 Whenever a node $a$ of depth $h$ is expanded by the optimistic algorithm, its first action $a_1$ enjoys a simple regret $V(a^*)-V(a_1) \leq \gamma^h(U(a)-L(a))$. 
 \end{lemma}
 \begin{proof}
-Let $t$ be the time of expansion of $a$, it holds that $U^a_t(b) \leq U^a_t(a)$ for all $b\in \cL_t$, in particular those in a branch starting by an optimal action $a^*$. Since $U=\cB(U)$ and $L=\cB(L)$, we also have $U^a_t(a^*) = \max_{b\in a^*A^*} U^a_t(b) \leq U^a_t(a)$, and $L^a_t(a_1) = \max{b\in a_1 A^*} L^a_t(b) \geq  L^a_t(a)$. Thus, $V(a^*)-V(a_1) \leq U^a_t(a^*) - L^a_t(a_1) \leq U^a_t(a) - L^a_t(a) = \gamma^h(U(a)-L(a))$.
+Let $t$ be the time of expansion of $a$, it holds that $U^a_t(b) \leq U^a_t(a)$ for all $b\in \cL_t$, in particular those in a branch starting by an optimal action $a^*$. Since $U=B(U)$ and $L=B(L)$, we also have $U^a_t(a^*) = \max_{b\in a^*A^*} U^a_t(b) \leq U^a_t(a)$, and $L^a_t(a_1) = \max{b\in a_1 A^*} L^a_t(b) \geq  L^a_t(a)$. Thus, $V(a^*)-V(a_1) \leq U^a_t(a^*) - L^a_t(a_1) \leq U^a_t(a) - L^a_t(a) = \gamma^h(U(a)-L(a))$.
 \qed\end{proof}
  
 \begin{lemma}
@@ -563,7 +663,7 @@ Let $i$ a node of maximal depth $d_n$, and consider the recommended node $a_n$ a
 Every node expanded by \eqref{eq:sampling_rule} is in $\Tau^\infty(L,U) = \bigcup_{h\geq 0} \Tau^\infty_h(L,U)$.
 \end{lemma}
 \begin{proof}
-Let $a$ be a node of depth $h$ expanded at round $n$, then $U^a_n(a) \geq U^a_n(b)$ for all $b\in\cL_n$. Thus, since $U = \cB(U)$, we have $U^a(a) = \cB(U)^a(\emptyset) = \cB(U)(s_0) \geq V(s_0) = V^*$. Thus, $V^* - V(a) \leq U^a(a) - L^a(a) = \gamma^h(U(a) - L(a))$.
+Let $a$ be a node of depth $h$ expanded at round $n$, then $U^a_n(a) \geq U^a_n(b)$ for all $b\in\cL_n$. Thus, since $U = B(U)$, we have $U^a(a) = B(U)^a(\emptyset) = B(U)(s_0) \geq V(s_0) = V^*$. Thus, $V^* - V(a) \leq U^a(a) - L^a(a) = \gamma^h(U(a) - L(a))$.
 \qed\end{proof}
 
 Finally, we can move on to the proof of \autoref{thm:regret-bound-U}.
@@ -571,7 +671,7 @@ Let $n_d$ be the number of expanded nodes of depth $d$, by \autoref{lemma:expans
 \[n = \sum_{d=1}^{d_n} n_d \leq C\sum_{d=0}^{d_n} \kappa(L,U)^d = C\frac{\kappa(L,U)^{d_n+1}-1}{\kappa(L,U)-1}\]
 Hence, $d_n \geq C'\frac{\log n}{\log\kappa(L,U)},$ which along with \autoref{lemma:expansion-bound} gives the claimed bound.
 
-Note that if $L,\,U$ are consistent bounds that do not verify $L = \cB(L)$ and $U=\cB(U)$, then planning with $\cB(L),\cB(U)$ instead will yield the proved bound with a branching factor $\kappa(\cB(L),\cB(U))$, and since $L\leq\cB(L)\leq V\leq \cB(U)\leq U$ we have $\kappa(\cB(L),\cB(U)) \leq \kappa(L,U)$, which still gives \begin{align*}
+Note that if $L,\,U$ are consistent bounds that do not verify $L = B(L)$ and $U=B(U)$, then planning with $B(L),B(U)$ instead will yield the proved bound with a branching factor $\kappa(B(L),B(U))$, and since $L\leq B(L)\leq V\leq B(U)\leq U$ we have $\kappa(B(L),B(U)) \leq \kappa(L,U)$, which still gives \begin{align*}
 r_n = \cO\left(n^{-\frac{\log 1/\gamma}{\log \kappa(L,U)}}\right);
 \end{align*}
 
@@ -579,13 +679,13 @@ r_n = \cO\left(n^{-\frac{\log 1/\gamma}{\log \kappa(L,U)}}\right);
 \begin{proof}
 Let $U_1, U_2\in \Real^\Tau_n, a\in\Tau_n$,
 \begin{align*}
-    (\cA U_1 - \cA U_2)(a) &= \min_{a'\in\cN_n(a)} U_1(a') - \min_{a'\in\cN_n(a)} U_2(a') \\
+    (M U_1 - M U_2)(a) &= \min_{a'\in\cN_n(a)} U_1(a') - \min_{a'\in\cN_n(a)} U_2(a') \\
     &= \min_{a'\in\cN_n(a)} U_1(a') - U_2(a^-) \\
     &\leq U_1(a^-) - U_2(a^-) \\
     &\leq \|U_1 - U_2\|_\infty
 \end{align*}
 where $a^-\in \argmin_{a'\in\cN_n(a)} U_2(a')$. 
-Hence, $\|\cA U_1 - \cA U_2\|_\infty \leq \|U_1 - U_2\|_\infty$
+Hence, $\|M U_1 - M U_2\|_\infty \leq \|U_1 - U_2\|_\infty$
 \qed\end{proof}
 
 \subsection{Proof of \autoref{prop:early-stopping}}
@@ -645,7 +745,7 @@ The \autoref{fig:mdp-tree} shows the planning tree corresponding to the MDP $\cM
     \label{fig:mdp-tree}
 \end{figure}
 \begin{lemma}
- Any sequence of actions in $\cA\setminus{a_1}$ is in $\Tau^\infty$.
+ Any sequence of actions in $M\setminus{a_1}$ is in $\Tau^\infty$.
 \end{lemma}
 \begin{proof}
 Any such sequence of actions yields the sequence of rewards $r^-, r^+, \dots,r^+$. and end up in the state $s^+$ with value at least $V^*$ (obtained by further taking $a_1$ indefinitely). Thus its value $V_h$ verifies, 
@@ -662,14 +762,14 @@ We can directly conclude that $\kappa \geq \limsup{|\{a_2,\dots,a_K\}^h|^{1/h}} 
 
 Now, consider the nodes expanded by \autoref{alg:state-aware}. The first expansion is that of the root, which discovers $s^*$ and $s^+$. In the absence of information on these two state, the bound $V_{\max}$ is used and the first action $a_1$ gets a higher $U^a$ that any other action $a_2,\dots,a_K$ since $r^* \geq r^-$. Hence, at the second iteration, the node $a_1$ gets expanded. At this point, the self-loop of the state $s^*$ is discovered, which means that form now on the bounds verify $L_n(a_1) = V^* = U_n(a_1)$ for $n\geq2$, which means that $L_n(a_1A^*)-U_n(a_1A^*) = 0$. The nodes $a_2,\dots,a_K$ can be expanded at most once until the entire MDP is discovered and $L_n=V=U_n$ over the entire tree, which means that $\Tau_n^\infty$ is the set of optimal nodes, that is the nodes in the only optimal sequence $a_1^*$. Hence, $\kappa_\infty = 1.$ 
 
-\section{Convergence of $(\cA\cB)^k$}
+\section{Convergence of $(M B)^k$}
 \label{sec:convergence}
 \begin{figure}[H]
     \centering
     \includegraphics[trim=2cm 2cm 2cm 2cm, clip, width=0.4\textwidth]{img/simple_loop.pdf}\\
     \begin{tabular}{cccccc}
          \toprule
-         Operator & $I$ & $\cB$ & $\cA\cB$ & $\cdots$ & $(\cA\cB)^k$ \\
+         Operator & $I$ & $B$ & $M B$ & $\cdots$ & $(M B)^k$ \\
          \midrule
          $U(a)$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
          $U(b)$ & $V_{\max}$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
@@ -680,62 +780,6 @@ Now, consider the nodes expanded by \autoref{alg:state-aware}. The first expansi
     \caption{\textbf{Top}: a looping MDP with $|S|=|A|=1$, and the corresponding expanded tree $\Tau_1$ for a single observed transition. \textbf{Bottom}: the sequence of upper-bounds $(U_n)$ when alternating $A$ and $L$. We obtain $(U_k)$ and $(L_k)$ only go to their limit $V = \frac{1}{2}V_{\max}$ geometrically.} % TODO: r=1/2
     \label{fig:simple_loop}
 \end{figure}
-
-% \section{Efficient implementation}
-
-% \paragraph{Time complexity}
-%  At each step, we perform a value iteration on $n$ nodes, which takes about $\cO\left(\frac{n K}{\log 1/\gamma}\right)$ steps. The entire planning procedure is $\cO\left(\frac{n^2 K}{\log 1/\gamma}\right)$.
-
-% In this section, we consider more efficient ways to implement the aggregation/backup and pruning rules described respectively in sections \ref{sec:aggregation} and \ref{sec:pruning}.
-
-% \paragraph{Aggregation and backup}
-% Let us denote $L_n,U_n$ the bounds used in the sampling rule \eqref{eq:sampling_rule} and recommendation rule \eqref{eq:recommendation_rule} after $n$ leaf expansions, where $L_nU_n$ is defined as the limit of \eqref{eq:recursion}.
-
-% At step $n+1$, after leaf expansion we obtain a novel tree $\Tau_{n+1}$. Instead of recomputing $U_{(n+1)}$ entirely from scratch using \eqref{eq:recursion}, we can instead initialise it with the previous value $U_{n}$ on $\Tau_n$ and $V_{\max}$ on the newly created leaves in $\Tau_{n+1} \setminus \Tau_n$.
-
-% We can notice that if we change the value of a single node $a$, the application of $L$ will only modify $U_{n}$ at its parents and leave the rest of the tree unchanged. Likewise, applying $A$ will only modify the values for the nodes in $\cN_n(a)$ and leave the rest of the tree unchanged. The idea of \autoref{algo:efficient} is
-
-% \paragraph{Leaves pruning}
-
-% When and how should we apply the rule \eqref{eq:pruning} described in \autoref{prop:pruning}?
-
-% The most straightforward way is to apply it once at every step, after the aggregations and backups.
-% The procedure needs to be applied within some equivalence classes $\cN_n(a)$ of nodes $a'$ that lead to the same state $s(a')=s(a)$. If a class $\cN_n$ is of size $p$, then the cost of running \eqref{eq:pruning} is $\cO(p^2)$. This could be improved to $\cO(p \log p)$ by computing the convex hull of the candidates points in $\cN_n(a)$. Indeed, any point $a_1$ that does not belong to the top-frontier of this hull is dominated by some $a_2$, in the sense of \eqref{eq:pruning}.
-
-
-% \begin{algorithm}[htp]
-%   \SetAlgoLined\DontPrintSemicolon
-%   \SetKwFunction{expand}{expand}
-%   \SetKwFunction{update}{update}
-%   \SetKwFunction{backup}{backup}
-%   \SetKwProg{myalg}{Algorithm}{}{}
-%   \myalg{\expand{a}}{
-%   \For{action $b\in A$}{
-%   \nl Simulate action $b$ from state $s(a)$, observe reward $r$ and next state $s'$\;
-%   \nl Create a new node $ab$ with reward $r$,  state $s'$\;
-%   }
-%   \nl \update{a}\;
-%   \;
-%   }
-  
-%   \setcounter{AlgoLine}{0}
-%   \SetKwProg{myproc}{Procedure}{}{}
-%   \myproc{\update{a}}{
-%   \uIf{$a$ is not a leaf}{
-%       \nl $U_{\text{backup}} \leftarrow \max_{b\in A} r(ab)+ \gamma U(s(ab))$\tcp*{Bellman backup $\cB$}
-%       \nl $\Delta \leftarrow U(s(a)) -  U_{\text{backup}}$\tcp*{Is the new bound tighter?}
-%       \nl \lIf{$\Delta > 0$}{$U(s(a))\leftarrow U_{\text{backup}}$\tcp*{Aggregation $\cA$}}
-%       \For{$a'\in\cN_n(a)$\tcp*{Recursion over updated nodes}}{
-%           \uIf{$a'$ is not the root and $\Delta > \epsilon(1-\gamma)\gamma^{-h(a)}$}{
-%               \nl \update{parent of $a'$}
-%           }
-%           }
-%   }
-%   }
-%   \caption{An recursive implementation of $(\cB\cA)^\infty$ with leaves pruning}
-%   \label{algo:efficient}
-% \end{algorithm} 
-
 
 \section{Supplementary Experiments}
 \subsection{Effect of the early stopping}
