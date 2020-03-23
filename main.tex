@@ -574,19 +574,25 @@ where $w_k$ is decreasing ($1/k$, or $\alpha^k$, etc.) ?
 
 \paragraph{Gridworld}
 
-The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, y) = 1 - \frac{1}{5^2}((x-10)^2 + (y-10)^2)$ clipped to [0, 1].
+The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, y) = 1 - \frac{1}{5^2}((x-10)^2 + (y-10)^2)$ clipped to [0, 1].  for $n = 5460$, $\gamma=0.95$
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.49\textwidth]{img/occupations_OPD.pdf}
 	\hfill
     \includegraphics[width=0.49\textwidth]{img/occupations_GBOP-D.pdf}
+    \caption{Deterministic Gridworld}
+    \label{fig:visits-d}
+\end{figure}
+\begin{figure}[H]
+    \centering
     \includegraphics[width=0.49\textwidth]{img/occupations_MDP-GapE.pdf}
     \hfill
     \includegraphics[width=0.49\textwidth]{img/occupations_GBOP.pdf}
-    \caption{Number of visits for $n = 5460$, $\gamma=0.95$}
-    \label{fig:visits}
+    \caption{Stochastic Gridworld}
+    \label{fig:visits-s}
 \end{figure}
+
 
 
 \paragraph{Sailing}
