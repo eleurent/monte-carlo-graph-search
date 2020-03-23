@@ -103,7 +103,7 @@ The quality of that action is assessed in terms of the \emph{simple regret}
 Tree-based planning algorithm date back to the work of \citet{Kearns02SS}, who proposed a uniform sampling approach for planning in MDPs, called \texttt{Sparse} \texttt{Sampling}. This uniform exploration strategy was further analysed with the \texttt{BRUE} algorithm
 \citep{Feldman14BRUE} providing an enhanced value estimation procedure. Another family of algorithms rely on the principle of \emph{Optimism in the Face of Uncertainty} \citep[surveyed by][]{SurveyRemiMCTS}, inspired from the Multi-Armed Bandit problem. This principle was first used in the context of planning in the \texttt{CrazyStone} software \citep{Coulom2006} for computer Go. It was later analysed as the \texttt{UCT} algorithm \citep{Kocsis06UCT}, but was shown by \citet{Coquelin2007} to have a doubly-exponential complexity in the worst case. The {Optimistic Planning for Deterministic Systems} (\texttt{OPD}) algorithm introduced by \citet{hren2008optimistic} was the first to provide a polynomial regret bound, but was limited to sytems with deterministic rewards and dynamics. It was then extended to the {open-loop} setting to handle stochastic rewards \citep{bubeck2010open,leurent2019practical}.
 MDP with known parameters \citep{busoniu2012optimistic}.
-For MDPs with stochastic and unknown transitions, polynomial sample complexities have been obtained for StOP \citep{STOP14}, TrailBlazer \citep{TrailBlazer16} and SmoothCruiser \citep{SmoothCruiser19} but the three algorithms suffer from numerical inefficiency.
+For MDPs with stochastic and unknown transitions, polynomial sample complexities have been obtained for StOP \citep{STOP14}, TrailBlazer \citep{TrailBlazer16} and SmoothCruiser \citep{SmoothCruiser19} but the three algorithms suffer from numerical inefficiency. Indeed, StOP requires to explicitly reason about policies and storing them is very costly, while TrailBlazer and SmoothCruiser require a very large amount of recursive calls even for small MDPs.
 
 
 
@@ -472,8 +472,14 @@ $(U_n^k)$ (resp. $(L_n^k)$) is non-increasing (resp. non-decreasing) and converg
 	the sequence upper-bound $\overline{U^{\infty}}$ is approximated by $\overline{U^{k+1}}$ with an accuracy of $\epsilon$.
 \end{proposition}
 
+Finally, at iteration $n$ we can compute the bounds 
+\begin{equation}
+\label{eq:recursion2}
+L_n = (M_n^- B_n)^\infty(0), \qquad
+U_n = (M_n^+ B_n)^\infty(V_{\max}),
+\end{equation}
 
-The tree version of \Cref{alg:gbopd} is described in \Cref{alg:gbop-t}.\\
+used in the tree version of \Cref{alg:gbopd}, that we describe in \Cref{alg:gbop-t}.\\
 \begin{algorithm}[H]
 	\caption{Tree version of \Cref{alg:gbopd}}
 	\label{alg:gbop-t}
@@ -491,7 +497,7 @@ The tree version of \Cref{alg:gbopd} is described in \Cref{alg:gbop-t}.\\
 
 \subsection{Main result}
 
-In \Cref{thm:regret-bound-U}, we assumed that some bounds $L,\,U$ were revealed by and oracle and available from the onset for planning. In \Cref{alg:gbop-t}, we instead built a non-increasing (in the sense of inclusion) \emph{sequence} of bounds $(L_n,U_n)_{n\geq 0}$, i.e. that verify $0\leq \dots\leq L_{n-1}\leq L_n\leq V\leq U_n\leq U_{n-1}\leq \dots\leq V_{\max}$.
+In \Cref{thm:regret-bound-U}, we assumed that some bounds $L,\,U$ were revealed by an oracle and available from the onset for planning. In \Cref{alg:gbop-t}, we instead built a \emph{sequence} of bounds $(L_n,U_n)_{n\geq 0}$ \eqref{eq:recursion2} that is non-increasing in the sense of inclusion, i.e. $0\leq \dots\leq L_{n-1}\leq L_n\leq V\leq U_n\leq U_{n-1}\leq \dots\leq V_{\max}$.
 
 We can consider the sequence $\kappa_n = \kappa(L_n, U_n)$. It is non-increasing and lower-bounded by $1$, thus converges. Let $\hlgb{\kappa_\infty = \lim_{n\rightarrow\infty} \kappa(L_n, U_n)} \in[1,K]$.
 
@@ -504,6 +510,8 @@ r_n = \tilde{\cO}\left(n^{-\log \frac{1}{\gamma}/\hlgb{\log \kappa_\infty}}\righ
 \end{theorem}
 
 Intuitively, $\kappa_\infty$ will be much lower than $\kappa$ in problems where trajectories overlap a lot. For instance, it will be the case for problems where two actions cancel each-other out (e.g. moving left or right), or are commutative (e.g. placing pawns on a board game).
+
+However, this is merely an intuition. So far we have not proven the existence of problem instances such that $\hlgb{\kappa_\infty} < \hlrb{\kappa}$, which is a legitimate concern since their non-existence would make our \Cref{thm:regret-state-aware} both trivial and uninformative.
 
 \subsection{Illustrative example}
 \label{sec:illustrative-example}
@@ -519,15 +527,16 @@ We consider a toy MDP $\cM$ shown in \Cref{fig:mdp}. The transitions are describ
 \begin{proposition}[Comparison of branching factors]
 \label{prop:illustrative-example}
 The MDP $\cM$ verifies:
-\begin{enumerate*}
+\begin{enumerate}[label=(\roman*)]
     \item $\hlrb{\kappa = K-1}$;
     \item $\hlgb{\kappa_\infty = 1}$.
-\end{enumerate*}
-In particular, if $K\geq 3$ then $\hlgb{\kappa_\infty} < \hlrb{\kappa}$.
+\end{enumerate}
 \end{proposition}
 
+Thus, this result shows that our \Cref{thm:regret-state-aware} is non-trivial since we exhibit a problem where $\hlgb{\kappa_\infty} < \hlrb{\kappa}$ (when $K\geq 3$), and legitimates our attempt to improve planning performances by merging the tree into a graph.
+
 \oam{Explain what is natural/expected in this result.  What is perhaps surprising/novel/non-trivial? What impact on practitioners? }
-\oam{Explain here what you used precisely for bounds $U,L$ in these implementations}
+
 
 \section{Extension to Stochastic Systems}
 
@@ -559,9 +568,7 @@ By tightening the bounds, we preserve the guarantees that rely on their validity
 for each $k\in\mathbb{N}$,  count the number $o_k$ of occupancies at distance $k$ from the goal, then look at a weighted sum, $\sum_{k} w_k o_k$,
 where $w_k$ is decreasing ($1/k$, or $\alpha^k$, etc.) ?
 }
-\el{Alright. Why do you want the weights to decrease with distance?}
 
-\el{Do we need an example (e.g. 1 state 2 actions) to show that even in the cases where $\kappa=\kappa_\infty$ asymptotically, the non-asymptotic behaviour of state-aware planning can be much better?}
 % \paragraph{Illustrative example}
 % We consider the example problem of \Cref{sec:illustrative-example} with $r_1=0$ and $r_2 = 0.7$. As expected from \Cref{prop:illustrative-example}, the tree expanded by \texttt{OPD} is quite balanced, even with such a dense reward and important gap. In contrast, The state-aware planner never expands a suboptimal node.
 % \begin{figure}[H]
@@ -574,22 +581,27 @@ where $w_k$ is decreasing ($1/k$, or $\alpha^k$, etc.) ?
 
 \paragraph{Gridworld}
 
-The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, y) = 1 - \frac{1}{5^2}((x-10)^2 + (y-10)^2)$ clipped to [0, 1].
+The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, y) = 1 - \frac{1}{5^2}((x-10)^2 + (y-10)^2)$ clipped to [0, 1].  for $n = 5460$, $\gamma=0.95$
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.49\textwidth]{img/occupations_OPD.pdf}
+\begin{figure}[t]
+	\centering
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\textwidth]{img/occupations_OPD.pdf}
 	\hfill
-    \includegraphics[width=0.49\textwidth]{img/occupations_GBOP-D.pdf}
-    \includegraphics[width=0.49\textwidth]{img/occupations_MDP-GapE.pdf}
-    \hfill
-    \includegraphics[width=0.49\textwidth]{img/occupations_GBOP.pdf}
-    \caption{Number of visits for $n = 5460$, $\gamma=0.95$}
-    \label{fig:visits}
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\textwidth]{img/occupations_GBOP-D.pdf}
+	\caption{Deterministic Gridworld}
+	\label{fig:visits-d}
+\end{figure}
+\begin{figure}[t]
+	\centering
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\textwidth]{img/occupations_MDP-GapE.pdf}
+	\hfill
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\textwidth]{img/occupations_GBOP.pdf}
+	\caption{Stochastic Gridworld}
+	\label{fig:visits-s}
 \end{figure}
 
 
-\paragraph{Sailing}
+\paragraph{Sailing problem}
 
 \section*{Conclusion}
 
