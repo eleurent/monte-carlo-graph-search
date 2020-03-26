@@ -23,6 +23,7 @@
 \usepackage[makeroom]{cancel}
 \usepackage[inline]{enumitem}
 \usepackage{cleveref}
+\usepackage{placeins}
 
 \usepackage[ruled,vlined]{algorithm2e}
 %\newcommand\mycommfont[1]{\footnotesize\ttfamily\textcolor{blue}{#1}}
@@ -100,10 +101,8 @@ The quality of that action is assessed in terms of the \emph{simple regret}
 	r_n \eqdef V(s) - Q(s, {a}_n), \; \mbox{where} \; V(s) \eqdef  \max_a Q(s, a).
 \end{align}
 
-Tree-based planning algorithm date back to the work of \citet{Kearns02SS}, who proposed a uniform sampling approach for planning in MDPs, called \texttt{Sparse} \texttt{Sampling}. This uniform exploration strategy was further analysed with the \texttt{BRUE} algorithm
-\citep{Feldman14BRUE} providing an enhanced value estimation procedure. Another family of algorithms rely on the principle of \emph{Optimism in the Face of Uncertainty} \citep[surveyed by][]{SurveyRemiMCTS}, inspired from the Multi-Armed Bandit problem. This principle was first used in the context of planning in the \texttt{CrazyStone} software \citep{Coulom2006} for computer Go. It was later analysed as the \texttt{UCT} algorithm \citep{Kocsis06UCT}, but was shown by \citet{Coquelin2007} to have a doubly-exponential complexity in the worst case. The {Optimistic Planning for Deterministic Systems} (\texttt{OPD}) algorithm introduced by \citet{hren2008optimistic} was the first to provide a polynomial regret bound, but was limited to sytems with deterministic rewards and dynamics. It was then extended to the {open-loop} setting to handle stochastic rewards \citep{bubeck2010open,leurent2019practical}.
-MDP with known parameters \citep{busoniu2012optimistic}.
-For MDPs with stochastic and unknown transitions, polynomial sample complexities have been obtained for StOP \citep{STOP14}, TrailBlazer \citep{TrailBlazer16} and SmoothCruiser \citep{SmoothCruiser19} but the three algorithms suffer from numerical inefficiency. Indeed, StOP requires to explicitly reason about policies and storing them is very costly, while TrailBlazer and SmoothCruiser require a very large amount of recursive calls even for small MDPs.
+Tree-based planning algorithm date back to the work of \citet{Kearns02SS}, who proposed a uniform sampling approach for planning in MDPs, called \texttt{Sparse} \texttt{Sampling}. This uniform exploration strategy was further analysed with the \texttt{BRUE} algorithm \citep{Feldman14BRUE} providing an enhanced value estimation procedure. Another family of algorithms rely on the principle of \emph{Optimism in the Face of Uncertainty} \citep[surveyed by][]{Munos14}, inspired from the Multi-Armed Bandit problem. This principle was first used in the context of planning in the \texttt{CrazyStone} software \citep{Coulom2006} for computer Go. This strategy was later analysed with the \texttt{UCT} algorithm \citep{Kocsis06UCT}, but it was shown by \citet{Coquelin2007} to have a doubly-exponential complexity in the worst case. The {Optimistic Planning for Deterministic Systems} (\texttt{OPD}) algorithm introduced by \citet{Hren2008optimistic} was the first to provide a polynomial regret bound, but was limited to systems with deterministic rewards and dynamics. It was then extended to handle stochastic rewards \citep{Bubeck2010open,Leurent2019practical} with deterministic transitions.
+Stochastic transitions were first handled by \citet{Busoniu2012optimistic}, but they required the knowledge of MDP parameters. For MDPs with stochastic and unknown transitions, polynomial sample complexities have been obtained for \texttt{StOP} \citep{Szorenyi14}, \texttt{TrailBlazer} \citep{Grill16} and \texttt{SmoothCruiser} \citep{Grill19} but the three algorithms are intractable in practice: \texttt{StOP} requires the expensive storage of a policies, while \texttt{TrailBlazer} and \texttt{SmoothCruiser} only terminate after a prohibitive amount of samples, even for very small MDPs. \citet{Jonsson2020} proposed \texttt{MDP-GapE}, the first non-uniform tractable algorithm for unknown stochastic MDPs.
 
 
 
@@ -111,7 +110,7 @@ For MDPs with stochastic and unknown transitions, polynomial sample complexities
 % A node is identified with the sequence of $h$ states and actions that leads to it. It leads to a very simple update: after each trajectory, one only needs to update the confidence bounds, $U_h(s_h,a_h)$ and $L_h(s_h,a_h)$, of the visited action-state pairs, see Algorithm~\ref{alg:OptimisticVItraj}. %The complexity of this value iteration is only of order $O(KBH)$ in time and $O(H)$ in space (since we only need to keep the last trajectory).
 % Another option is to merge information for the same states and a fixed depth. But in this case the search tree becomes a \emph{graph} and after each trajectory we need to re-compute the values $U_h(s_h,a_h)$ for all stored state action pairs $(s_h,a_h)$ at each depth, see
 % %we thus need to update  perform a complete optimistic value iteration to update the confidence bounds, see
-% Algorithm~\ref{alg:OptimisticVIcompl}.
+% Algorithm~\ref{alg:OptimisticVIcompl}.f
 % %The complexity of this algorithm is of order $O(KBH)$ in time and $O(H)$.
 
 
@@ -123,6 +122,7 @@ If two trajectories $\tau_1$, $\tau_2$ lead to the same state $s$, the latter is
 
 
 \section{Graph-Based Planning for Deterministic Systems}
+\label{sec:gbopd}
 
 We consider the simple setting of MDPs with deterministic dynamics and rewards.
 We start by giving some background on the interplay of data structures and optimistic planning algorithms.
@@ -172,7 +172,7 @@ The pseudo-code of generic planning algorithm is given in \Cref{alg:generic}.
 \end{algorithm}
 
 These sampling and recommendation rules must be chosen with the goal of minimising the simple regret $r_n$.
-A very popular approach is to follow the principle of \emph{Optimism in the Face of Uncertainty} (OFU) \citep{SurveyRemiMCTS}, which consists in exploring the option that maximises an upper-bound of the true objective. In the context of planning, it can be applied by forming bounds on the state value function $V$.
+A very popular approach is to follow the principle of \emph{Optimism in the Face of Uncertainty} (OFU) \citep{Munos14}, which consists in exploring the option that maximises an upper-bound of the true objective. In the context of planning, it can be applied by forming bounds on the state value function $V$.
 
 \begin{definition}[Value bounds]
 \paragraph{\textbf{On trees.}} We denote by $L:\Tau_n \rightarrow \Real$ and  $U:\Tau_n \rightarrow \Real$ a lower-bound and upper-bound for the state value $V$ defined on the tree $\Tau_n$, such that
@@ -186,7 +186,7 @@ A very popular approach is to follow the principle of \emph{Optimism in the Face
 \end{equation*}
 \end{definition}
 
-Following the OFU principle, at iteration $n$ we must leverage available information to design an upper-bound $U_n$ (or $\cU_n$) on $V$ as tight as possible. Then, in order to select an promising exterior node to expand, the sampling rule starts from the root (or source) and follows the optimistic strategy of always selecting the action which maximises $U_n$ (or $\cU_n$), until reaching an optimistic leaf (or sink) to expand. This strategy was used in \citep[e.g.][]{Kocsis06UCT, hren2008optimistic, bubeck2010open, busoniu2012optimistic}.
+Following the OFU principle, at iteration $n$ we must leverage available information to design an upper-bound $U_n$ (or $\cU_n$) on $V$ as tight as possible. Then, in order to select an promising exterior node to expand, the sampling rule starts from the root (or source) and follows the optimistic strategy of always selecting the action which maximises $U_n$ (or $\cU_n$), until reaching an optimistic leaf (or sink) to expand. This strategy was used in \citep[e.g.][]{Kocsis06UCT, Hren2008optimistic, Bubeck2010open, Busoniu2012optimistic}.
 
 For instance, since we assume that the rewards are bounded in [0, 1], trivial bounds on $V(s)$ are
 $0 \leq V(s) \leq V_{\max} \eqdef {1}/({1-\gamma})$. But these trivial bounds are the same for every node, which makes them non-informative, and do not make use of the observed information. However, they can be used as a valid starting point. Every observed transition stored in the graph / can then be used to tightened these bounds, by using the Bellman Optimal operator.
@@ -229,7 +229,7 @@ $0 \leq V(s) \leq V_{\max} \eqdef {1}/({1-\gamma})$. But these trivial bounds ar
 	\label{fig:bellman}
 \end{figure}
 
-\citet{hren2008optimistic} used this Bellman operator $B_n$ in their \texttt{OPD} algorithm to define a pair of bounds $(L_n,\, U_n)$ at each iteration $n$. They use trivial bounds at the leaves, and backup these estimates up to the root by iteratively applying $B_n$. We can show that, under a \textit{consistency} condition (satisfied by the trivial bounds $0$ and $V_{max}$), applying $B_n$ can only tighten a bound and converges in a finite time.
+\citet{Hren2008optimistic} used this Bellman operator $B_n$ in their \texttt{OPD} algorithm to define a pair of bounds $(L_n,\, U_n)$ at each iteration $n$. They use trivial bounds at the leaves, and backup these estimates up to the root by iteratively applying $B_n$. We can show that, under a \textit{consistency} condition (satisfied by the trivial bounds $0$ and $V_{max}$), applying $B_n$ can only tighten a bound and converges in a finite time.
 
 \begin{definition}[Consistency]
 	We say that a lower-bound $L$ and an upper bound $U$ are \emph{consistent} if they are respectively non-decreasing and non-increasing along sequences of actions:
@@ -250,7 +250,7 @@ $0 \leq V(s) \leq V_{\max} \eqdef {1}/({1-\gamma})$. But these trivial bounds ar
 	\end{enumerate}
 \end{lemma}
 
-This enables \citet{hren2008optimistic} to define non-trivial valid bounds on $V$:
+This enables \citet{Hren2008optimistic} to define non-trivial valid bounds on $V$:
 \begin{align}
 L_n = B_n^{d_n}(0), \qquad U_n = B_n^{d_n}(V_{\max}).
 \end{align}
@@ -258,7 +258,7 @@ L_n = B_n^{d_n}(0), \qquad U_n = B_n^{d_n}(V_{\max}).
 The corresponding \texttt{OPD} algorithm is described in \Cref{alg:opd}. Likewise, we propose \Cref{alg:gbopd} which follows the same approach adapted to a graph structure. Though the two algorithms share a very similar design, we claim that using graphs provides substantial theoretical and practical performance improvements, and back up this statement in \Cref{sec:analysis,sec:experiments}.
 
 \begin{algorithm}[th]
-	\caption{The \emph{Optimistic Planning of Deterministic Systems} (\OPD) algorithm from \citep{hren2008optimistic}.}
+	\caption{The \emph{Optimistic Planning of Deterministic Systems} (\OPD) algorithm from \citep{Hren2008optimistic}.}
 	\label{alg:opd}
 	\DontPrintSemicolon
 	\For{each iteration $n$}{
@@ -285,14 +285,14 @@ The corresponding \texttt{OPD} algorithm is described in \Cref{alg:opd}. Likewis
 		
 		$\hat{s}_n$ = $s_0$\;
 		\While{$\hat{s}_n\in\inte{\cG}_n$}{
-			$\hat{s}_n\gets \displaystyle\argmax_{s'} r(s, a) + \gamma \cU(s')$ \Comment*[r]{Optimistic sampling rule}
+			$\hat{s}_n\gets \displaystyle\argmax_{s'} r(s, a) + \gamma \cU_n(s')$ \Comment*[r]{Optimistic sampling rule}
 		}
 		\For(\Comment*[f]{Node expansion}){action $a\in A$}{
 			Simulate $r, s' \sim \probability{r, s' \condbar s, a}$.\;
 			Get or create the node $s'$ in $\cG_{n+1}$, and add the transition $(s,a) \rightarrow s', r$.
 		}
 	}
-	\Return $\displaystyle\argmax_{a\in A} r(s,a) + \gamma \cL(s(a))$. \Comment*[r]{Conservative recommendation rule}
+	\Return $\displaystyle\argmax_{a\in A} r(s,a) + \gamma \cL_n(s(a))$. \Comment*[r]{Conservative recommendation rule}
 \end{algorithm}
 
 \section{Analysis}
@@ -326,7 +326,7 @@ where ${\Tau^\infty}$ is the subtree of near-optimal nodes $${\Tau_h^\infty} = \
 This problem-dependent measure $\hlrb{\kappa}$ is the branching factor of the subtree $T^\infty$ of near-optimal nodes that can be sampled by \OPD, and acts as an effective branching factor as opposed to the true branching factor $K$. When $\kappa$ is small, fewer nodes need to be explored at a given depth, which means that the planner will be able to plan deeper for a given budget $n$. Thus, it directly impacts the simple regret that can be achieved by \OPD when run on a given MDP.
 
 
-\begin{theorem}[Regret bound of \citealt{hren2008optimistic}]
+\begin{theorem}[Regret bound of \citealt{Hren2008optimistic}]
 \label{thm:regret-opd}
 The \Cref{alg:opd} enjoys the following regret bound:
 \begin{align*}
@@ -540,76 +540,119 @@ Thus, this result shows that our \Cref{thm:regret-state-aware} is non-trivial si
 
 \section{Extension to Stochastic Systems}
 
-Whenever a planning algorithm is based on bounds over the values, our approach can be applied to tighten these bounds while preserving their validity. In particular, when the rewards and/or transitions are stochastic, many algorithms rely on confidence intervals to build statistical bounds on the values that hold with high probability.
 
-\subsection{Episodic planning}
+The approach developed in \Cref{sec:gbopd,sec:analysis} consists in using state similarity to tighten a pair of lower and upper bounds $(L,\,U)$ for the value function $V$. Thus, any planning algorithm that is based on such bounds can benefit from this insight, and any theoretical result based on the validity and rate of convergence of these bounds will be preserved.  
+
+\paragraph{Confidence bounds for rewards}
+
+When the reward $r\sim \probability{r \condbar s,a}$ is stochastic, deviation inequalities can be used to design a confidence interval $[\ell_t(s,a), u_t(s,a)]$ over its expected value $\mu(s,a) = \expectedvalue\left[r | s,a\right]$. For instance, the confidence interval based on the Chernoff-Hoeffding deviation inequality was first used in \citep{Kocsis06UCT,Bubeck2010open}.
+In recent works \citep{Leurent2019practical, Jonsson2020}, a Kullback-Leibler confidence interval is used instead.
+\begin{align*}
+u_t(s,a) &\eqdef \max \left\{v : \kl\!\big(\hat{r}_t(s,a),v\big) \leq \frac {\beta^r(n_t(s,a), \delta)} {n_t(s,a)} \right\},\\
+\ell_t(s,a) &\eqdef\min \left\{v : \kl\!\big(\hat{r}_t(s,a),v\big) \leq \frac {\beta^r(n_t(s,a), \delta)} {n_t(s,a)} \right\},
+\end{align*}
+where $\beta^r$ is an exploration function and $\kl(u,v)$ is the binary Kullback-Leibler divergence between two Bernoulli distributions: $\kl(u,v) = u \log \tfrac {u} {v} + (1-u) \log \tfrac {1-u} {1-v}$.
+
+\paragraph{Confidence bounds for transitions}
+
+A confidence set on the probability vector $p(\cdot|s,a)$ can be defined as
+$\cC_t(s,a) \eqdef \left\{p\in \Sigma_{B} :  \KL\!\big(\hp_t(\cdot|s,a),p\big) \leq \frac {\beta^p(n_t(s,a), \delta)} {n_t(s,a)}\right\}$.
+
+\paragraph{Bellman operator with stochasticity}
+
+\begin{align*}
+\cB_t^+(\cU)(s) &= \max_{a\in A} u_t(s,a) + \gamma \max_{p \in \cC_t(s,a)} \sum_{s'} p(s'|s,a) \cU(s'), \\
+\cB_t^-(\cL)(s) &= \max_{a\in A} \ell_t(s,a) + \gamma \min_{p \in \cC_t(s,a)} \sum_{s'} p(s'|s,a)\cL(s').
+\end{align*}
 
 
-\subsection{Confidence bounds}
+\paragraph{Structure of the planning algorithm}
 
-\paragraph{Stochastic rewards}
+In the deterministic setting, once a transition has been observed, it is known with no uncertainty. Hence, we only simulate transitions from external nodes $\ext{\cG_n}$. In contrast, in the stochastic setting, we need to estimate expected reward and the transition probabilites from many samples, which implies that internal nodes $\inte{\cG_n}$ must be sampled as well.
 
-KL-OLOP
+Stochastic systems: the approach is to sample trajectories of length $H$, where $H$ can be tuned depending on the budget $n$. For instance, in SS, OLOP..., BRUE, MDP GapeE
 
-\paragraph{Stochastic dynamics}
-
-MDP-GapE ?
-
-Other closed loop algorithms are not runnable, except BRUE which is not optimistic and does not involve bounds.
-
-By tightening the bounds, we preserve the guarantees that rely on their validity and rate of convergence. 
+\begin{algorithm}[th]
+	\caption{\emph{Graph-Based Optimistic Planning} (\GBOP) algorithm.}
+	\label{alg:gbopd}
+	\DontPrintSemicolon
+	\For{trajectory $m$ in $[1, M]$}{
+		\For{time $t$ in $[1, H]$}{
+			$n \gets (m - 1)H + t$.\;
+			Compute the bounds $\cL_n = (\cB_n^-)^{\infty}(0)$ and $\cU_n = (\cB_n^+)^\infty(V_{\max})$.\; 
+			$\hat{a}_t\gets \displaystyle\argmax_{a\in A} r(s_t, a) + \gamma \cU_n(s')$ \Comment*[r]{Optimistic sampling rule}
+			Simulate $r_t, s_{t+1} \sim \probability{r, s_{t+1} \condbar s_t, \hat{a}_t}$.\;
+			Get or create the node $s_{t+1}$ in $\cG_{n+1}$, and add an occurence of the transition $(s_t,\hat{a}_t, r_t, s_{t+1})$.
+		}
+	}
+	\Return $\displaystyle\argmax_{a\in A} r(s,a) + \gamma \cL_n(s(a))$. \Comment*[r]{Conservative recommendation rule}
+\end{algorithm}
 
 \section{Numerical Experiments}
 \label{sec:experiments}
 
-\oam{Better explain the figures shown in this section}
-
-\oam{On top of the illustrative pictures, would it be possible to compute some simple score, say 
-for each $k\in\mathbb{N}$,  count the number $o_k$ of occupancies at distance $k$ from the goal, then look at a weighted sum, $\sum_{k} w_k o_k$,
-where $w_k$ is decreasing ($1/k$, or $\alpha^k$, etc.) ?
-}
-
-% \paragraph{Illustrative example}
-% We consider the example problem of \Cref{sec:illustrative-example} with $r_1=0$ and $r_2 = 0.7$. As expected from \Cref{prop:illustrative-example}, the tree expanded by \texttt{OPD} is quite balanced, even with such a dense reward and important gap. In contrast, The state-aware planner never expands a suboptimal node.
-% \begin{figure}[H]
-%     \centering
-%     \includegraphics[width=0.49\textwidth]{img/bandit_deterministic.pdf}
-%     \includegraphics[width=0.49\textwidth]{img/bandit_state_aware.pdf}
-%     \caption{Trees expanded for $n = 200$, $\gamma=0.99$}
-%     \label{fig:bandit_trees}
-% \end{figure}
 
 \paragraph{Gridworld}
 
 The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, y) = 1 - \frac{1}{5^2}((x-10)^2 + (y-10)^2)$ clipped to [0, 1].  for $n = 5460$, $\gamma=0.95$
 
-\begin{figure}[t]
+\begin{figure}[ht]
 	\centering
-	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\textwidth]{img/occupations_OPD.pdf}
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_OPD.pdf}
 	\hfill
-	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\textwidth]{img/occupations_GBOP-D.pdf}
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_GBOP-D.pdf}
 	\caption{Deterministic Gridworld}
-	\label{fig:visits-d}
+	\label{fig:deterministic-gridworld}
 \end{figure}
-\begin{figure}[t]
+\begin{figure}[ht]
 	\centering
-	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\textwidth]{img/occupations_KL-OLOP.pdf}
+%	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_KL-OLOP.pdf}
+%	\hfill
+%	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_BRUE.pdf}
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_MDP-GapE.pdf}
 	\hfill
-	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\textwidth]{img/occupations_BRUE.pdf}
-	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\textwidth]{img/occupations_MDP-GapE.pdf}
-	\hfill
-	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\textwidth]{img/occupations_GBOP.pdf}
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_GBOP.pdf}
 	\caption{Stochastic Gridworld}
-	\label{fig:visits-s}
+	\label{g:stochastic-gridworld}
 \end{figure}
-
 
 \paragraph{Sailing problem}
+
+By running linear regression, we find a slope of $\sigma \simeq-0.04$ for BRUE, KL-OLOP, MDP-GapE, which corresponds to an effective branching factor $\kappa_e \simeq \exp(-\log(1/\gamma)/\sigma) = 3.6$. In contrast, \GBOP has a slope $\sigma \simeq-0.3$, which corresponds to an effective branching factor $\kappa_e \simeq 1.2$.
+
+\begin{figure}[ht]
+	\begin{subfigure}[b]{0.49\textwidth}
+		\includegraphics[trim = {0 0 0 0}, clip, width=\linewidth]{img/score.pdf}
+		\caption{Exploration score in the gridworld domain}
+		\label{fig:1}
+	\end{subfigure}
+	%
+	\begin{subfigure}[b]{0.49\textwidth}
+		\includegraphics[trim = {0 0 0 0}, clip, width=\linewidth]{img/simple_regret.pdf}
+		\caption{Simple regret $r_n$ in the sailing domain}
+		\label{fig:2}
+	\end{subfigure}
+\end{figure}
+
+%
+%\begin{figure}[ht]
+%	\centering
+%
+%	\caption{Sailing problem}
+%	\label{fig:sailing}
+%\end{figure}
+%\begin{figure}[ht]
+%	\centering
+%
+%	\caption{Sailing problem}
+%	\label{fig:sailing}
+%\end{figure}
+
 
 
 \section*{Conclusion}
 
-
+\FloatBarrier
 \bibliography{references}
 
 
@@ -618,7 +661,7 @@ The reward is a paraboloid centred at $(10, 10)$ with length-scale of 5:  $r(x, 
 
 \section{Proofs}
 \subsection{Proof of \Cref{thm:regret-opd}}
-We simply recall the sketch of the proof of \citet{hren2008optimistic}.\\
+We simply recall the sketch of the proof of \citet{Hren2008optimistic}.\\
 
 \begin{enumerate}
 	\item The recommendation $a_n$ has a maximal depth $d_n$ in the tree, and its gap $r_n = V^\star - V({a_{n,1}})$ is bounded by $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$. We need to relate $d_n$ to $n$.
@@ -740,7 +783,7 @@ The \Cref{fig:mdp-tree} shows the planning tree corresponding to the MDP $\cM$. 
 
 \begin{figure}
     \centering
-    \includegraphics[trim={3.5cm 2cm 0.5cm 0.5cm}, clip, width=0.6\textwidth]{img/mdp_tree.pdf}
+    \includegraphics[trim={3.5cm 2cm 0.5cm 0.5cm}, clip, width=0.6\linewidth]{img/mdp_tree.pdf}
     \caption{Planning tree of the MDP $\cM$ of \Cref{fig:mdp}}.
     \label{fig:mdp-tree}
 \end{figure}
@@ -766,18 +809,18 @@ Now, consider the nodes expanded by \Cref{alg:gbop-t}. The first expansion is th
 \label{sec:convergence}
 \begin{figure}[H]
     \centering
-    \includegraphics[trim=2.5cm 1cm 1.5cm 2cm, clip, width=0.4\textwidth]{img/loop.pdf}\\
+    \includegraphics[trim=2.5cm 1cm 1.5cm 2cm, clip, width=0.35\linewidth]{img/loop.pdf}\\
     \begin{tabular}{cccccc}
          \toprule
          Operator & $I$ & $B$ & $M B$ & $\cdots$ & $(M B)^k$ \\
          \midrule
-         $U(a)$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
-         $U(b)$ & $V_{\max}$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
-         $L(a)$ & $0$ & $\frac{1}{2}$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
-		 $L(b)$ & $0$ & $0$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
+         $U^k(a)$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
+         $U^k(b)$ & $V_{\max}$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
+         $L^k(a)$ & $0$ & $\frac{1}{2}$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
+		 $L^k(b)$ & $0$ & $0$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
          \bottomrule
     \end{tabular}
-    \caption{\textbf{Top}: a looping MDP with $|S|=|A|=1$, and the corresponding expanded tree $\Tau_1$ for a single observed transition. \textbf{Bottom}: the sequence of upper-bounds $(U_n)$ when alternating $A$ and $L$. $(U_k)$ and $(L_k)$ converge geometrically to their limit $V = \frac{1}{2}V_{\max}$, thus in infinite time.} % TODO: r=1/2
+    \caption{\textbf{Top}: a looping MDP with $|S|=|A|=1$, and the corresponding expanded tree $\Tau_1$ after having observed a single transition ($n=1$). \textbf{Bottom}: the sequence of bounds $(U_1^k)$ when alternating $M$ and $B$. $(U_1^k)$ and $(L_1^k)$ converge geometrically to their limit $V = \frac{1}{2}V_{\max}$, thus in infinite time.}
     \label{fig:simple_loop}
 \end{figure}
 
@@ -786,9 +829,9 @@ Now, consider the nodes expanded by \Cref{alg:gbop-t}. The first expansion is th
 \subsection{Trees expanded}
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.44\textwidth]{img/tree_OPD.pdf}
-%    \includegraphics[width=0.44\textwidth]{img/tree_KL-OLOP.pdf}
-	\includegraphics[width=0.44\textwidth]{img/tree_GBOP-D.pdf}
+	\includegraphics[width=0.44\linewidth]{img/tree_OPD.pdf}
+%    \includegraphics[width=0.44\linewidth]{img/tree_KL-OLOP.pdf}
+	\includegraphics[width=0.44\linewidth]{img/tree_GBOP-D.pdf}
 	\caption{Trees expanded for $n = 5460$, $\gamma=0.95$}
 	\label{fig:trees_expanded}
 \end{figure}
@@ -797,31 +840,31 @@ Now, consider the nodes expanded by \Cref{alg:gbop-t}. The first expansion is th
 
 \begin{figure}[H]
 	\centering
-	% \includegraphics[width=0.49\textwidth]{img/4_updates_deterministic.pdf}
-	% \includegraphics[width=0.49\textwidth]{img/4_updates_kl-olop.pdf}
-	\includegraphics[width=0.44\textwidth]{img/updates_GBOP-D.pdf}
+	% \includegraphics[width=0.49\linewidth]{img/4_updates_deterministic.pdf}
+	% \includegraphics[width=0.49\linewidth]{img/4_updates_kl-olop.pdf}
+	\includegraphics[width=0.44\linewidth]{img/updates_GBOP-D.pdf}
 	\caption{Number of updates in the leaf expansion for $n = 5460$, $\gamma=0.95$}
 	\label{fig:gw4_updates}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \begin{subfigure}[b]{\textwidth}
+    \begin{subfigure}[b]{\linewidth}
         \centering
         \includegraphics[width=0.49\linewidth]{img/epsilon/0/updates_state_aware.pdf}
         \includegraphics[width=0.49\linewidth]{img/epsilon/0/occupations_state_aware.pdf}
         \caption{$\epsilon=0$}
     \end{subfigure}
-    \begin{subfigure}[b]{\textwidth}
+    \begin{subfigure}[b]{\linewidth}
         \centering
-        \includegraphics[width=0.49\textwidth]{img/epsilon/1e-2/updates_state_aware.pdf}
-        \includegraphics[width=0.49\textwidth]{img/epsilon/1e-2/occupations_state_aware.pdf}
+        \includegraphics[width=0.49\linewidth]{img/epsilon/1e-2/updates_state_aware.pdf}
+        \includegraphics[width=0.49\linewidth]{img/epsilon/1e-2/occupations_state_aware.pdf}
         \caption{$\epsilon=1e-2$}
     \end{subfigure}
-    \begin{subfigure}[b]{\textwidth}
+    \begin{subfigure}[b]{\linewidth}
         \centering
-        \includegraphics[width=0.49\textwidth]{img/epsilon/1e-1/updates_state_aware.pdf}
-        \includegraphics[width=0.49\textwidth]{img/epsilon/1e-2/occupations_state_aware.pdf}
+        \includegraphics[width=0.49\linewidth]{img/epsilon/1e-1/updates_state_aware.pdf}
+        \includegraphics[width=0.49\linewidth]{img/epsilon/1e-2/occupations_state_aware.pdf}
         \caption{$\epsilon=1e-1$}
     \end{subfigure}
     \caption{Updates and occupancies for various values of $\epsilon$, for $n = 5460$, $\gamma=0.95$}
@@ -830,22 +873,22 @@ Now, consider the nodes expanded by \Cref{alg:gbop-t}. The first expansion is th
 \begin{figure}[H]
 \ContinuedFloat
     \centering
-    \begin{subfigure}[b]{\textwidth}
+    \begin{subfigure}[b]{\linewidth}
         \centering
-        \includegraphics[width=0.49\textwidth]{img/epsilon/1e0/updates_state_aware.pdf}
-        \includegraphics[width=0.49\textwidth]{img/epsilon/1e0/occupations_state_aware.pdf}
+        \includegraphics[width=0.49\linewidth]{img/epsilon/1e0/updates_state_aware.pdf}
+        \includegraphics[width=0.49\linewidth]{img/epsilon/1e0/occupations_state_aware.pdf}
         \caption{$\epsilon=1e0$}
     \end{subfigure}
-    \begin{subfigure}[b]{\textwidth}
+    \begin{subfigure}[b]{\linewidth}
         \centering
-        \includegraphics[width=0.49\textwidth]{img/epsilon/1e1/updates_state_aware.pdf}
-        \includegraphics[width=0.49\textwidth]{img/epsilon/1e1/occupations_state_aware.pdf}
+        \includegraphics[width=0.49\linewidth]{img/epsilon/1e1/updates_state_aware.pdf}
+        \includegraphics[width=0.49\linewidth]{img/epsilon/1e1/occupations_state_aware.pdf}
         \caption{$\epsilon=1e1$}
     \end{subfigure}
-    \begin{subfigure}[b]{\textwidth}
+    \begin{subfigure}[b]{\linewidth}
         \centering
-        \includegraphics[width=0.49\textwidth]{img/epsilon/1e2/updates_state_aware.pdf}
-        \includegraphics[width=0.49\textwidth]{img/epsilon/1e2/occupations_state_aware.pdf}
+        \includegraphics[width=0.49\linewidth]{img/epsilon/1e2/updates_state_aware.pdf}
+        \includegraphics[width=0.49\linewidth]{img/epsilon/1e2/occupations_state_aware.pdf}
         \caption{$\epsilon=1e2 = V_{\max}$}
     \end{subfigure}
     \caption{Updates and occupancies for various values of $\epsilon$, for $n = 5460$, $\gamma=0.95$}
