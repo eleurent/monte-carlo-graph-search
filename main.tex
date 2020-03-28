@@ -154,10 +154,10 @@ These data structures can be used to store information about the MDP, such as th
 \subsection{Optimistic planning}
 
 A planning algorithm is typically composed of two main rules:
-\begin{enumerate}[label=(\roman*)]
+\begin{enumerate*}[label=(\roman*)]
 	\item A \emph{sampling rule}, that selects promising transitions to simulate at each iteration $n$;
 	\item A \emph{recommendation rule}, that recommends a first good action to take.
-\end{enumerate}
+\end{enumerate*}
 %The pseudo-code of generic planning algorithm is provided in \Cref{alg:generic}.
 %\begin{algorithm}
 %	\caption{A generic planning algorithm}
@@ -173,7 +173,7 @@ A planning algorithm is typically composed of two main rules:
 %	\Return the recommended action $a_{n}$ according to the \textbf{recommendation rule}.\;
 %\end{algorithm}
 These rules can be chosen with the goal of minimising the simple regret $r_n$.
-A popular approach is to follow the principle of \emph{Optimism in the Face of Uncertainty} (OFU) \citep{Munos14}, which consists in exploring the option that maximises an upper-bound of the true objective. In the context of planning, it has been applied by forming bounds on the value function $V$.
+A popular approach is to follow the principle of \emph{Optimism in the Face of Uncertainty} (OFU) \citep[see][]{Munos14}, which consists in exploring the option that maximises an upper-bound of the true objective. In the context of planning, it has been applied by forming bounds on the value function $V$.
 
 \begin{definition}[Value bounds]
 \paragraph{\textbf{On trees.}} We denote by $L:\Tau_n \rightarrow \Real$ and  $U:\Tau_n \rightarrow \Real$ a lower-bound and upper-bound for the state value $V$ defined on the tree $\Tau_n$, such that
@@ -527,14 +527,14 @@ We consider a toy MDP $\cM$ shown in \Cref{fig:mdp}. The transitions are describ
 
 \begin{proposition}[Comparison of branching factors]
 \label{prop:illustrative-example}
-The MDP $\cM$ verifies:
-\begin{enumerate}[label=(\roman*)]
-    \item $\hlrb{\kappa = K-1}$;
-    \item $\hlgb{\kappa_\infty = 1}$.
-\end{enumerate}
+The MDP $\cM$ verifies $\hlrb{\kappa = K-1}$ and $\hlgb{\kappa_\infty = 1}$.
+% :
+% \begin{enumerate}[label=(\roman*)]
+%     \item $\hlrb{\kappa = K-1}$;
+%     \item $\hlgb{\kappa_\infty = 1}$.
+% \end{enumerate}
 \end{proposition}
-
-Thus, this result shows that \Cref{thm:regret-state-aware} is non-trivial since we exhibit a problem where $\hlgb{\kappa_\infty} < \hlrb{\kappa}$ (when $K\geq 3$), and legitimates our attempt to improve planning performances by merging the tree into a graph.
+This result confirms that \Cref{thm:regret-state-aware} is non-trivial since we exhibit a problem where $\hlgb{\kappa_\infty} < \hlrb{\kappa}$ (when $K\geq 3$), and legitimates our attempt to improve planning performances by merging the tree into a graph.
 
 
 \section{Extension to Stochastic Systems}
