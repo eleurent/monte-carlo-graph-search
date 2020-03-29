@@ -47,7 +47,8 @@ comma,         % use commas as separators
 % Source: http://phaseportrait.blogspot.de/2011/02/natbib-compatible-bibtex-style-bst-file.html
 \bibliographystyle{splncsnat}
 
-\usepackage{todonotes}
+%\usepackage{todonotes}
+\usepackage[disable]{todonotes}
 \newcommand{\oam}[1]{\todo[inline,color=orange!40]{{\textbf{OM:}~}#1}}
 \newcommand{\el}[1]{\todo[inline,color=green!40]{{\textbf{EL:}~}#1}}
 
@@ -217,7 +218,6 @@ $0 \leq V(s) \leq V_{\max} \eqdef {1}/({1-\gamma})$. But these trivial bounds ar
 	\caption{Depiction of the Bellman backup operators $B$ (left) and $\cB$ (right). Notice that $B$ only propagates information upward in the tree.}
 	\label{fig:bellman}
 \end{figure}
-\el{il manque $\cB_n$ dans la figure}
 
 \citet{Hren2008optimistic} used this Bellman operator $B_n$ in their \texttt{OPD} algorithm to define a pair of bounds $(L_n,\, U_n)$ at each iteration $n$. They use trivial bounds at the leaves, and backup these estimates up to the root by iteratively applying $B_n$. We can show that, under a \textit{monotonicity} condition (satisfied by the trivial bounds $0$ and $V_{max}$), applying $B_n$ can only tighten a bound and converges in a finite time.
 
@@ -230,6 +230,7 @@ $0 \leq V(s) \leq V_{\max} \eqdef {1}/({1-\gamma})$. But these trivial bounds ar
 \end{definition}
 
 \begin{lemma}[Properties of $B_n$]
+	\label{lem:properties-b-tree}
 	\begin{enumerate}[label=(\roman*)]
 		\item $B_n$ preserves monotonicity and tightens monotonic bounds: $$
 		L \leq B_n(L) \leq V \leq B_n(U) \leq U;
@@ -243,7 +244,7 @@ L_n = B_n^{d_n}(0), \qquad U_n = B_n^{d_n}(V_{\max}).
 \end{align}
 and their \texttt{OPD} algorithm, described in \Cref{alg:opd}. Likewise, we have:
 \begin{lemma}[Properties of $\cB_n$]
-	\label{prop:bellman-graph}
+	\label{lem:properties-b-graph}
 	\begin{enumerate}[label=(\roman*)]
 		\item $\cB_n$ preserves monotonicity and tightens monotonic bounds: $$
 		\cL \leq \cB_n(\cL) \leq V \leq \cB_n(\cU) \leq \cU;
@@ -335,7 +336,7 @@ where $f_n = \tilde{\cO}(n^{-\alpha})$ means that for any $\alpha'<\alpha$, $f_n
 
 $\hlrb{\kappa}$ is typically small in problems where there is one clearly identified optimal trajectory, of which any deviation can be quickly dismissed as suboptimal. Conversely, $\kappa$ is large when there are many suboptimal trajectories that cannot be distinguished easily based on their values, which requires the uniform exploration of the entire tree $T$ with its original branching factor $K$.
 
-%\oam{Recall some examples from literature.}
+\oam{Recall some examples from literature.}
 \oam{Add discussion regarding literature scarcity on the topic}
 
 \subsection{Motivation for an improved regret bound}
@@ -374,7 +375,9 @@ $ \displaystyle
 $
 \end{definition}
 
-\begin{lemma}This branching factor shrinks as the bounds $(L,\,U)$ get tighter:
+\begin{lemma}
+\label{lem:shrink}
+This branching factor shrinks as the bounds $(L,\,U)$ get tighter:
 \[L_2\leq L_1\leq V\leq U_1\leq U_2\implies \kappa(L_1,U_1) \leq \kappa(L_2,U_2).\]
 In particular, $\hlbb{\kappa(L,U)} \leq \hlrb{\kappa}$.
 \end{lemma}
@@ -554,7 +557,7 @@ In this work, we do not discuss the tuning of $\beta^r$, $\beta^p$, but simply a
 \cB_t^+(\cU)(s) &= \max_{a\in A} u_t(s,a) + \gamma \max_{p \in \cC_t(s,a)} \sum_{s'} p(s'|s,a) \cU(s'), \\
 \cB_t^-(\cL)(s) &= \max_{a\in A} \ell_t(s,a) + \gamma \min_{p \in \cC_t(s,a)} \sum_{s'} p(s'|s,a)\cL(s'),
 \end{align*}
-for all $s\in\inte{\cG_n}$, where the maximum and minimum over these Kullback-Leibler confidence regions $\cC_t(s,a)$ can be computed as explained in \citep[Appendix A of][]{Filippi2010optimism}. Under the event that every confidence regions $[\ell_t(s,a), u_t(s,a)]$ and $\cC_t(s,a)$ are valid at time $t$, the \Cref{prop:bellman-graph} still holds for $\cB_t^-, \cB_t^+$.
+for all $s\in\inte{\cG_n}$, where the maximum and minimum over these Kullback-Leibler confidence regions $\cC_t(s,a)$ can be computed as explained in \citep[Appendix A of][]{Filippi2010optimism}. Under the event that every confidence regions $[\ell_t(s,a), u_t(s,a)]$ and $\cC_t(s,a)$ are valid at time $t$, the \Cref{lem:properties-b-graph} still holds for $\cB_t^-, \cB_t^+$.
 
 \paragraph{Structure of the planning algorithm}
 
@@ -622,22 +625,6 @@ In a second experiment, we consider the problem of a boat sailing in $K=8$ direc
 	\caption{Benchmark of planning performances.}
 \end{figure}
 
-%
-%\begin{figure}[ht]
-%	\centering
-%
-%	\caption{Sailing problem}
-%	\label{fig:sailing}
-%\end{figure}
-%\begin{figure}[ht]
-%	\centering
-%
-%	\caption{Sailing problem}
-%	\label{fig:sailing}
-%\end{figure}
-
-
-
 \section*{Conclusion}
 
 We proposed an algorithm that exploits a graph structure to plan in an MDP with a generative model under limited budget $n$. We showed this graph structure provides a benefit compared to tree structure in the deterministic setting, that translates as an improved regret bound that depends on a smaller problem difficulty. This improvement can also be observed with stochastic problems, as we demonstrate experimentally.
@@ -645,11 +632,15 @@ We proposed an algorithm that exploits a graph structure to plan in an MDP with 
 \FloatBarrier
 \bibliography{references}
 
-
 \clearpage
 \appendix
 
 \section{Proofs}
+
+\subsection{Proof of \Cref{lem:properties-b-tree}}
+
+\subsection{Proof of \Cref{lem:properties-b-graph}}
+
 \subsection{Proof of \Cref{thm:regret-opd}}
 We recall the main steps of the proof of \citet{Hren2008optimistic}.\\
 
@@ -667,6 +658,8 @@ We recall the main steps of the proof of \citet{Hren2008optimistic}.\\
 	\cO(\gamma^{\frac{\log n}{\log \kappa}}) = \cO(n^{-\frac{\log 1/\gamma}{\log \kappa}}) &\text{else.}
 	\end{cases}$
 \end{enumerate}
+
+\subsection{Proof of \Cref{lem:shrink}}
 
 \subsection{Proof of \Cref{thm:regret-bound-U}}
 In this proof, we temporarily assume that $U=B(U)$ and $L=B(L)$. We follow the same steps as in the proof of the regret of \texttt{OPD}.
@@ -721,28 +714,6 @@ where $a^-\in \argmin_{a'\in N_n(a)} U_2(a')$.
 Hence, $\|M_n^+ U_1 - M_n^+ U_2\|_\infty \leq \|U_1 - U_2\|_\infty$
 \qed\end{proof}
 
-\subsection{Proof of \Cref{prop:early-stopping}}
-
-\begin{proof}
-Let $a\in A^h$. We consider the sequence $(\overline{U}_n)_{n\in\Natural}$.
-Notice that for any $U,V\in\Real^\Tau$, we have $\overline{U}(a)-\overline{V}(a)=\gamma^h(U(a)-V(a))$.
-
-Hence, if the premise holds,
-\begin{align*}
-    |\overline{U}_{k+1}(a) - \overline{U}_{k}(a)| &\leq \gamma^h\epsilon (1-\gamma)\gamma^{-h-1} = \epsilon (1-\gamma)\gamma^{-1}
-\end{align*}
-
-And then,
-\begin{align*}
-|\overline{U}_{k+1}(a) - \overline{U}_\infty(a)| &= \gamma^h |U_{k+1}(a) - U_\infty(a)|\\
-&\leq \gamma^{h+1}|U_{k}(a) - U_\infty(a)| \text{ since $LA$ is a $\gamma$-contraction}\\
-&\leq \gamma^{h+1}|U_{k}(a) - U_{k+1}(a)| + \gamma^{h+1}|U_{k+1}(a) - U_\infty(a)|\\
-&= \gamma|\overline{U}_{k}(a) - \overline{U}_{k+1}(a)| + \gamma |\overline{U}_{k+1}(a) - \overline{U}_\infty(a)|\\
-&\leq \frac{\gamma}{1-\gamma} |\overline{U}_{k}(a) - \overline{U}_{k+1}(a)|\\
-&\leq\epsilon
-\end{align*}
-\qed\end{proof}
-
 \subsection{Proof of \Cref{prop:pruning}}
 
 \begin{proof}
@@ -754,6 +725,23 @@ Assume $h(a_2) \geq h(a_1)$.
 \end{align*}
 Hence, if this last term is negative, then $V(a_1) - V(a_2)$ is as well.
 \qed\end{proof}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[trim=2.5cm 1cm 1.5cm 2cm, clip, width=0.35\linewidth]{img/loop.pdf}\\
+	\begin{tabular}{cccccc}
+		\toprule
+		Operator & $I$ & $B$ & $M B$ & $\cdots$ & $(M B)^k$ \\
+		\midrule
+		$U^k(a)$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
+		$U^k(b)$ & $V_{\max}$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
+		$L^k(a)$ & $0$ & $\frac{1}{2}$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
+		$L^k(b)$ & $0$ & $0$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
+		\bottomrule
+	\end{tabular}
+	\caption{\textbf{Top}: a looping MDP with $|S|=|A|=1$, and the corresponding expanded tree $\Tau_1$ after having observed a single transition ($n=1$). \textbf{Bottom}: the sequence of bounds $(U_1^k)$ when alternating $M$ and $B$. $(U_1^k)$ and $(L_1^k)$ converge geometrically to their limit $V = \frac{1}{2}V_{\max}$, thus in infinite time.}
+	\label{fig:simple_loop}
+\end{figure}
 
 \subsection{Proof of \Cref{thm:regret-gbop-t}}
 
@@ -773,7 +761,7 @@ The \Cref{fig:mdp-tree} shows the planning tree corresponding to the MDP $\cM$. 
 
 \begin{figure}
     \centering
-    \includegraphics[trim={3.5cm 2cm 0.5cm 0.5cm}, clip, width=0.6\linewidth]{img/mdp_tree.pdf}
+    \includegraphics[trim={3.5cm 2cm 0.5cm 0.5cm}, clip, width=0.5\linewidth]{img/mdp_tree.pdf}
     \caption{Planning tree of the MDP $\cM$ of \Cref{fig:mdp}}.
     \label{fig:mdp-tree}
 \end{figure}
@@ -795,23 +783,86 @@ We can directly conclude that $\kappa \geq \limsup{|\{a_2,\dots,a_K\}^h|^{1/h}} 
 
 Now, consider the nodes expanded by \Cref{alg:gbop-t}. The first expansion is that of the root, which discovers $s^\star$ and $s^+$. In the absence of information on these two state, the bound $V_{\max}$ is used and the first action $a_1$ gets a higher $\overline{U}$ that any other action $a_2,\dots,a_K$ since $r^\star \geq r^-$. Hence, at the second iteration, the node $a_1$ gets expanded. At this point, the self-loop of the state $s^\star$ is discovered, which means that form now on the bounds verify $L_n(a_1) = V^\star = U_n(a_1)$ for $n\geq2$, which means that $L_n(a_1A^*)-U_n(a_1A^*) = 0$. The nodes $a_2,\dots,a_K$ can be expanded at most once until the entire MDP is discovered and $L_n=V=U_n$ over the entire tree, which means that $\Tau_n^\infty$ is the set of optimal nodes, that is the nodes in the only optimal sequence $a_1^\star$. Hence, $\kappa_\infty = 1.$ 
 
-\section{Convergence of $(M B)^k$}
-\label{sec:convergence}
+\section{Efficient Implementation}
+
+\subsection{Early stopping}
+
+Proof of \Cref{prop:early-stopping}
+\begin{proof}
+	Let $a\in A^h$. We consider the sequence $(\overline{U}_n)_{n\in\Natural}$.
+	Notice that for any $U,V\in\Real^\Tau$, we have $\overline{U}(a)-\overline{V}(a)=\gamma^h(U(a)-V(a))$.
+	
+	Hence, if the premise holds,
+	\begin{align*}
+	|\overline{U}_{k+1}(a) - \overline{U}_{k}(a)| &\leq \gamma^h\epsilon (1-\gamma)\gamma^{-h-1} = \epsilon (1-\gamma)\gamma^{-1}
+	\end{align*}
+	
+	And then,
+	\begin{align*}
+	|\overline{U}_{k+1}(a) - \overline{U}_\infty(a)| &= \gamma^h |U_{k+1}(a) - U_\infty(a)|\\
+	&\leq \gamma^{h+1}|U_{k}(a) - U_\infty(a)| \text{ since $LA$ is a $\gamma$-contraction}\\
+	&\leq \gamma^{h+1}|U_{k}(a) - U_{k+1}(a)| + \gamma^{h+1}|U_{k+1}(a) - U_\infty(a)|\\
+	&= \gamma|\overline{U}_{k}(a) - \overline{U}_{k+1}(a)| + \gamma |\overline{U}_{k+1}(a) - \overline{U}_\infty(a)|\\
+	&\leq \frac{\gamma}{1-\gamma} |\overline{U}_{k}(a) - \overline{U}_{k+1}(a)|\\
+	&\leq\epsilon
+	\end{align*}
+	\qed\end{proof}
+
+
+\subsubsection{Experiment on the gridworld domain}
+
 \begin{figure}[H]
-    \centering
-    \includegraphics[trim=2.5cm 1cm 1.5cm 2cm, clip, width=0.35\linewidth]{img/loop.pdf}\\
-    \begin{tabular}{cccccc}
-         \toprule
-         Operator & $I$ & $B$ & $M B$ & $\cdots$ & $(M B)^k$ \\
-         \midrule
-         $U^k(a)$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
-         $U^k(b)$ & $V_{\max}$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
-         $L^k(a)$ & $0$ & $\frac{1}{2}$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
-		 $L^k(b)$ & $0$ & $0$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
-         \bottomrule
-    \end{tabular}
-    \caption{\textbf{Top}: a looping MDP with $|S|=|A|=1$, and the corresponding expanded tree $\Tau_1$ after having observed a single transition ($n=1$). \textbf{Bottom}: the sequence of bounds $(U_1^k)$ when alternating $M$ and $B$. $(U_1^k)$ and $(L_1^k)$ converge geometrically to their limit $V = \frac{1}{2}V_{\max}$, thus in infinite time.}
-    \label{fig:simple_loop}
+	\centering
+	\includegraphics[width=0.44\linewidth]{img/updates_GBOP-D.pdf}
+	\caption{Number of updates in the leaf expansion for $n = 5460$, $\gamma=0.95$}
+	\label{fig:gw4_updates}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{\linewidth}
+		\centering
+		\includegraphics[width=0.49\linewidth]{img/epsilon/0/updates_state_aware.pdf}
+		\includegraphics[width=0.49\linewidth]{img/epsilon/0/occupations_state_aware.pdf}
+		\caption{$\epsilon=0$}
+	\end{subfigure}
+	\begin{subfigure}[b]{\linewidth}
+		\centering
+		\includegraphics[width=0.49\linewidth]{img/epsilon/1e-2/updates_state_aware.pdf}
+		\includegraphics[width=0.49\linewidth]{img/epsilon/1e-2/occupations_state_aware.pdf}
+		\caption{$\epsilon=1e-2$}
+	\end{subfigure}
+	\begin{subfigure}[b]{\linewidth}
+		\centering
+		\includegraphics[width=0.49\linewidth]{img/epsilon/1e-1/updates_state_aware.pdf}
+		\includegraphics[width=0.49\linewidth]{img/epsilon/1e-2/occupations_state_aware.pdf}
+		\caption{$\epsilon=1e-1$}
+	\end{subfigure}
+	\caption{Updates and occupancies for various values of $\epsilon$, for $n = 5460$, $\gamma=0.95$}
+	\label{fig:epsilon_1}
+\end{figure}
+\begin{figure}[H]
+	\ContinuedFloat
+	\centering
+	\begin{subfigure}[b]{\linewidth}
+		\centering
+		\includegraphics[width=0.49\linewidth]{img/epsilon/1e0/updates_state_aware.pdf}
+		\includegraphics[width=0.49\linewidth]{img/epsilon/1e0/occupations_state_aware.pdf}
+		\caption{$\epsilon=1e0$}
+	\end{subfigure}
+	\begin{subfigure}[b]{\linewidth}
+		\centering
+		\includegraphics[width=0.49\linewidth]{img/epsilon/1e1/updates_state_aware.pdf}
+		\includegraphics[width=0.49\linewidth]{img/epsilon/1e1/occupations_state_aware.pdf}
+		\caption{$\epsilon=1e1$}
+	\end{subfigure}
+	\begin{subfigure}[b]{\linewidth}
+		\centering
+		\includegraphics[width=0.49\linewidth]{img/epsilon/1e2/updates_state_aware.pdf}
+		\includegraphics[width=0.49\linewidth]{img/epsilon/1e2/occupations_state_aware.pdf}
+		\caption{$\epsilon=1e2 = V_{\max}$}
+	\end{subfigure}
+	\caption{Updates and occupancies for various values of $\epsilon$, for $n = 5460$, $\gamma=0.95$}
 \end{figure}
 
 \section{Supplementary Experiments}
@@ -825,64 +876,5 @@ Now, consider the nodes expanded by \Cref{alg:gbop-t}. The first expansion is th
 	\caption{Trees expanded for $n = 5460$, $\gamma=0.95$}
 	\label{fig:trees_expanded}
 \end{figure}
-
-\subsection{Effect of the early stopping}
-
-\begin{figure}[H]
-	\centering
-	% \includegraphics[width=0.49\linewidth]{img/4_updates_deterministic.pdf}
-	% \includegraphics[width=0.49\linewidth]{img/4_updates_kl-olop.pdf}
-	\includegraphics[width=0.44\linewidth]{img/updates_GBOP-D.pdf}
-	\caption{Number of updates in the leaf expansion for $n = 5460$, $\gamma=0.95$}
-	\label{fig:gw4_updates}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \begin{subfigure}[b]{\linewidth}
-        \centering
-        \includegraphics[width=0.49\linewidth]{img/epsilon/0/updates_state_aware.pdf}
-        \includegraphics[width=0.49\linewidth]{img/epsilon/0/occupations_state_aware.pdf}
-        \caption{$\epsilon=0$}
-    \end{subfigure}
-    \begin{subfigure}[b]{\linewidth}
-        \centering
-        \includegraphics[width=0.49\linewidth]{img/epsilon/1e-2/updates_state_aware.pdf}
-        \includegraphics[width=0.49\linewidth]{img/epsilon/1e-2/occupations_state_aware.pdf}
-        \caption{$\epsilon=1e-2$}
-    \end{subfigure}
-    \begin{subfigure}[b]{\linewidth}
-        \centering
-        \includegraphics[width=0.49\linewidth]{img/epsilon/1e-1/updates_state_aware.pdf}
-        \includegraphics[width=0.49\linewidth]{img/epsilon/1e-2/occupations_state_aware.pdf}
-        \caption{$\epsilon=1e-1$}
-    \end{subfigure}
-    \caption{Updates and occupancies for various values of $\epsilon$, for $n = 5460$, $\gamma=0.95$}
-    \label{fig:epsilon_1}
-\end{figure}
-\begin{figure}[H]
-\ContinuedFloat
-    \centering
-    \begin{subfigure}[b]{\linewidth}
-        \centering
-        \includegraphics[width=0.49\linewidth]{img/epsilon/1e0/updates_state_aware.pdf}
-        \includegraphics[width=0.49\linewidth]{img/epsilon/1e0/occupations_state_aware.pdf}
-        \caption{$\epsilon=1e0$}
-    \end{subfigure}
-    \begin{subfigure}[b]{\linewidth}
-        \centering
-        \includegraphics[width=0.49\linewidth]{img/epsilon/1e1/updates_state_aware.pdf}
-        \includegraphics[width=0.49\linewidth]{img/epsilon/1e1/occupations_state_aware.pdf}
-        \caption{$\epsilon=1e1$}
-    \end{subfigure}
-    \begin{subfigure}[b]{\linewidth}
-        \centering
-        \includegraphics[width=0.49\linewidth]{img/epsilon/1e2/updates_state_aware.pdf}
-        \includegraphics[width=0.49\linewidth]{img/epsilon/1e2/occupations_state_aware.pdf}
-        \caption{$\epsilon=1e2 = V_{\max}$}
-    \end{subfigure}
-    \caption{Updates and occupancies for various values of $\epsilon$, for $n = 5460$, $\gamma=0.95$}
-\end{figure}
-
 
 \end{document}
