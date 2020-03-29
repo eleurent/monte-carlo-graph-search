@@ -607,13 +607,14 @@ The \Cref{fig:deterministic-gridworld} shows number of times a state is sampled 
 In a second experiment, we consider the problem of a boat sailing in $K=8$ directions to reach a goal, and enduring a cost (move duration) that depends on the direction of the wind which follows stochastic dynamics. The \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls. The slope $\sigma$ of $r_n$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithms. A linear regression gives $\sigma \simeq-0.04$ and $\kappa_e \simeq = 3.6$ for BRUE, KL-OLOP, MDP-GapE. In contrast, we measure $\sigma \simeq-0.25$ and $\kappa_e \simeq 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop-t} might generalize to the stochastic setting.
 
 \begin{figure}[ht]
-	\begin{subfigure}[b]{0.4\textwidth}
+	\centering
+	\begin{subfigure}[b]{0.49\textwidth}
 		\includegraphics[trim = {0 0 0 0}, clip, width=\linewidth]{img/score.pdf}
 		\caption{Exploration score in the gridworld domain}
 		\label{fig:exploration}
 	\end{subfigure}
-	%
-	\begin{subfigure}[b]{0.4\textwidth}
+	\hfill%
+	\begin{subfigure}[b]{0.49\textwidth}
 		\includegraphics[trim = {0 0 0 0}, clip, width=\linewidth]{img/simple_regret.pdf}
 		\caption{Simple regret $r_n$ in the sailing domain}
 		\label{fig:sailing}
