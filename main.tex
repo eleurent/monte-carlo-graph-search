@@ -316,7 +316,7 @@ We define the near-optimal branching factor $\hlrb{\kappa}$ of an MDP as
 \begin{equation}
 \hlrb{\kappa = \limsup_{h\rightarrow\infty} |\hlrb{\Tau_h^\infty}|^{1/h}} \in [1, K]
 \end{equation}
-where ${\Tau^\infty}$ is the subtree of near-optimal nodes $${\Tau_h^\infty} = \left\{a\in A^h: V^\star-V(a) \leq \frac{\gamma^h}{1-\gamma}\right\}.$$
+where $\Tau^\infty_h = \displaystyle \left\{a\in A^h: V^\star-V(a) \leq \frac{\gamma^h}{1-\gamma}\right\}$ is the subtree of near-optimal nodes.
 \end{definition}
 
 This problem-dependent measure $\hlrb{\kappa}$ is the branching factor of the subtree $T^\infty$ of near-optimal nodes that can be sampled by \OPD, and acts as an effective branching factor as opposed to the true branching factor $K$. When $\kappa$ is small, fewer nodes need to be explored at a given depth, which means that the planner will be able to plan deeper for a given budget $n$. Thus, it directly impacts the simple regret that can be achieved by \OPD when run on a given MDP.
@@ -369,9 +369,9 @@ We define the near-optimal branching factor \emph{according to the bounds $(L,\,
 \hlbb{\kappa(L,U) \eqdef \limsup_{h\rightarrow\infty} \left|\Tau_h^\infty(L,U)\right|^{1/h}}\in(1, K], 
 \end{equation}
 where
-\begin{equation*}
+$ \displaystyle
      {\Tau_h^\infty(L,U)}=\left\{a\in A^h: V^\star - V(a)\leq \gamma^{h}(U(a)-L(a))\right\}.
-\end{equation*}
+$
 \end{definition}
 
 \begin{lemma}This branching factor shrinks as the bounds $(L,\,U)$ get tighter:
@@ -579,17 +579,16 @@ In the deterministic setting, once a transition has been observed, it is known w
 \section{Numerical Experiments}
 \label{sec:experiments}
 
-In order to assert the practical benefits of our approach, we compare graph-based and tree-based planning algorithms in various problems.
+To evaluate the practical benefits of our approach, we compare graph-based and tree-based planning algorithms in various problems.
 
-\paragraph{Gridworld domain}
+\paragraph{Gridworld domain.}
 We consider a grid in which the agent can move in $K=4$ directions. The reward function is $0$ everywhere, except in the vicinity of a goal located at $(10, 10)$, around which the reward decreases quadratically in a ball of radius $5$. %: $r(x, y) = \max(1 - \frac{1}{5^2}((x-10)^2 + (y-10)^2), 0)$. 
 The \Cref{fig:deterministic-gridworld} shows number of times a state is sampled by \OPD and \GBOPD, both run with a budget $n = 5460$ and discount $\gamma=0.95$. In the absence of rewards, \OPD samples sequences of actions uniformly (in a breadth-first search manner), which --because of the dynamics structure-- results in a non-uniform occupancy of the state space $S$, where the trajectories concentrate near the starting state. In contrast, \GBOPD explores uniformly in $S$, sampling each state up to four times (from its four  neighbours), until it finds the goal vicinity and finally samples the goal location indefinitely. We reproduce the experiment in the stochastic setting by adding noise on the transitions with probability $p=10\%$, and comparing \GBOP to \MDPGapE as we show in \Cref{fig:stochastic-gridworld}. To quantify these qualitative differences, we define an exploration score: the average distance $d(s_t, s_0)$ of sampled states to the initial state (exploration) minus the distance $d(s_t, s_g)$ to the goal state (exploitation), that we show in \Cref{fig:exploration}.
 
 \begin{figure}[ht]
 	\centering
-	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_OPD.pdf}
-	\hfill
-	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_GBOP-D.pdf}
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.4\linewidth]{img/occupations_OPD.pdf}
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.4\linewidth]{img/occupations_GBOP-D.pdf}
 	\caption{State occupancies of two planning algorithms in a deterministic gridworld.}
 	\label{fig:deterministic-gridworld}
 \end{figure}
@@ -598,24 +597,23 @@ The \Cref{fig:deterministic-gridworld} shows number of times a state is sampled 
 %	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_KL-OLOP.pdf}
 %	\hfill
 %	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_BRUE.pdf}
-	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_MDP-GapE.pdf}
-	\hfill
-	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_GBOP.pdf}
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.4\linewidth]{img/occupations_MDP-GapE.pdf}
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.4\linewidth]{img/occupations_GBOP.pdf}
 	\caption{State occupancies of two planning algorithms in a stochastic gridworld.}
 	\label{fig:stochastic-gridworld}
 \end{figure}
 
-\paragraph{Sailing problem}
-In a second experiment, we consider a the sailing domain [ref]: a boat can move in $K=8$ directions, and endures a cost (move duration) depending on the direction of the wind which follows stochastic dynamics. The \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls. The slope $\sigma$ of $r_n$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithms. A linear regression gives $\sigma \simeq-0.04$ and $\kappa_e \simeq = 3.6$ for BRUE, KL-OLOP, MDP-GapE. In contrast, we measure $\sigma \simeq-0.25$ and $\kappa_e \simeq 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop-t} might generalize to the stochastic setting.
+\paragraph{Sailing domain \citep{Vanderbei1996}.}
+In a second experiment, we consider the problem of a boat sailing in $K=8$ directions to reach a goal, and enduring a cost (move duration) that depends on the direction of the wind which follows stochastic dynamics. The \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls. The slope $\sigma$ of $r_n$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithms. A linear regression gives $\sigma \simeq-0.04$ and $\kappa_e \simeq = 3.6$ for BRUE, KL-OLOP, MDP-GapE. In contrast, we measure $\sigma \simeq-0.25$ and $\kappa_e \simeq 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop-t} might generalize to the stochastic setting.
 
 \begin{figure}[ht]
-	\begin{subfigure}[b]{0.49\textwidth}
+	\begin{subfigure}[b]{0.4\textwidth}
 		\includegraphics[trim = {0 0 0 0}, clip, width=\linewidth]{img/score.pdf}
 		\caption{Exploration score in the gridworld domain}
 		\label{fig:exploration}
 	\end{subfigure}
 	%
-	\begin{subfigure}[b]{0.49\textwidth}
+	\begin{subfigure}[b]{0.4\textwidth}
 		\includegraphics[trim = {0 0 0 0}, clip, width=\linewidth]{img/simple_regret.pdf}
 		\caption{Simple regret $r_n$ in the sailing domain}
 		\label{fig:sailing}
@@ -640,6 +638,8 @@ In a second experiment, we consider a the sailing domain [ref]: a boat can move 
 
 
 \section*{Conclusion}
+
+We proposed an algorithm that exploits a graph structure to plan in an MDP with a generative model under limited budget $n$. We showed this graph structure provides a benefit compared to tree structure in the deterministic setting, that translates as an improved regret bound that depends on a smaller problem difficulty. This improvement can also be observed with stochastic problems, as we demonstrate experimentally.
 
 \FloatBarrier
 \bibliography{references}
