@@ -224,8 +224,8 @@ $0 \leq V(s) \leq V_{\max} \eqdef {1}/({1-\gamma})$. But these trivial bounds ar
 \begin{definition}[Monotonicity]
 	A pair of bounds ($L$, $U$) or $(\cL, \cU)$ is \emph{monotonic} if they are respectively non-decreasing and non-increasing along transitions:
 	\begin{align*}
-	\forall a\in\inte{\Tau}_n,\quad & L(a) \leq& \max_{b\in A} r(s(a), b) + \gamma L(ab), \quad U(a) &\geq \max_{b\in A} r(s(a), b) + \gamma U(ab)\\
-	\forall (s)\in\inte{\cG}_n,\quad & \cL(s) \leq& \max_{b\in A} r(s, b) + \gamma \cL(T(s,b)), \quad \cU(s) &\geq \max_{b\in A} r(s, b) + \gamma \cU(T(s,b))
+	\forall a\in{\Tau}_n, \quad & L(a) \leq B_n(L)(a), & U(a) & \geq B_n(U)(a)\\
+	\forall (s)\in\inte{\cG}_n, \quad &\; \cL(s) \leq \cB_n(\cL)(s),&   \cU(s) & \geq \cB_n(\cU)(s)
 	\end{align*}
 \end{definition}
 
@@ -638,8 +638,27 @@ We proposed an algorithm that exploits a graph structure to plan in an MDP with 
 \section{Proofs}
 
 \subsection{Proof of \Cref{lem:properties-b-tree}}
+\begin{proof}
+The tightening property is directly obtained by definition of monotonicity.
+Let us show the preservation of monotonicity. Let $U$ a monotonic upper-bound, $a\in A^h$. Then, for any $b\in A$:
+\begin{align*}
+U(ab) \geq B(U)(ab) \implies 
+r(ab) + \gamma U(ab) \geq r(ab) + \gamma B(U)(ab).
+\end{align*}
+Thus, my taking the $\max$ on $b$,
+$
+B(U)(a) \geq B^2(U)(a).
+$
+The same can be obtained for a lower-bound $L$.
+
+The finite time convergence can be obtained by recursion from the leaves to the root, by noticing that if the value of a set of siblings $aA$ is invariant by $B$, then the value of their parent $a$ is invariant by $B^2$.
+\end{proof}
 
 \subsection{Proof of \Cref{lem:properties-b-graph}}
+\begin{proof}
+The proof of tightening and monotonicity preservation is the same as that of \Cref{lem:properties-b-tree}.
+The contraction property is standard for the Bellman Operator, see e.g. Puterman M., Markov Decision Processes: Discrete Stochastic Dynamic Programming (2005).
+\end{proof}
 
 \subsection{Proof of \Cref{thm:regret-opd}}
 We recall the main steps of the proof of \citet{Hren2008optimistic}.\\
@@ -661,6 +680,10 @@ We recall the main steps of the proof of \citet{Hren2008optimistic}.\\
 
 \subsection{Proof of \Cref{lem:shrink}}
 
+\begin{proof}
+Let $L_2\leq L_1\leq V\leq U_1\leq U_2$, then $\Tau_h^\infty(L_1,U_1) \subset \Tau_h^\infty(L_2,U_2)$, which implies $|\Tau_h^\infty(L_1,U_1)|^{1/h} \leq |\Tau_h^\infty(L_2,U_2)|^{1/h}$ and the claimed result in the limit $h\rightarrow\infty$.
+\end{proof}
+
 \subsection{Proof of \Cref{thm:regret-bound-U}}
 In this proof, we temporarily assume that $U=B(U)$ and $L=B(L)$. We follow the same steps as in the proof of the regret of \texttt{OPD}.
 
@@ -678,6 +701,7 @@ Let $t$ be the time of expansion of $a$, it holds that $\overline{U}_t(b) \leq \
 \qed\end{proof}
  
 \begin{lemma}
+	\label{lem:regret-depth}
 The recommended action $a_n$ has a simple regret $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$, where $d_n$ is the maximal depth of $\Tau_n$.
 \end{lemma}
 \begin{proof}
@@ -726,33 +750,16 @@ Assume $h(a_2) \geq h(a_1)$.
 Hence, if this last term is negative, then $V(a_1) - V(a_2)$ is as well.
 \qed\end{proof}
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[trim=2.5cm 1cm 1.5cm 2cm, clip, width=0.35\linewidth]{img/loop.pdf}\\
-	\begin{tabular}{cccccc}
-		\toprule
-		Operator & $I$ & $B$ & $M B$ & $\cdots$ & $(M B)^k$ \\
-		\midrule
-		$U^k(a)$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
-		$U^k(b)$ & $V_{\max}$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
-		$L^k(a)$ & $0$ & $\frac{1}{2}$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
-		$L^k(b)$ & $0$ & $0$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
-		\bottomrule
-	\end{tabular}
-	\caption{\textbf{Top}: a looping MDP with $|S|=|A|=1$, and the corresponding expanded tree $\Tau_1$ after having observed a single transition ($n=1$). \textbf{Bottom}: the sequence of bounds $(U_1^k)$ when alternating $M$ and $B$. $(U_1^k)$ and $(L_1^k)$ converge geometrically to their limit $V = \frac{1}{2}V_{\max}$, thus in infinite time.}
-	\label{fig:simple_loop}
-\end{figure}
-
 \subsection{Proof of \Cref{thm:regret-gbop-t}}
 
 \begin{proof}
 Let $\kappa'>\kappa_\infty$. Since $\kappa(L_n,U_n)\rightarrow\kappa_\infty$, there exists $n_0\in\Natural$ such that for all $n\geq n_0$, $\kappa(L_n,U_n) \leq \kappa'$.
-We can show that at each iteration $n$, the expanded node must belong to $\Tau^\infty(L_n,U_n)$.
+We can show that at each iteration $n$ the expanded node must belong to $\Tau^\infty(L_n,U_n)$, in the same way as the proof of \Cref{thm:regret-bound-U}.
 Let $n\geq n_0$, and define $d_0 = \min\{d\in\Natural: \exists t \in[n_0,n], \hat{a}_t\in A^d \}$. By definition, for all $d\geq d_0$, any expanded node of depth $d$ was expanded at a time $t\geq n_0$, and thus $\hat{a}_t\in\Tau^\infty_t \subset\Tau^\infty_{n_0}$. By denoting $n_d$ the number of expanded nodes of depth $d$, we obtain:
 \[
 n = \sum_{d=0}^{d_0-1}n_d + \sum_{d=d_0}^{d_n} n_d \leq  C_0 + C_1\sum_{d=d_0}^{d_n} (\kappa')^d \leq C_0 + C_1' (\kappa')^{d_n}
 \]
-And since $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$, we obtain the claimed bound.
+And since $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$ by \Cref{lem:regret-depth}, we obtain the claimed bound.
 \qed\end{proof}
 
 \subsection{Proof of \Cref{prop:illustrative-example}}
@@ -766,7 +773,7 @@ The \Cref{fig:mdp-tree} shows the planning tree corresponding to the MDP $\cM$. 
     \label{fig:mdp-tree}
 \end{figure}
 \begin{lemma}
- Any sequence of actions in $M\setminus{a_1}$ is in $\Tau^\infty$.
+ Any sequence of actions in $A\setminus{a_1}$ is in $\Tau^\infty$.
 \end{lemma}
 \begin{proof}
 Any such sequence of actions yields the sequence of rewards $r^-, r^+, \dots,r^+$. and end up in the state $s^+$ with value at least $V^\star$ (obtained by further taking $a_1$ indefinitely). Thus its value $V_h$ verifies, 
@@ -785,8 +792,35 @@ Now, consider the nodes expanded by \Cref{alg:gbop-t}. The first expansion is th
 
 \section{Efficient Implementation}
 
+\subsection{Update queue}
+
+Instead of executing $\cB_n$ on the entire graph $\cG_n$, we can keep track of the nodes to update in a queue, and propagate these updates to their predecessors.
+
+% TODO: implementation of \cB^$\infty$
+
 \subsection{Early stopping}
 
+$\cB_n^\infty$ can converge in infinite time, as shown in 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[trim=2.5cm 1cm 1.5cm 2cm, clip, width=0.35\linewidth]{img/loop.pdf}\\
+	\begin{tabular}{cccccc}
+		\toprule
+		Operator & $I$ & $B$ & $M B$ & $\cdots$ & $(M B)^k$ \\
+		\midrule
+		$U^k(a)$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
+		$U^k(b)$ & $V_{\max}$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
+		$L^k(a)$ & $0$ & $\frac{1}{2}$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
+		$L^k(b)$ & $0$ & $0$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
+		\bottomrule
+	\end{tabular}
+	\caption{\textbf{Top}: a looping MDP with $|S|=|A|=1$, and the corresponding expanded tree $\Tau_1$ after having observed a single transition ($n=1$). \textbf{Bottom}: the sequence of bounds $(U_1^k)$ when alternating $M$ and $B$. $(U_1^k)$ and $(L_1^k)$ converge geometrically to their limit $V = \frac{1}{2}V_{\max}$, thus in infinite time.}
+	\label{fig:simple_loop}
+\end{figure}
+
+
+%TODO: prop early stopping here.
 Proof of \Cref{prop:early-stopping}
 \begin{proof}
 	Let $a\in A^h$. We consider the sequence $(\overline{U}_n)_{n\in\Natural}$.
