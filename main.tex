@@ -106,9 +106,9 @@ The quality of that action is assessed in terms of the \emph{simple regret}
 
 Algorithms for planning with a generative model dates back to the work of \citet{Kearns02SS} who proposed the \texttt{Sparse} \texttt{Sampling} algorithm using a tree structure to represent the value estimate and uniform sampling of trajectories. This strategy was further analysed with the \texttt{BRUE} algorithm \citep{Feldman14BRUE} providing an enhanced value estimation. Another family of algorithms rely on the principle of \emph{Optimism in the Face of Uncertainty} \citep[surveyed by][]{Munos14}, inspired from the Multi-Armed Bandit problem. This principle was first used in the context of planning in the \texttt{CrazyStone} software \citep{Coulom2006} for computer Go. It was later formalized with the \texttt{UCT} algorithm \citep{Kocsis06UCT}, but was shown by \citet{Coquelin2007} to have a doubly-exponential complexity in the worst case. The {Optimistic Planning for Deterministic Systems} (\texttt{OPD}) algorithm introduced by \citet{Hren2008optimistic} was the first to provide a polynomial regret bound, but was limited to systems with deterministic rewards and dynamics. It was then extended to the case stochastic rewards \citep{Bubeck2010open,Leurent2019practical} with deterministic transitions.
 Known stochastic transitions were handled by \citet{Busoniu2012optimistic}. For MDPs with stochastic and unknown transitions, polynomial sample complexities have been obtained for \texttt{StOP} \citep{Szorenyi14}, \texttt{TrailBlazer} \citep{Grill16} and \texttt{SmoothCruiser} \citep{Grill19} but the three algorithms are intractable in practice: \texttt{StOP} requires the expensive storage of a policies, while \texttt{TrailBlazer} and \texttt{SmoothCruiser} only terminate after a prohibitive amount of samples, even for very small MDPs. 
-\citep{Kaufmann2017} proposed a tractable algorithm for unknown stochastic games but it was limited to depth two only. It was recently extended by \citet{MDPGapE2020} as the \texttt{MDP-GapE} for unknown stochastic MDPs, in the fixed-confidence setting.
+\citep{Kaufmann2017} proposed a tractable algorithm for unknown stochastic games limited to depth two only. It was recently extended by \citet{MDPGapE2020} as the \texttt{MDP-GapE} for unknown stochastic MDPs, in the fixed-confidence setting.
 
-To our knowledge, all the planning algorithms mentioned so far have one thing in common: they \emph{do not merge information across states}. That is, if a state $s$ can be reached by two different trajectories, it will be represented twice in the look-ahead tree. For instance, in \Cref{fig:structures} (left), two different paths lead to the same state represented in red. None of the mentioned algorithms would merge the information of the two trajectories to update a shared value estimate $V(s)$. The closest attempt to do so is that of \citet{Silver18} which uses a shared Neural Network to approximate the value of each state, but this network is merely updated in-between two planning instances and not during the planning procedure itself.
+To our knowledge, all the planning algorithms mentioned so far have one thing in common: they \emph{do not merge information across states}. That is, if a state $s$ can be reached by two different trajectories, it will be represented twice in the look-ahead tree. For instance, in \Cref{fig:structures} (left), two different paths lead to the same state represented in red. None of the mentioned algorithms would merge the information of the two trajectories to update a shared value estimate $V(s)$. The closest attempt to do so is that of \citet{Silver18} which uses a shared Neural Network to approximate the value of each state, but this network is merely updated between two planning instances and not during the planning procedure itself.
 % Also DP and RL, but not with generative model
 
 Our contributions are the following: first, in \Cref{sec:gbopd} we recall the \OPD tree-based planning algorithm in the simple context of deterministic MDPs, and propose a graph-based version named \GBOPD. Second, we analyse the benefit of our approach in \Cref{sec:analysis}, by framing \GBOP as a tree-based algorithm augmented with merge and pruning operators. Our main result shows that its regret scales with a novel problem-dependent complexity measure, that can only improve over the existing one, and provide an example where it does. Third, the \Cref{sec:stochastic} discusses an extension of our method to stochastic MDPs, called \GBOP. Finally, the \Cref{sec:experiments} demonstrates the applicability and benefits of our approach in two numerical experiments.
@@ -607,7 +607,7 @@ The \Cref{fig:deterministic-gridworld} shows number of times a state is sampled 
 \end{figure}
 
 \paragraph{Sailing domain \citep{Vanderbei1996}.}
-In a second experiment, we consider the problem of a boat sailing in $K=8$ directions to reach a goal, and enduring a cost (move duration) that depends on the direction of the wind which follows stochastic dynamics. The \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls. The slope $\sigma$ of $r_n$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithms. A linear regression gives $\sigma \simeq-0.04$ and $\kappa_e \simeq = 3.6$ for BRUE, KL-OLOP, MDP-GapE. In contrast, we measure $\sigma \simeq-0.25$ and $\kappa_e \simeq 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop-t} might generalize to the stochastic setting.
+In a second experiment, we consider the problem of a boat sailing in $K=8$ directions to reach a goal, and enduring a cost (move duration) that depends on the direction of the wind which follows stochastic dynamics. The \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls. The log-log slope $\sigma$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithm. A linear regression gives $\sigma \approx-0.04$ and $\kappa_e \approx 3.6$ for BRUE, KL-OLOP, MDP-GapE. In contrast, we measure $\sigma \approx-0.25$ and $\kappa_e \approx 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop-t} might generalize to the stochastic setting.
 
 \begin{figure}[ht]
 	\centering
@@ -900,6 +900,18 @@ Proof of \Cref{prop:early-stopping}
 \end{figure}
 
 \section{Supplementary Experiments}
+
+\subsection{State occupancies}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_KL-OLOP.pdf}
+	\hfill
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_BRUE.pdf}
+%	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.4\linewidth]{img/occupations_MDP-GapE.pdf}
+%	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.4\linewidth]{img/occupations_GBOP.pdf}
+	\caption{State occupancies of other planning algorithms in a stochastic gridworld.}
+\end{figure}
 
 \subsection{Trees expanded}
 \begin{figure}[H]
