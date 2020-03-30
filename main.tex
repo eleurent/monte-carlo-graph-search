@@ -47,8 +47,8 @@ comma,         % use commas as separators
 % Source: http://phaseportrait.blogspot.de/2011/02/natbib-compatible-bibtex-style-bst-file.html
 \bibliographystyle{splncsnat}
 
-%\usepackage{todonotes}
-\usepackage[disable]{todonotes}
+\usepackage{todonotes}
+%\usepackage[disable]{todonotes}
 \newcommand{\oam}[1]{\todo[inline,color=orange!40]{{\textbf{OM:}~}#1}}
 \newcommand{\el}[1]{\todo[inline,color=green!40]{{\textbf{EL:}~}#1}}
 
@@ -903,6 +903,8 @@ Proof of \Cref{prop:early-stopping}
 
 \subsection{State occupancies}
 
+We show the number of times each state is visited by other stochastic planning algorithms, in the stochastic gridworld domain.
+
 \begin{figure}[H]
 	\centering
 	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_KL-OLOP.pdf}
@@ -913,12 +915,14 @@ Proof of \Cref{prop:early-stopping}
 	\caption{State occupancies of other planning algorithms in a stochastic gridworld.}
 \end{figure}
 
-\subsection{Trees expanded}
+\subsection{Expanded trees}
+We compare the tree expanded by \OPD and \Cref{alg:gbop-t} in the deterministic gridworld domain. \Cref{fig:trees_expanded} shows that \OPD explored uniformly in the space of sequences, which results in contentrated exploration in the state space as seen in \Cref{fig:deterministic-gridworld}. Conversely, \Cref{alg:gbop-t} expands a sparse unbalanced tree which actually corresponds to uniform exploration in the state space.
+
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.44\linewidth]{img/tree_OPD.pdf}
 %    \includegraphics[width=0.44\linewidth]{img/tree_KL-OLOP.pdf}
-	\includegraphics[width=0.44\linewidth]{img/tree_GBOP-D.pdf}
+	\includegraphics[width=0.44\linewidth]{img/tree_GBOP-T.pdf}
 	\caption{Trees expanded for $n = 5460$, $\gamma=0.95$}
 	\label{fig:trees_expanded}
 \end{figure}
