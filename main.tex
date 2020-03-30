@@ -392,119 +392,84 @@ r_n = \tilde{\cO}\left(n^{-\log \frac{1}{\gamma}/\hlbb{\log \kappa(L,U)}}\right)
 \end{theorem}
 
 
-This theorem states that we can potentially improve the performance of the planning algorithm if we manage to find bounds $(L,\, U)$ that are tighter than the trivial ones at the leaves $\ext{\Tau_n}$, but it does not explain how to obtain such bounds. In the next subsection, we describe a method to build at each planning iteration $n$ a sequence of increasingly tight bounds $(L^k,\, U^k)$. The corresponding regret bound, our main result, is stated in \Cref{thm:regret-gbop-t}.
+This theorem states that we can potentially improve the performance of the planning algorithm if we manage to find bounds $(L,\, U)$ that are tighter than the trivial ones at the leaves $\ext{\Tau_n}$, which may be possible if we have already seen the states corresponding to this leaves, but it does not explain how to obtain such bounds. In the next subsection, we describe a method to build at each planning iteration $n$ a sequence of increasingly tight bounds $(L^k,\, U^k)$. The corresponding regret bound, our main result, is stated in \Cref{thm:regret-gbop-t}.
 
 
-\subsection{Merging the states}
+\subsection{Unrolling the tree}
+\label{sec:unrolling}
 
-In order to reproduce the behaviour of \Cref{alg:gbop-d} on a tree structure, we rely on two observations: \begin{enumerate*}[label=(\roman*)]
-	\item in $\cG_n$, all paths leading to a single state $s$ share the same bounds $\cL(s)$ and $\cU(s)$;
-	\item in $\cG_n$, expanding a node $s$ simultaneously expands all the paths leading to this node.
-\end{enumerate*}
-They are implemented on top of \Cref{alg:opd} through the introduction of two additional operators: $M$ (\Cref{def:merge}) and $P$ (\Cref{prop:pruning}),  illustrated in \Cref{fig:operators}.
+In order to reproduce the behaviour of \Cref{alg:gbop-d} on a tree structure, we rely on the following observation:  expanding a node $s$ in $\cG_n$ simultaneously expands all the paths leading to this node.
+To account for this observation in the analysis, we will consider an \emph{unrolling} operator $T$ that builds a potentially infinite tree $T(\cG_n)$ containing every sequence of action that can be traversed in a graph $\cG_n$.
 
-\begin{definition}[Merge operator $M_n$]
-	\label{def:merge}
-If several sequences $a'\in\Tau_n$ all lead to the same state $s$, their respective bounds must hold simultaneously. We introduce the merge operator $M_n$ as:
-    \begin{align}
-    \label{eq:merge}
-        \forall a\in\mathcal{T}_n, \qquad &M_n^-(L)(a) = \max_{a'\in N_n(a)} L(a'),\qquad M_n^+(U)(a) = \min_{a'\in N_n(a)} U(a'),                                   
-    \end{align}
-    where $N_n(a)$ is the set of \emph{neighbours} of a sequence of action $a\in A^h$, that lead to the same state:  $N_n(a) = \{a'\in\Tau_n: s(a)=s(a')\}$.
-\end{definition}
+\begin{equation}
+T(\cG_n) = \{a\in A^h: s_t \in \cG_n \text{ with } s_{t+1} = T(s_{t}, a_t)\text{ for } 0 \leq t < h\}
+\end{equation}
 
-\begin{remark} For ease of notation, we sometimes refer to $M_n^-$ and $M_n^+$ as a single merge operator $M_n$, that acts as $M_n^-$ on lower-bounds and $M_n^+$ on upper-bounds.
-\end{remark}
-
-\begin{figure}[th]
+\begin{figure}[htp]
 	\centering
-	\includegraphics[trim={1.8cm 1.4cm 1.1cm 1.1cm}, clip,width=0.42\linewidth]{img/tree_3}
-	\qquad
-	\includegraphics[trim={1.8cm 1.4cm 1.1cm 1.1cm}, clip, width=0.42\linewidth]{img/tree_4}
-	\caption{\textbf{Left:} The merge operator $M_n$. Any node of $\Tau_n$ can be updated, and in particular its leaves $\ext{\Tau}_n$. \textbf{Right:} The pruning operator $P$. A leaf verifying the criterion of \Cref{prop:pruning} is removed from the set of candidates to expansion.}
-	\label{fig:operators}
+	\includegraphics[trim={2.2cm 0 2.5cm 0}, clip, width=0.44\textwidth]{img/tree_5.pdf}
+	\caption{The tree $T(\cG_n)$ obtained by unrolling $\cG_n$. Contrary to $T_n$ shown in \Cref{fig:structures}, the red leaf has been expanded at the same time as the internal red node, which allows to tighten its value bounds.}
+	\label{fig:unroll}
 \end{figure}
 
-We now argue that the introduction of this merge operator $M_n$ enables to reproduce the behaviour of $\cB_n$ on a tree.
+Equivalently, after expanding a leaf in $T_n$, we simultaneously expand any leaf that leads to the same state as an internal node. These expansion can only tighten the bounds at these leafs.
 
-\begin{definition}[Bounds equivalence]
-	We say that a bound $U\in (T_n)^\Real$ is \emph{equivalent} to a bound $\cU \in (\cG_n) ^\Real $ if for all sequence $a\in A^*$, $U(a) = \cU(s(a))$.
-\end{definition}
+We can define the counterpart of the bounds $(\cL_n, \cU_n)$ in the same way as \eqref{eq:opd-bounds} applied to $T(\cG_n)$ rather than $T_n$, except that the depth $d_n$ of $T(\cG_n)$ can now be infinite:
+\begin{align}
+\label{eq:gbop-t-bounds}
+L_n = B_n^{\infty}(0), \qquad U_n = B_n^{\infty}(V_{\max}).
+\end{align}
 
-\begin{proposition}[``$\cB = MB$"]
-	\label{prop:b-eq-mb}
-	If $U$ and $\cU$ (resp. $L$ and $\cL$) are equivalent, then $(M_n^+B_n)(U)$ and $\cB_n(\cU)$ (resp. $(M_n^-B_n)(L)$ and $\cB_n(\cL)$) are also equivalent.
-\end{proposition}
 
-Since in \Cref{alg:gbop-d} the bounds $(\cL_n, \cU_n)$ are defined as a fixed-point iteration of $\cB_n$, starting from the trivial bounds $(0,\, V_{\max})$, we translate this definition in the context of trees with an alternating procedure of backups $B_n$ and merges $M_n$. At iteration $n$ we define the bounds
-\begin{equation}
-\label{eq:tree-bounds}
-L_n = (M_n^- B_n)^\infty(0), \qquad
-U_n = (M_n^+ B_n)^\infty(V_{\max}),
-\end{equation}
-Note that $L_n, U_n$ are well defined, since:
-\begin{lemma}[Properties of $M_nB_n$]
-	\label{lem:properties-mb}
+\begin{lemma}[Sequence bounds variations]
+	The bounds $(\overline{L}_n, \overline{U}_n)$ on the value of sequences of actions verify:
 	\begin{enumerate}[label=(\roman*)]
-		\item $M_n B_n$ preserves monotonicity and tightens monotonic bounds;
-		\item $M_n B_n$ a $\gamma$-contraction.
+		\item $\overline{L}_n$ is non-decreasing with $n$ and $\overline{U}_n$ is non-increasing with $n$.
+		\item For all $a\in A$, $\overline{U}(a) = \max_{a'\in a A^\infty} \overline{U}(a')$.
 	\end{enumerate}
 \end{lemma}
 
-By \Cref{prop:b-eq-mb}, the bounds $(\cL_n, \cU_n)$ and $(L_n, U_n)$ are respectively equivalent, and the optimistic sampling rule will sweep the same sequences of actions. It remains to deal with the second observation (ii): in \Cref{alg:gbop-d}, expanding a node simultaneously expands all the sequences of actions leading to this node. We could proceed similarly in $T_n$, by automatically expanding leaves that represent the same state as an internal node, but that would result in infinite trees whenever a loop is observed. We instead opt for the alternative solution of pruning any leaf $a$ that constitutes a suboptimal path to $s(a)$.
+In this context, the sampling rules are and recommendation rules of \GBOPD are similar to those of \OPD applied to the tree $T(\cG_n)$, except that the sampled node $b_n$ and recommended nodes $a_n$ belong to $T(\cG_n)$ and thus can have an infinite depth. 
 
-
-\begin{proposition}[Pruning operator $P$]
-	\label{prop:pruning}
-	Let $a_1,a_2\in\Tau_n$ such that state $s(a_1) = s(a_2) = s$ and $U = M(U) \geq V$ an aggregated upper-bound. 
+\begin{lemma}[Expansion]
+	\label{lemma:expansion-bound-2}
+	Let $a$, a node of depth $h$ traversed by the optimistic sampling rule of \GBOPD at iteration $t$. Then its first action $a_1$ enjoys a simple regret 
 	\begin{equation}
-	\label{eq:pruning}
-	\text{If } h(a_2) \geq h(a_1) \text{ and } \overline{U}(a_2) \geq \overline{U}(a_1)
-	\text{, then }V(a_2) \geq V(a_1)
+	\label{eq:expansion-regret}
+	V(a^\star)-V(a_1) \leq \gamma^h(U_t(a)-L_t(a)).
 	\end{equation}
 	
-	In particular, there is no need to ever expand the node $a_1$. We propose that at each step, we detect such pairs $a_1, a_2$. Whenever $a_1$ is a leaf, we can remove it from the set $\ext{\Tau}_n^-\subset \ext{\Tau}_n $ of candidates for expansion.
-\end{proposition}
+	In particular, if the sampling rule samples an infinite sequence $a\in A^\infty$, its first action $a_1$ is optimal, and we write that \eqref{alg:gbop-d} also holds for $a$ with $h=\infty$.
+\end{lemma}
+\begin{proof}
+	Let $t$ be the time of expansion of $a$, it holds that $\overline{U}_t(b) \leq \overline{U}_t(a)$ for all $b\in T(\cG_n)$, in particular those in a branch starting by an optimal action $a^\star$. Since $U_t=B_t(U_t)$ and $L_t=B_t(L_t)$, we also have $\overline{U}_t(a^\star) = \max_{b\in a^\star A^*} \overline{U}_t(b) \leq \overline{U}_t(a)$, and $\overline{L}_t(a_1) = \max{b\in a_1 A^*} \overline{L}_t(b) \geq  \overline{L}_t(a)$. Thus, $V(a^\star)-V(a_1) \leq \overline{U}_t(a^\star) - \overline{L}_t(a_1) \leq \overline{U}_t(a) - \overline{L}_t(a) = \gamma^h(U_t(a)-L_t(a))$.
+\qed\end{proof}
 
+\begin{lemma}[Recommendation]
+	\label{lem:regret-depth-2}
+	The action $a_n$ recommended by \GBOPD has a simple regret $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$, where $d_n\in\Real\cup\{\infty\}$ is the maximal depth of expanded nodes in $T(\cG_n)$.
+\end{lemma}
+Note that even though $T(\cG_n)$ can be infinite, there is a finite number of nodes $b_t$ that were selected for expansion at time $t\leq n$.
+\begin{proof}
+	Let $i$ an expanded node of maximal depth $d_n\in\Real\cup\{\infty\}$, and consider the recommended node $a_n$ at time $n$, of depth $d\in\Real\cup\{\infty\}$. In particular, $\overline{L}_n(a_n) \geq \overline{L}_n(i)$, and since $(\overline{L}_t)_t$ is non-decreasing we also have $\overline{L}_n(i) \geq \overline{L}_t(i)$. At the time $t$ when $i$ is expanded, we have $\overline{U}_t(a_n) \leq \overline{U}_t(i)$, and since $(\overline{U}_t)_t$ is non-increasing we also have $\overline{U}_n(a_n) \leq \overline{U}_t(a_n)$. We can conclude with \Cref{lemma:expansion-bound-2} applied to $a_n$: $r_n \leq \gamma^d(U(a_n)-L(a_n) = \overline{U}_n(a_n) - \overline{L}_n(a_n)  \leq \overline{U}_t(a_n) - \overline{L}_n(i) \leq \overline{U}_t(i) - \overline{L}_t(i) = \gamma^{d_n}(U_t(i) - L_t(i)$, which yields the claimed bound since $U(i) - L(i) \leq V_{\max}-0$.
+	\qed\end{proof}
 
-%\begin{corollary}
-%	The nodes $\hat{a}_n$ selected by the sampling rule \eqref{eq:sampling_rule} using the merged bounds \eqref{eq:tree-bounds} lead to the same states %$s(\hat{a}_n)$
-%	as those ($\hat{s}_n$) sampled by \Cref{alg:gbop-d}.
-%\end{corollary}
-
-
-We finally describe in \Cref{alg:gbop-t} the tree version \GBOPD.
-
-\begin{algorithm}[H]
-	\caption{Tree version of \Cref{alg:gbop-d}}
-	\label{alg:gbop-t}
-	\DontPrintSemicolon
-	\For{iteration $n$}{
-		Compute $L_n = (M_n^-B_n)^\infty(0)$, $U_n = (M_n^+B_n)^\infty(V_{\max})$ with \eqref{eq:bellman-tree}, \eqref{eq:merge}.\;
-		Select the optimistic sequence of actions $\hat{a}_{n}$ from \eqref{eq:sampling_rule} in $\ext{T_n}^-$.\;
-		\For{action $a\in A$}{
-			Add the child $\hat{a}_{n}a$ to the tree $\Tau_{n+1}$ and simulate its reward.
-		}
-		Prune the tree: $\ext{\Tau}_{n+1}^- = P(\ext{\Tau}_{n+1})$.\;
-	}
-	\Return the recommendation $a_{n+1}$ from \eqref{eq:recommendation_rule}.\;
-\end{algorithm}
 
 \subsection{Main result}
 
-In \Cref{thm:regret-bound-U}, we assumed that some bounds $(L,\,U)$ were revealed by an oracle and available from the onset for planning. In \Cref{alg:gbop-t}, we instead built a \emph{sequence} of bounds $(L_n,U_n)_{n\geq 0}$ \eqref{eq:tree-bounds} that is non-increasing in the sense of inclusion, i.e. $0\leq \dots\leq L_{n-1}\leq L_n\leq V\leq U_n\leq U_{n-1}\leq \dots\leq V_{\max}$.
+In \Cref{thm:regret-bound-U}, we assumed that some bounds $(L,\,U)$ were revealed by an oracle and available from the onset for planning. In \eqref{eq:gbop-t-bounds}, we instead built a \emph{sequence} of bounds $(L_n,U_n)_{n\geq 0}$ \eqref{eq:gbop-t-bounds} that is non-increasing in the sense of inclusion, i.e. $0\leq \dots\leq L_{n-1}\leq L_n\leq V\leq U_n\leq U_{n-1}\leq \dots\leq V_{\max}$.
 
 We can consider the sequence $\kappa_n = \kappa(L_n, U_n)$. It is non-increasing and lower-bounded by $1$, thus converges. Let $\hlgb{\kappa_\infty = \lim_{n\rightarrow\infty} \kappa(L_n, U_n)} \in[1,K]$.
 
 \begin{theorem}
 \label{thm:regret-gbop-t}
-\Cref{alg:gbop-t} enjoys the following regret bound, with $\hlgb{\kappa_\infty} \leq \hlrb{\kappa}$: 
+\GBOPD enjoys the following regret bound, with $\hlgb{\kappa_\infty} \leq \hlrb{\kappa}$: 
 \begin{align*}
 r_n = \tilde{\cO}\left(n^{-\log \frac{1}{\gamma}/\hlgb{\log \kappa_\infty}}\right).
 \end{align*}
 \end{theorem}
 
-Intuitively, $\kappa_\infty$ should be much lower than $\kappa$ in problems where trajectories overlap a lot. For instance, it will be the case for problems where two actions cancel each-other out (e.g. moving left or right), or are commutative (e.g. placing pawns on a board game). However, this is merely an intuition. So far we have not proven the existence of problem instances such that $\hlgb{\kappa_\infty} < \hlrb{\kappa}$, which is a legitimate concern since their non-existence would make \Cref{thm:regret-gbop-t} trivial and uninformative.
+Intuitively, $\kappa_\infty$ should be much lower than $\kappa$ in problems where trajectories overlap a lot. For instance, it will be the case for problems where two actions cancel each-other out (e.g. moving left or right), or are commutative (e.g. placing pawns on a board game). However, this is merely an intuition. We now show that there exist problem instances in which $\hlgb{\kappa_\infty} < \hlrb{\kappa}$, which is a legitimate concern since their non-existence would make \Cref{thm:regret-gbop-t} trivial.
 
 \subsection{Illustrative example}
 
@@ -693,7 +658,7 @@ It no longer holds that $a_n$ must be of maximal depth $d_n$.  This is due to th
 \end{remark}
 
 The regret bound still holds, however. First, notice that:
-\begin{lemma}
+\begin{lemma}[Expansion]
 \label{lemma:expansion-bound}
 Whenever a node $a$ of depth $h$ is expanded by the optimistic algorithm, its first action $a_1$ enjoys a simple regret $V(a^\star)-V(a_1) \leq \gamma^h(U(a)-L(a))$. 
 \end{lemma}
@@ -701,7 +666,7 @@ Whenever a node $a$ of depth $h$ is expanded by the optimistic algorithm, its fi
 Let $t$ be the time of expansion of $a$, it holds that $\overline{U}_t(b) \leq \overline{U}_t(a)$ for all $b\in \ext{\Tau}_t$, in particular those in a branch starting by an optimal action $a^\star$. Since $U=B(U)$ and $L=B(L)$, we also have $\overline{U}_t(a^\star) = \max_{b\in a^\star A^*} \overline{U}_t(b) \leq \overline{U}_t(a)$, and $\overline{L}_t(a_1) = \max{b\in a_1 A^*} \overline{L}_t(b) \geq  \overline{L}_t(a)$. Thus, $V(a^\star)-V(a_1) \leq \overline{U}_t(a^\star) - \overline{L}_t(a_1) \leq \overline{U}_t(a) - \overline{L}_t(a) = \gamma^h(U(a)-L(a))$.
 \qed\end{proof}
  
-\begin{lemma}
+\begin{lemma}[Recommendation]
 	\label{lem:regret-depth}
 The recommended action $a_n$ has a simple regret $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$, where $d_n$ is the maximal depth of $\Tau_n$.
 \end{lemma}
@@ -709,7 +674,7 @@ The recommended action $a_n$ has a simple regret $r_n \leq \frac{\gamma^{d_n}}{1
 Let $i$ a node of maximal depth $d_n$, and consider the recommended node $a_n$ at time $n$, of depth $d$. In particular, $\overline{L}_n(a_n) \geq \overline{L}_n(i)$, and since $(\overline{L}_t)_t$ is non-decreasing we also have $\overline{L}_n(i) \geq \overline{L}_t(i)$. At the time $t$ when $i$ is expanded, we have $\overline{U}_t(a_n) \leq \overline{U}_t(i)$, and since $(\overline{U}_t)_t$ is non-increasing we also have $\overline{U}_n(a_n) \leq \overline{U}_t(a_n)$. We can conclude with \Cref{lemma:expansion-bound} applied to $a_n$: $r_n \leq \gamma^d(U(a_n)-L(a_n) = \overline{U}_n(a_n) - \overline{L}_n(a_n)  \leq \overline{U}_t(a_n) - \overline{L}_n(i) \leq \overline{U}_t(i) - \overline{L}_t(i) = \gamma^{d_n}(U(i) - L(i)$, which yields the claimed bound since $U(i) - L(i) \leq V_{\max}-0$.
 \qed\end{proof}
 
-\begin{lemma}
+\begin{lemma}[Near-optimal nodes]
 \label{lemma:expansion-tree}
 Every node expanded by \eqref{eq:sampling_rule} is in $\Tau^\infty(L,U) = \bigcup_{h\geq 0} \Tau^\infty_h(L,U)$.
 \end{lemma}
@@ -726,37 +691,45 @@ Note that if $L,\,U$ are monotonic bounds that do not verify $L = B(L)$ and $U=B
 r_n = \cO\left(n^{-\frac{\log 1/\gamma}{\log \kappa(L,U)}}\right);
 \end{align*}
 
-\subsection{Proof of \Cref{lem:properties-mb}}
-\begin{proof}
-Let $U_1, U_2\in \Real^\Tau_n, a\in\Tau_n$,
-\begin{align*}
-    (M_n^+ U_1 - M_n^+ U_2)(a) &= \min_{a'\in N_n(a)} U_1(a') - \min_{a'\in N_n(a)} U_2(a') \\
-    &= \min_{a'\in N_n(a)} U_1(a') - U_2(a^-) \\
-    &\leq U_1(a^-) - U_2(a^-) \\
-    &\leq \|U_1 - U_2\|_\infty
-\end{align*}
-where $a^-\in \argmin_{a'\in N_n(a)} U_2(a')$. 
-Hence, $\|M_n^+ U_1 - M_n^+ U_2\|_\infty \leq \|U_1 - U_2\|_\infty$
-\qed\end{proof}
+%\subsection{Proof of \Cref{prop:b-eq-mb}}
 
-\subsection{Proof of \Cref{prop:pruning}}
+%\begin{proof}
+%	Let $U$ equivalent to $\cU$, and $a\in T_n$.
+%	If $a\in\ext{T_n}$, then necessarily $s(a)\in\ext{\cG_n}$, and both are unchanged by $B_n$ and $\cB_n$ respectively.
+%	If $a\in\inte{T_n}$, then necessarily $s(a)\in\int{\cG_n}$. There exist a'
+%\qed\end{proof}
 
-\begin{proof}
-Assume $h(a_2) \geq h(a_1)$.
-\begin{align*}
-    V(a_1) - V(a_2) &= R(a_1)- R(a_2) + \underbrace{\left(\gamma^{h(a_1)} - \gamma^{h(a_2)}\right)}_{\geq 0}V(s) \\
-    &\leq R(a_1)- R(a_2) + \left(\gamma^{h(a_1)} - \gamma^{h(a_2)}\right)U(s)\\
-    &= \overline{U}(a_1) - \overline{U}(a_2)
-\end{align*}
-Hence, if this last term is negative, then $V(a_1) - V(a_2)$ is as well.
-\qed\end{proof}
+%\subsection{Proof of \Cref{lem:properties-mb}}
+%\begin{proof}
+%Let $U_1, U_2\in \Real^\Tau_n, a\in\Tau_n$,
+%\begin{align*}
+%    (M_n^+ U_1 - M_n^+ U_2)(a) &= \min_{a'\in N_n(a)} U_1(a') - \min_{a'\in N_n(a)} U_2(a') \\
+%    &= \min_{a'\in N_n(a)} U_1(a') - U_2(a^-) \\
+%    &\leq U_1(a^-) - U_2(a^-) \\
+%    &\leq \|U_1 - U_2\|_\infty
+%\end{align*}
+%where $a^-\in \argmin_{a'\in N_n(a)} U_2(a')$. 
+%Hence, $\|M_n^+ U_1 - M_n^+ U_2\|_\infty \leq \|U_1 - U_2\|_\infty$
+%\qed\end{proof}
+%
+%\subsection{Proof of \Cref{prop:pruning}}
+%
+%\begin{proof}
+%Assume $h(a_2) \geq h(a_1)$.
+%\begin{align*}
+%    V(a_1) - V(a_2) &= R(a_1)- R(a_2) + \underbrace{\left(\gamma^{h(a_1)} - \gamma^{h(a_2)}\right)}_{\geq 0}V(s) \\
+%    &\leq R(a_1)- R(a_2) + \left(\gamma^{h(a_1)} - \gamma^{h(a_2)}\right)U(s)\\
+%    &= \overline{U}(a_1) - \overline{U}(a_2)
+%\end{align*}
+%Hence, if this last term is negative, then $V(a_1) - V(a_2)$ is as well.
+%\qed\end{proof}
 
 \subsection{Proof of \Cref{thm:regret-gbop-t}}
 
 \begin{proof}
 Let $\kappa'>\kappa_\infty$. Since $\kappa(L_n,U_n)\rightarrow\kappa_\infty$, there exists $n_0\in\Natural$ such that for all $n\geq n_0$, $\kappa(L_n,U_n) \leq \kappa'$.
 We can show that at each iteration $n$ the expanded node must belong to $\Tau^\infty(L_n,U_n)$, in the same way as the proof of \Cref{thm:regret-bound-U}.
-Let $n\geq n_0$, and define $d_0 = \min\{d\in\Natural: \exists t \in[n_0,n], \hat{a}_t\in A^d \}$. By definition, for all $d\geq d_0$, any expanded node of depth $d$ was expanded at a time $t\geq n_0$, and thus $\hat{a}_t\in\Tau^\infty_t \subset\Tau^\infty_{n_0}$. By denoting $n_d$ the number of expanded nodes of depth $d$, we obtain:
+Let $n\geq n_0$, and define $d_0 = \min\{d\in\Natural: \exists t \in[n_0,n], b_t\in A^d \}$. By definition, for all $d\geq d_0$, any expanded node of depth $d$ was expanded at a time $t\geq n_0$, and thus $b_t\in\Tau^\infty_t \subset\Tau^\infty_{n_0}$. By denoting $n_d$ the number of expanded nodes of depth $d$, we obtain:
 \[
 n = \sum_{d=0}^{d_0-1}n_d + \sum_{d=d_0}^{d_n} n_d \leq  C_0 + C_1\sum_{d=d_0}^{d_n} (\kappa')^d \leq C_0 + C_1' (\kappa')^{d_n}
 \]
@@ -789,7 +762,7 @@ Any such sequence of actions yields the sequence of rewards $r^-, r^+, \dots,r^+
 
 We can directly conclude that $\kappa \geq \limsup{|\{a_2,\dots,a_K\}^h|^{1/h}} = K-1$.
 
-Now, consider the nodes expanded by \Cref{alg:gbop-t}. The first expansion is that of the root, which discovers $s^\star$ and $s^+$. In the absence of information on these two state, the bound $V_{\max}$ is used and the first action $a_1$ gets a higher $\overline{U}$ that any other action $a_2,\dots,a_K$ since $r^\star \geq r^-$. Hence, at the second iteration, the node $a_1$ gets expanded. At this point, the self-loop of the state $s^\star$ is discovered, which means that form now on the bounds verify $L_n(a_1) = V^\star = U_n(a_1)$ for $n\geq2$, which means that $L_n(a_1A^*)-U_n(a_1A^*) = 0$. The nodes $a_2,\dots,a_K$ can be expanded at most once until the entire MDP is discovered and $L_n=V=U_n$ over the entire tree, which means that $\Tau_n^\infty$ is the set of optimal nodes, that is the nodes in the only optimal sequence $a_1^\star$. Hence, $\kappa_\infty = 1.$ 
+Now, consider the nodes expanded by \GBOPD. The first expansion is that of the root, which discovers $s^\star$ and $s^+$. In the absence of information on these two state, the bound $V_{\max}$ is used and the first action $a_1$ gets a higher $\overline{U}$ that any other action $a_2,\dots,a_K$ since $r^\star \geq r^-$. Hence, at the second iteration, the node $a_1$ gets expanded. At this point, the self-loop of the state $s^\star$ is discovered, which means that form now on the bounds verify $L_n(a_1) = V^\star = U_n(a_1)$ for $n\geq2$, which means that $L_n(a_1A^*)-U_n(a_1A^*) = 0$. The nodes $a_2,\dots,a_K$ can be expanded at most once until the entire MDP is discovered and $L_n=V=U_n$ over the entire tree, which means that $\Tau_n^\infty$ is the set of optimal nodes, that is the nodes in the only optimal sequence $a_1^\star$. Hence, $\kappa_\infty = 1.$ 
 
 \section{Efficient Implementation}
 
