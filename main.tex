@@ -108,10 +108,10 @@ Algorithms for planning with a generative model dates back to the work of \citet
 Known stochastic transitions were handled by \citet{Busoniu2012optimistic}. For MDPs with stochastic and unknown transitions, polynomial sample complexities have been obtained for \texttt{StOP} \citep{Szorenyi14}, \texttt{TrailBlazer} \citep{Grill16} and \texttt{SmoothCruiser} \citep{Grill19} but the three algorithms are intractable in practice: \texttt{StOP} requires the expensive storage of a policies, while \texttt{TrailBlazer} and \texttt{SmoothCruiser} only terminate after a prohibitive amount of samples, even for very small MDPs. 
 \citep{Kaufmann2017} proposed an algorithm for planning in a maxmin game with stochastic rewards in the leaves of a known, game tree. It was recently extended by \citet{MDPGapE2020} as the \texttt{MDP-GapE} for planning in unknown stochastic MDPs, in the fixed-confidence setting.
 
-To our knowledge, all the planning algorithms mentioned so far have one thing in common: they \emph{do not merge information across states}. That is, if a state $s$ can be reached by two different trajectories, it will be represented twice in the look-ahead tree. For instance, in \Cref{fig:structures} (left), two different paths lead to the same state represented in red. None of the mentioned algorithms would merge the information of the two trajectories to update a shared value estimate $V(s)$. The closest attempt to do so is that of \citet{Silver18} which uses a shared Neural Network to approximate the value of each state, but this network is merely updated between two planning instances and not during the planning procedure itself.
+To our knowledge, all the planning algorithms mentioned so far have one thing in common: they \emph{do not merge information across states}. That is, if a state $s$ can be reached by two different trajectories, it will be represented twice in the look-ahead tree. For instance, in \Cref{fig:structures} (left), two different paths lead to the same state represented in red. None of the mentioned algorithms would use the information of both trajectories to update a shared value estimate $V(s)$. The closest attempt to do so is that of \citet{Silver18} which uses a shared Neural Network to approximate the value of each state, but this network is merely updated between two planning instances and not during the planning procedure itself.
 % Also DP and RL, but not with generative model
 
-Our contributions are the following: first, in \Cref{sec:gbopd} we recall the \OPD tree-based planning algorithm in the simple context of deterministic MDPs, and propose a graph-based version named \GBOPD. Second, we analyse the benefit of our approach in \Cref{sec:analysis}, by framing \GBOPD as a tree-based algorithm augmented with merge and pruning operators. We show in \Cref{thm:regret-gbop-t} that its regret scales with a novel problem-dependent complexity measure, that can only improve over the existing one, and provide an example where it does. Third, \Cref{sec:stochastic} discusses an extension of our method to stochastic MDPs, called \GBOP. Finally, \Cref{sec:experiments} demonstrates the applicability and benefits of our approach in two numerical experiments.
+Our contributions are the following: first, in \Cref{sec:gbopd} we recall the \OPD tree-based planning algorithm in the simple context of deterministic MDPs, and propose a graph-based version named \GBOPD. Second, we analyse the benefits of our approach in \Cref{sec:analysis}, by framing \GBOPD as a tree-based algorithm running on the unrolled graph. We show in \Cref{thm:regret-gbop-t} that its regret scales with a novel problem-dependent complexity measure, that can only improve over the existing one, and provide an example where it does. Third, \Cref{sec:stochastic} discusses an extension of our method to stochastic MDPs, called \GBOP. Finally, \Cref{sec:experiments} demonstrates the applicability and benefits of our approach in two numerical experiments.
 
 \section{Graph-Based Planning for Deterministic Systems}
 \label{sec:gbopd}
@@ -276,7 +276,7 @@ which motivates us to propose \Cref{alg:gbop-d}, following the approach of \Cref
 \end{algorithm}
 
 \begin{algorithm}[th]
-	\caption{Our \emph{Graph-Based Optimistic Planning for Deterministic systems} (\GBOPD) algorithm.}
+	\caption{Our proposed \emph{Graph-Based Optimistic Planning for Deterministic systems} (\GBOPD) algorithm.}
 	\label{alg:gbop-d}
 	\DontPrintSemicolon
 	\For{each iteration $n$}{
@@ -300,7 +300,7 @@ There are two procedures in \GBOPD that may not terminate in finite time when $\
 	\item the computation of $\cB_n^\infty$ (line 1); and
 	\item the sampling rule loop (line 2),
 \end{enumerate*}
-The \Cref{sec:implementation} discusses an approximate implementation where these procedures are stopped whenever they reach a desired accuracy $\varepsilon$. This  $\varepsilon$ can be tuned with respect to the budget $n$.
+The \Cref{sec:implementation} discusses an approximate implementation where these procedures are stopped whenever they reach a desired accuracy $\varepsilon$, along with the corresponding time complexity analysis. The accuracy $\varepsilon$ can be tuned with respect to the budget $n$ to preserve the theoretical guarantees of the algorithm.
 \end{remark}
 
 Though the two algorithms share a similar design, we claim that using graphs provides substantial theoretical and practical performance improvements, and back up this statement in \Cref{sec:analysis,sec:experiments}.
@@ -346,7 +346,7 @@ where $f_n = \tilde{\cO}(n^{-\alpha})$ means that for any $\alpha'<\alpha$, $f_n
 
 \end{theorem}
 
-The near-optimal branching factor $\hlrb{\kappa}$ is related [ref OLOP] to the near-optimality dimension studied in the online optimisation literature \citep[see e.g.][]{DOO HOO SOO POO}. % TODO
+The near-optimal branching factor $\hlrb{\kappa}$ is related [ref OLOP] to the near-optimality dimension studied in the online optimisation literature \citep[see e.g.][]{DOO HOO SOO POO}. \todo{TODO}
 It is typically small in problems where there is one single optimal trajectory, of which any deviation can be quickly dismissed as suboptimal. Conversely, $\kappa$ is large when there are many sub-optimal trajectories that cannot be distinguished easily based on their values, which requires the uniform exploration of a large part of the tree $T$ with its original branching factor $K$. 
 
 
@@ -417,7 +417,7 @@ T(\cG_n) = \{a\in A^h: s_t \in \cG_n \text{ with } s_{t+1} = T(s_{t}, a_t)\text{
 \begin{figure}[htp]
 	\centering
 	\includegraphics[trim={2.cm 1cm 2.5cm 1cm}, clip, width=0.44\textwidth]{img/tree_5.pdf}
-	\caption{The tree $T(\cG_n)$ obtained by unrolling $\cG_n$. Contrary to $T_n$ shown in \Cref{fig:structures}, the red leaf is expanded at the same time as the internal red node, which enables to tighten its value bounds by applying $B_n$.}
+	\caption{The tree $T(\cG_n)$ obtained by unrolling $\cG_n$. Contrary to $T_n$ shown in \Cref{fig:structures}, the red leaf $a$ is expanded at the same time as the internal red node, which enables to tighten its value bounds $(L_n(a), U_n(a))$ by applying $B_n$.}
 	\label{fig:unroll}
 \end{figure}
 We analyse \GBOPD though the prism of $T(\cG_n)$, which is only used as a theoretical tool. 
@@ -429,6 +429,7 @@ L_n = B_n^{\infty}(0), \qquad U_n = B_n^{\infty}(V_{\max}).
 \end{align}
 This definition is equivalent to that of \GBOPD in the sense that:
 \begin{lemma}[Bound equivalence]
+	\label{lem:equivalence}
 For any sequence of action $a\in T(\cG_n)$, we have $L_n(a) = \cL_n(s(a))$ and $U_n(a) = \cU_n(s(a))$.	
 \end{lemma}
 
@@ -490,7 +491,7 @@ The MDP $\cM$ verifies $\hlrb{\kappa = K-1}$ and $\hlgb{\kappa_\infty = 1}$.
 %     \item $\hlgb{\kappa_\infty = 1}$.
 % \end{enumerate}
 \end{proposition}
-This result confirms that \Cref{thm:regret-gbop-t} is non-trivial since we exhibit a problem where $\hlgb{\kappa_\infty} < \hlrb{\kappa}$ (when $K\geq 3$), and legitimates our attempt to improve planning performances by merging the tree into a graph.
+This result confirms that \Cref{thm:regret-gbop-t} is non-trivial since we exhibit a problem for which $\hlgb{\kappa_\infty} < \hlrb{\kappa}$ (when $K\geq 3$), and legitimates our attempt to improve planning performances by merging the tree into a graph.
 
 
 \section{Extension to Stochastic Systems}
@@ -562,17 +563,14 @@ The \Cref{fig:deterministic-gridworld} shows number of times a state is sampled 
 \end{figure}
 \begin{figure}[ht]
 	\centering
-%	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_KL-OLOP.pdf}
-%	\hfill
-%	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_BRUE.pdf}
-	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.4\linewidth]{img/occupations_MDP-GapE.pdf}
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.4\linewidth]{img/occupations_UCT.pdf}
 	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.4\linewidth]{img/occupations_GBOP.pdf}
 	\caption{State occupancies of two planning algorithms in a stochastic gridworld.}
 	\label{fig:stochastic-gridworld}
 \end{figure}
 
 \paragraph{Sailing domain \citep{Vanderbei1996}.}
-In a second experiment, we consider the problem of a boat sailing in $K=8$ directions to reach a goal, and enduring a cost (move duration) that depends on the direction of the wind which follows stochastic dynamics. The \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls. The log-log slope $\sigma$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithm. A linear regression gives $\sigma \approx-0.04$ and $\kappa_e \approx 3.6$ for BRUE, KL-OLOP, MDP-GapE. In contrast, we measure $\sigma \approx-0.25$ and $\kappa_e \approx 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop-t} might generalize to the stochastic setting.
+In a second experiment, a boat is sailing in $K=8$ directions to reach a goal, and suffers a cost (move duration) that depends on the direction of the wind which follows stochastic dynamics. The \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls (again, $\gamma=0.95$). The log-log slope $\sigma$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithm. A linear regression gives $\sigma \approx-0.04$ and $\kappa_e \approx 3.6$ for BRUE, KL-OLOP, MDP-GapE. In contrast, we measure $\sigma \approx-0.25$ and $\kappa_e \approx 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop-t} might generalize to the stochastic setting.
 
 \begin{figure}[ht]
 	\centering
@@ -723,6 +721,10 @@ r_n = \cO\left(n^{-\frac{\log 1/\gamma}{\log \kappa(L,U)}}\right);
 %Hence, if this last term is negative, then $V(a_1) - V(a_2)$ is as well.
 %\qed\end{proof}
 
+\subsection{Proof of \Cref{lem:equivalence}}
+
+\el{TODO}
+
 \subsection{Proof of \Cref{lem:expansion-bound}}
 
 We start by showing a preliminary lemma.
@@ -789,11 +791,6 @@ Now, consider the nodes expanded by \GBOPD. The first expansion is that of the r
 \section{Efficient Implementation}
 \label{sec:implementation}
 
-\subsection{Lazy Bellman update $\cB_n$}
-
-Instead of executing $\cB_n$ on the entire graph $\cG_n$, we can keep track of the nodes to update in a queue, and propagate these updates to their predecessors.
-
-\el{implementation of $\cB^\infty$}
 
 \subsection{Termination}
 
@@ -802,15 +799,15 @@ $\cB_n^\infty$ can converge in infinite time whenever $\cG_n$ contains a loop, a
 \begin{figure}[H]
 	\centering
 	\includegraphics[trim=2.5cm 1cm 9cm 2cm, clip, width=0.1\linewidth]{img/loop.pdf}\\
-	\begin{tabular}{cccccc}
+	\begin{tabular}{lccccc}
 		\toprule
 		$k$ & $0$ & $1$ & $\cdots$ & $k$ \\
 		\midrule
-		$\cB^k(\cU)(s)$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
-		$\cB^k(\cL)(s)$ & $0$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
+		$\cU = \cB^k(V_{\max})(s)$ & $V_{\max}$ & $\frac{1}{2} + \gamma V_{\max}$ && $\frac{1}{2}(1-\gamma^k)V_{\max} + \gamma^k V_{\max}$\\
+		$\cL = \cB^k(0)(s)$ & $0$ & $\frac{1}{2}$ && $\frac{1}{2}(1-\gamma^k)V_{\max}$\\
 		\bottomrule
 	\end{tabular}
-	\caption{\textbf{Top}: a simple looping MDP with $|S|=|A|=1$ after having observed a single transition ($n=1$). \textbf{Bottom}: the sequence of bounds $(U_1^k)$ when alternating $M$ and $B$. $(U_1^k)$ and $(L_1^k)$ converge geometrically to their limit $V = \frac{1}{2}V_{\max}$, thus in infinite time.}
+	\caption{\textbf{Top}: a simple looping MDP with $|S|=|A|=1$ after having observed a single transition ($n=1$). \textbf{Bottom}: the sequence of bounds $\cB_1^k(0)$ and $\cB_1^k(V_{\max})$. They converge geometrically to their limit $\cU_1 = \cL_1 = V = \frac{1}{2}V_{\max}$, thus in infinite time.}
 	\label{fig:simple_loop}
 \end{figure}
 
@@ -839,63 +836,26 @@ Proof of \Cref{prop:early-stopping}
 	\qed\end{proof}
 
 
-\subsubsection{Experiment on the gridworld domain}
+\subsection{Time complexity}
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.44\linewidth]{img/updates_GBOP-D.pdf}
-	\caption{Number of updates in the leaf expansion for $n = 5460$, $\gamma=0.95$}
-	\label{fig:gw4_updates}
-\end{figure}
+\begin{proposition}[Time complexity]
+The number of iterations $k(\epsilon,\gamma)$ required to compute $\cL_n$, $\cU_n$ with an accuracy $\varepsilon$ is $$k(\epsilon,\gamma) = \log_\gamma\frac{1}{\varepsilon(1-\gamma)}.$$ 
+\end{proposition}
 
-\begin{figure}[H]
-	\centering
-	\begin{subfigure}[b]{\linewidth}
-		\centering
-		\includegraphics[width=0.49\linewidth]{img/epsilon/0/updates_state_aware.pdf}
-		\includegraphics[width=0.49\linewidth]{img/epsilon/0/occupations_state_aware.pdf}
-		\caption{$\varepsilon=0$}
-	\end{subfigure}
-	\begin{subfigure}[b]{\linewidth}
-		\centering
-		\includegraphics[width=0.49\linewidth]{img/epsilon/1e-2/updates_state_aware.pdf}
-		\includegraphics[width=0.49\linewidth]{img/epsilon/1e-2/occupations_state_aware.pdf}
-		\caption{$\varepsilon=1e-2$}
-	\end{subfigure}
-	\begin{subfigure}[b]{\linewidth}
-		\centering
-		\includegraphics[width=0.49\linewidth]{img/epsilon/1e-1/updates_state_aware.pdf}
-		\includegraphics[width=0.49\linewidth]{img/epsilon/1e-2/occupations_state_aware.pdf}
-		\caption{$\varepsilon=1e-1$}
-	\end{subfigure}
-	\caption{Updates and occupancies for various values of $\varepsilon$, for $n = 5460$, $\gamma=0.95$}
-	\label{fig:epsilon_1}
-\end{figure}
-\begin{figure}[H]
-	\ContinuedFloat
-	\centering
-	\begin{subfigure}[b]{\linewidth}
-		\centering
-		\includegraphics[width=0.49\linewidth]{img/epsilon/1e0/updates_state_aware.pdf}
-		\includegraphics[width=0.49\linewidth]{img/epsilon/1e0/occupations_state_aware.pdf}
-		\caption{$\varepsilon=1e0$}
-	\end{subfigure}
-	\begin{subfigure}[b]{\linewidth}
-		\centering
-		\includegraphics[width=0.49\linewidth]{img/epsilon/1e1/updates_state_aware.pdf}
-		\includegraphics[width=0.49\linewidth]{img/epsilon/1e1/occupations_state_aware.pdf}
-		\caption{$\varepsilon=1e1$}
-	\end{subfigure}
-	\begin{subfigure}[b]{\linewidth}
-		\centering
-		\includegraphics[width=0.49\linewidth]{img/epsilon/1e2/updates_state_aware.pdf}
-		\includegraphics[width=0.49\linewidth]{img/epsilon/1e2/occupations_state_aware.pdf}
-		\caption{$\varepsilon=1e2 = V_{\max}$}
-	\end{subfigure}
-	\caption{Updates and occupancies for various values of $\varepsilon$, for $n = 5460$, $\gamma=0.95$}
-\end{figure}
+\el{Number of udpates vs epsilon}
 
-\section{Supplementary Experiments}
+
+\subsection{Lazy Bellman update $\cB_n$}
+
+Instead of executing $\cB_n$ on the entire graph $\cG_n$, we can keep track of the nodes to update in a queue, and propagate these updates to their predecessors.
+
+\el{implementation of $\cB^\infty$}
+
+\section{Experiments}
+
+\subsection{Parameters}
+
+Since the rewards are deterministic and the transitions are stochastic, we used $\beta^r(n_t(s,a), n) = 0$ and $\beta^p(n_t(s,a), n) = \log n$.
 
 \subsection{State occupancies}
 
@@ -905,14 +865,13 @@ We show the number of times each state is visited by other stochastic planning a
 	\centering
 	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_KL-OLOP.pdf}
 	\hfill
-	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_BRUE.pdf}
-%	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.4\linewidth]{img/occupations_MDP-GapE.pdf}
-%	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.4\linewidth]{img/occupations_GBOP.pdf}
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_BRUE.pdf}\\
+	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_MDP-GapE.pdf}
 	\caption{State occupancies of other planning algorithms in a stochastic gridworld.}
 \end{figure}
 
 \subsection{Expanded trees}
-We compare the tree expanded by \OPD and \Cref{alg:gbop-t} in the deterministic gridworld domain. \Cref{fig:trees_expanded} shows that \OPD explored uniformly in the space of sequences, which results in contentrated exploration in the state space as seen in \Cref{fig:deterministic-gridworld}. Conversely, \Cref{alg:gbop-t} expands a sparse unbalanced tree which actually corresponds to uniform exploration in the state space.
+We compare the tree $T_n$ expanded by \OPD to the unrolled graph $T(\cG_n)$ of \GBOPD in the deterministic gridworld domain. For clarity of the figure, we only display the nodes selected for expansion and not the automatic expansions as in \Cref{fig:unroll}. \Cref{fig:trees_expanded} shows that \OPD explored uniformly in the space of sequences, which results in contentrated exploration in the state space as seen in \Cref{fig:deterministic-gridworld}. Conversely, \GBOPD expands a sparse unbalanced tree which actually corresponds to uniform exploration in the state space, and allows to explore much deeper for the some budget $n$.
 
 \begin{figure}[H]
 	\centering
