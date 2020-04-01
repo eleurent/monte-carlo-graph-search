@@ -26,6 +26,7 @@
 \usepackage{placeins}
 \usepackage{mathtools}
 \usepackage{siunitx}
+\usepackage{comment}
 
 \usepackage[ruled,vlined]{algorithm2e}
 %\newcommand\mycommfont[1]{\footnotesize\ttfamily\textcolor{blue}{#1}}
@@ -305,7 +306,7 @@ There are two procedures in \GBOPD that may not terminate in finite time when $\
 	\item the computation of $\cB_n^\infty$ (line 1); and
 	\item the sampling rule loop (line 2),
 \end{enumerate*}
-The \Cref{sec:implementation} discusses an approximate implementation where these two procedures are stopped whenever they reach a desired accuracy $\varepsilon$, along with an analysis of the corresponding time complexity and impact on the planning performance.
+In the Supplementary Material, we discuss an approximate implementation where these two procedures are stopped whenever they reach a desired accuracy $\varepsilon$, along with an analysis of the corresponding time complexity and impact on the planning performance.
 \end{remark}
 
 Though both algorithms share a similar design, we claim that using graphs provides substantial theoretical and practical performance improvements, and back up this statement in \Cref{sec:analysis,sec:experiments}.
@@ -575,7 +576,7 @@ The \Cref{fig:deterministic-gridworld} shows number of times a state is sampled 
 \end{figure}
 
 \paragraph{Sailing domain \citep{Vanderbei1996}.}
-In a second experiment, a boat is sailing in $K=8$ directions to reach a goal, and suffers a cost (move duration) that depends on the direction of the wind which follows stochastic dynamics. The \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls. We show the mean regret and its 95\% confidence interval computed over 500 simulations. The asymptotic log-log slope $\sigma$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithm. We measure that for $n>10^{3.5}$, $\sigma \approx-0.04$ and $\kappa_e \approx 3.6$ for \texttt{BRUE}, \texttt{KL-OLOP}, \texttt{MDP-GapE}, \texttt{UCT}. In contrast, we measure $\sigma \approx-0.3$ and $\kappa_e \approx 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop} might generalize to the stochastic setting.
+In a second experiment, a boat is sailing in $K=8$ directions to reach a goal, and suffers a cost (move duration) that depends on the direction of the wind which follows stochastic dynamics. The \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls. We show the mean regret and its 95\% confidence interval computed over 500 simulations. The asymptotic log-log slope $\sigma$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithm. We measure that for $n>10^{3.5}$, $\sigma \approx-0.04$ and $\kappa_e \approx 3.6$ for \texttt{BRUE}, \texttt{KL-OLOP}, \texttt{MDP-GapE}, \texttt{UCT}. In contrast, we measure $\sigma \approx-0.3$ and $\kappa_e \approx 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop} might generalize to the stochastic setting. Additional results and experimental details are provided in the Supplementary Material.
 
 \begin{figure}[ht]
 	\centering
@@ -602,6 +603,8 @@ We proposed an algorithm that exploits a graph structure to plan in an MDP with 
 
 \clearpage
 \appendix
+
+\begin{comment}
 
 \section{Proofs}
 
@@ -935,5 +938,7 @@ In \Cref{fig:suppl-trees}, we compare the trees $T_n$ expanded by \OPD and \text
 	\caption{Trees expanded by \OPD, by \texttt{KL-OLOP}, and sequences of actions sampled by \GBOPD. The width of edges is proportional to the number of visits.}
 	\label{fig:suppl-trees}
 \end{figure}
+
+\end{comment}
 
 \end{document}
