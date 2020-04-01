@@ -84,7 +84,7 @@ Renault Group, France
 \maketitle              % typeset the header of the contribution
 %
 \begin{abstract}
-	We consider the problem of planning in a Markov Decision Process (MDP) with a generative model and limited computational budget. Despite the underlying MDP transitions having a graph structure, the popular \emph{tree-based} planning algorithms such as \texttt{UCT} rely on a tree structure to represent their value estimates. That is, they either ignore the states crossed along a trajectory, or they do not identify with each other two similar states met at different places in the tree. In this work, we propose the first \emph{graph-based} planning algorithm, which takes into account this state similarity. For the sake of analysis and explicit comparison, we first study our algorithm by framing it as a tree-based planner acting on the \textit{unrolled} graph, in the simple case of deterministic systems. We provide a regret bound that depends on a novel problem-dependent measure of difficulty. This measure improves on the previous one in MDPs where the trajectories overlap, and recovers it otherwise. Then, we show that this methodology can be adapted to existing planning algorithms that deal with stochastic systems. Finally, numerical simulations illustrate the benefits of our approach.
+	We consider the problem of planning in a Markov Decision Process (MDP) with a generative model and limited computational budget. Despite the underlying MDP transitions having a graph structure, the popular \emph{tree-based} planning algorithms such as \texttt{UCT} rely on a tree structure to represent their value estimates. That is, they either ignore the states crossed along a trajectory, or they do not identify with each other two similar states met at different places in the tree. In this work, we propose the first \emph{graph-based} planning algorithm, which takes into account this state similarity. For the sake of analysis and explicit comparison, we first study our algorithm by framing it as a tree-based planner acting on the {unrolled} graph, in the simple case of deterministic systems. We provide a regret bound that depends on a novel problem-dependent measure of difficulty. This measure improves on the previous one in MDPs where the trajectories overlap, and recovers it otherwise. Then, we show that this methodology can be adapted to existing planning algorithms that deal with stochastic systems. Finally, numerical simulations illustrate the benefits of our approach.
 	
 	\keywords{Planning  \and Tree-search \and Reinforcement Learning.}
 \end{abstract}
@@ -296,7 +296,7 @@ which motivates us to propose \Cref{alg:gbop-d}, following the approach of \Cref
 	\Return $\displaystyle\argmax_{a\in A} r(s,a) + \gamma \cL_n(s(a))$. \Comment*[r]{Conservative recommendation rule}
 \end{algorithm}
 
-\begin{remark}[Termination]
+\begin{remark}[Termination and complexity]
 There are two procedures in \GBOPD that may not terminate in finite time when $\cG_n$ contains a loop:
 \begin{enumerate*}[label=(\roman*)]
 	\item the computation of $\cB_n^\infty$ (line 1); and
@@ -499,7 +499,7 @@ This result confirms that \Cref{thm:regret-gbop} is non-trivial since we exhibit
 \section{Extension to Stochastic Systems}
 \label{sec:stochastic}
 
-The approach developed in \cref{sec:gbopd,sec:analysis} consists in using state similarity to tighten a pair of lower and upper bounds $(L,\,U)$ for the value function $V$. Thus, any planning algorithm that is based on such bounds can benefit from this insight, and any theoretical result based on the validity and rate of convergence of these bounds will be preserved.  
+The approach developed in \Cref{sec:gbopd,sec:analysis} consists in using state similarity to tighten a pair of lower and upper bounds $(L,\,U)$ for the value function $V$. Thus, any planning algorithm that is based on such bounds can benefit from this insight, and any theoretical result based on the validity and rate of convergence of these bounds will be preserved.  
 
 \paragraph{Confidence intervals for rewards.}
 
@@ -519,7 +519,7 @@ where $\Sigma_S$ is the probability simplex over $S$, $\beta^p$ is an exploratio
 
 \paragraph{Bellman operator with stochasticity.}
 
-In this work, we do not discuss the tuning of $\beta^r$, $\beta^p$, but simply assume that they are chosen such that the rewards and transitions belong to their confidence regions with sufficiently high probability to obtain performance guarantees for the corresponding planning algorithm. For more details on such a choice, refer to \citep[e.g.][]{Leurent2019practical, MDPGapE2020}. We modify the \cref{def:bellman} of the Bellman operator on graphs as:
+In this work, we do not discuss the tuning of $\beta^r$, $\beta^p$, but simply assume that they are chosen such that the rewards and transitions belong to their confidence regions with sufficiently high probability to obtain performance guarantees for the corresponding planning algorithm. For more details on such a choice, refer to \citep[e.g.][]{Leurent2019practical, MDPGapE2020}. We modify the \Cref{def:bellman} of the Bellman operator on graphs as:
 
 \begin{align*}
 \cB_t^+(\cU)(s) &= \max_{a\in A} \left[u_t(s,a) + \gamma \max_{p \in \cC_t(s,a)} \sum_{s'} p(s'|s,a) \cU(s')\right], \\
