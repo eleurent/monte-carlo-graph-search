@@ -24,6 +24,7 @@
 \usepackage[inline]{enumitem}
 \usepackage{cleveref}
 \usepackage{placeins}
+\usepackage{mathtools}
 
 \usepackage[ruled,vlined]{algorithm2e}
 %\newcommand\mycommfont[1]{\footnotesize\ttfamily\textcolor{blue}{#1}}
@@ -111,7 +112,7 @@ Known stochastic transitions were handled by \citet{Busoniu2012optimistic}. For 
 To our knowledge, all the planning algorithms mentioned so far have one thing in common: they \emph{do not merge information across states}. That is, if a state $s$ can be reached by two different trajectories, it will be represented twice in the look-ahead tree. For instance, in \Cref{fig:structures} (left), two different paths lead to the same state represented in red. None of the mentioned algorithms would use the information of both trajectories to update a shared value estimate $V(s)$. The closest attempt to do so is that of \citet{Silver18} which uses a shared Neural Network to approximate the value of each state, but this network is merely updated between two planning instances and not during the planning procedure itself.
 % Also DP and RL, but not with generative model
 
-Our contributions are the following: first, in \Cref{sec:gbopd} we recall the \OPD tree-based planning algorithm in the simple context of deterministic MDPs, and propose a graph-based version named \GBOPD. Second, we analyse the benefits of our approach in \Cref{sec:analysis}, by framing \GBOPD as a tree-based algorithm running on the unrolled graph. We show in \Cref{thm:regret-gbop-t} that its regret scales with a novel problem-dependent complexity measure, that can only improve over the existing one, and provide an example where it does. Third, \Cref{sec:stochastic} discusses an extension of our method to stochastic MDPs, called \GBOP. Finally, \Cref{sec:experiments} demonstrates the applicability and benefits of our approach in two numerical experiments.
+Our contributions are the following: first, in \Cref{sec:gbopd} we recall the \OPD tree-based planning algorithm in the simple context of deterministic MDPs, and propose a graph-based version named \GBOPD. Second, we analyse the benefits of our approach in \Cref{sec:analysis}, by framing \GBOPD as a tree-based algorithm running on the unrolled graph. We show in \Cref{thm:regret-gbop} that its regret scales with a novel problem-dependent complexity measure, that can only improve over the existing one, and provide an example where it does. Third, \Cref{sec:stochastic} discusses an extension of our method to stochastic MDPs, called \GBOP. Finally, \Cref{sec:experiments} demonstrates the applicability and benefits of our approach in two numerical experiments.
 
 \section{Graph-Based Planning for Deterministic Systems}
 \label{sec:gbopd}
@@ -401,7 +402,7 @@ r_n = \tilde{\cO}\left(n^{-\log \frac{1}{\gamma}/\hlbb{\log \kappa(L,U)}}\right)
 \end{theorem}
 
 
-This theorem states that we can potentially improve the performance of the planning algorithm if we manage to find bounds $(L,\, U)$ that are tighter than the trivial ones at the leaves $\ext{\Tau_n}$, which may be possible if we have already seen the states corresponding to this leaves, but it does not explain how to obtain such bounds. In the next subsection, we describe a method to build at each planning iteration $n$ a sequence of increasingly tight bounds $(L^k,\, U^k)$. The corresponding regret bound, our main result, is stated in \Cref{thm:regret-gbop-t}.
+This theorem states that we can potentially improve the performance of the planning algorithm if we manage to find bounds $(L,\, U)$ that are tighter than the trivial ones at the leaves $\ext{\Tau_n}$, which may be possible if we have already seen the states corresponding to this leaves, but it does not explain how to obtain such bounds. In the next subsection, we describe a method to build at each planning iteration $n$ a sequence of increasingly tight bounds $(L^k,\, U^k)$. The corresponding regret bound, our main result, is stated in \Cref{thm:regret-gbop}.
 
 
 \subsection{Unrolling the tree to tighten the bounds}
@@ -439,13 +440,13 @@ The sampling and recommendation rules of \GBOPD also amount to running those of 
 
 \begin{lemma}[Expansion]
 	\label{lem:expansion-bound}
-	Let a node $a$ of depth $h$ traversed by the optimistic sampling rule of \GBOPD at iteration $n$. Then, its first action $a_1$ enjoys a simple regret 
+	Any node $a$ of depth $h$ traversed by the optimistic sampling rule of \GBOPD at iteration $n$ belongs to $T_h^\infty(L_n, U_n)$: 
 	\begin{equation}
 	\label{eq:expansion-regret}
-	V(a^\star)-V(a_1) \leq \gamma^h(U_n(a)-L_n(a)).
+	V^\star-V(a) \leq \gamma^h(U_n(a)-L_n(a)).
 	\end{equation}
 	
-	In particular, if the sampling rule samples an infinite sequence $a\in A^\infty$, its first action $a_1$ is optimal, and we write that \eqref{alg:gbop-d} also holds for $a$ with $h=\infty$.
+	In particular, if the sampling rule samples an infinite sequence $a\in A^\infty$, it is an optimal sequence, and we write that \eqref{alg:gbop-d} also holds for $a$ with $h=\infty$.
 \end{lemma}
 
 
@@ -462,14 +463,14 @@ In \Cref{thm:regret-bound-U}, we assumed that some bounds $(L,\,U)$ were reveale
 We can consider the sequence $\kappa_n = \kappa(L_n, U_n)$. It is non-increasing and lower-bounded by $1$, thus converges. Let $\hlgb{\kappa_\infty = \lim_{n\rightarrow\infty} \kappa(L_n, U_n)} \in[1,K]$.
 
 \begin{theorem}
-\label{thm:regret-gbop-t}
+\label{thm:regret-gbop}
 \GBOPD enjoys the following regret bound, with $\hlgb{\kappa_\infty} \leq \hlrb{\kappa}$: 
 \begin{align*}
 r_n = \tilde{\cO}\left(n^{-\log \frac{1}{\gamma}/\hlgb{\log \kappa_\infty}}\right).
 \end{align*}
 \end{theorem}
 
-Intuitively, $\kappa_\infty$ should be much lower than $\kappa$ in problems where trajectories overlap a lot. For instance, it will be the case for problems where two actions cancel each-other out (e.g. moving left or right), or are commutative (e.g. placing pawns on a board game). However, this is merely an intuition. We now show that there exist problem instances in which $\hlgb{\kappa_\infty} < \hlrb{\kappa}$, which is a legitimate concern since their non-existence would make \Cref{thm:regret-gbop-t} trivial.
+Intuitively, $\kappa_\infty$ should be much lower than $\kappa$ in problems where trajectories overlap a lot. For instance, it will be the case for problems where two actions cancel each-other out (e.g. moving left or right), or are commutative (e.g. placing pawns on a board game). However, this is merely an intuition. We now show that there exist problem instances in which $\hlgb{\kappa_\infty} < \hlrb{\kappa}$, which is a legitimate concern since their non-existence would make \Cref{thm:regret-gbop} trivial.
 
 \subsection{Illustrative example}
 
@@ -491,7 +492,7 @@ The MDP $\cM$ verifies $\hlrb{\kappa = K-1}$ and $\hlgb{\kappa_\infty = 1}$.
 %     \item $\hlgb{\kappa_\infty = 1}$.
 % \end{enumerate}
 \end{proposition}
-This result confirms that \Cref{thm:regret-gbop-t} is non-trivial since we exhibit a problem for which $\hlgb{\kappa_\infty} < \hlrb{\kappa}$ (when $K\geq 3$), and legitimates our attempt to improve planning performances by merging the tree into a graph.
+This result confirms that \Cref{thm:regret-gbop} is non-trivial since we exhibit a problem for which $\hlgb{\kappa_\infty} < \hlrb{\kappa}$ (when $K\geq 3$), and legitimates our attempt to improve planning performances by merging the tree into a graph.
 
 
 \section{Extension to Stochastic Systems}
@@ -570,7 +571,7 @@ The \Cref{fig:deterministic-gridworld} shows number of times a state is sampled 
 \end{figure}
 
 \paragraph{Sailing domain \citep{Vanderbei1996}.}
-In a second experiment, a boat is sailing in $K=8$ directions to reach a goal, and suffers a cost (move duration) that depends on the direction of the wind which follows stochastic dynamics. The \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls (again, $\gamma=0.95$). The log-log slope $\sigma$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithm. A linear regression gives $\sigma \approx-0.04$ and $\kappa_e \approx 3.6$ for BRUE, KL-OLOP, MDP-GapE. In contrast, we measure $\sigma \approx-0.25$ and $\kappa_e \approx 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop-t} might generalize to the stochastic setting.
+In a second experiment, a boat is sailing in $K=8$ directions to reach a goal, and suffers a cost (move duration) that depends on the direction of the wind which follows stochastic dynamics. The \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls (again, $\gamma=0.95$). The asymptotic log-log slope $\sigma$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithm. We measure that for $n>10^{3.5}$, $\sigma \approx-0.04$ and $\kappa_e \approx 3.6$ for \texttt{BRUE}, \texttt{KL-OLOP}, \texttt{MDP-GapE}, \texttt{UCT}. In contrast, we measure $\sigma \approx-0.3$ and $\kappa_e \approx 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop} might generalize to the stochastic setting.
 
 \begin{figure}[ht]
 	\centering
@@ -729,36 +730,37 @@ r_n = \cO\left(n^{-\frac{\log 1/\gamma}{\log \kappa(L,U)}}\right);
 
 We start by showing a preliminary lemma.
 \begin{lemma}[Bounds of sequence values]
-	The bounds $(\overline{L}_n, \overline{U}_n)$ on the value of sequences of actions verify:
-	\begin{enumerate}[label=(\roman*)]
-		\item $\overline{L}_n$ and $\overline{U}_n$ are respectively non-decreasing and non-increasing with respect to $n$.
-		\item For all $a\in A^*$, $\overline{U_n}(a) = \max_{a'\in a A^\infty} \overline{U}(a')$.
-	\end{enumerate}
+	\label{lem:bounds}
+	The bounds $(\overline{L}_n, \overline{U}_n)$ on the value of sequences of actions verify are respectively non-decreasing and non-increasing with respect to $n$, and verify: for all $a\in A^*$, $\overline{U_n}(a) = \max_{a'\in a A^\infty} \overline{U}(a')$.
 \end{lemma}
+\begin{proof}
+	\el{TODO}
+	 Since $U_t=B_t(U_t)$ and $L_t=B_t(L_t)$, 
+\qed\end{proof}
 
 Which enables us to proceed to the proof of \Cref{lem:expansion-bound}.
 \begin{proof}
-	Let $t$ be the time of expansion of $a$, it holds that $\overline{U}_t(b) \leq \overline{U}_t(a)$ for all $b\in T(\cG_n)$, in particular those in a branch starting by an optimal action $a^\star$. Since $U_t=B_t(U_t)$ and $L_t=B_t(L_t)$, we also have $\overline{U}_t(a^\star) = \max_{b\in a^\star A^*} \overline{U}_t(b) \leq \overline{U}_t(a)$, and $\overline{L}_t(a_1) = \max{b\in a_1 A^*} \overline{L}_t(b) \geq  \overline{L}_t(a)$. Thus, $V(a^\star)-V(a_1) \leq \overline{U}_t(a^\star) - \overline{L}_t(a_1) \leq \overline{U}_t(a) - \overline{L}_t(a) = \gamma^h(U_t(a)-L_t(a))$.
+	Let $t$ be the time of expansion of $a$, it holds that $\overline{U}_t(b) \leq \overline{U}_t(a)$ for all $b\in T(\cG_n)$. In particular for $b$ in a branch starting by an optimal action $a^\star$ $\overline{U}_t(a) \geq \max_{b\in a^\star A^*}  \overline{U}_t(b) = \overline{U}_t(a^\star)$. Thus, $V(a^\star)-V(a) \leq \overline{U}_t(a^\star) - \overline{L}_t(a) \leq \overline{U}_t(a) - \overline{L}_t(a) = \gamma^h(U_t(a)-L_t(a))$.
 \qed\end{proof}
 
 \subsection{Proof of \Cref{lem:recommendation-bound}}
 \begin{proof}
-	Let $i$ an expanded node of maximal depth $d_n\in\Real\cup\{\infty\}$, and consider the recommended node $a_n$ at time $n$, of depth $d\in\Real\cup\{\infty\}$. In particular, $\overline{L}_n(a_n) \geq \overline{L}_n(i)$, and since $(\overline{L}_t)_t$ is non-decreasing we also have $\overline{L}_n(i) \geq \overline{L}_t(i)$. At the time $t$ when $i$ is expanded, we have $\overline{U}_t(a_n) \leq \overline{U}_t(i)$, and since $(\overline{U}_t)_t$ is non-increasing we also have $\overline{U}_n(a_n) \leq \overline{U}_t(a_n)$. We can conclude with \Cref{lem:expansion-bound-U-2} applied to $a_n$: $r_n \leq \gamma^d(U(a_n)-L(a_n) = \overline{U}_n(a_n) - \overline{L}_n(a_n)  \leq \overline{U}_t(a_n) - \overline{L}_n(i) \leq \overline{U}_t(i) - \overline{L}_t(i) = \gamma^{d_n}(U_t(i) - L_t(i)$, which yields the claimed bound since $U(i) - L(i) \leq V_{\max}-0$.
+	Let $i$ an expanded node of maximal depth $d_n\in\Real\cup\{\infty\}$, and consider the recommended node $a_n$ at time $n$, of depth $d\in\Real\cup\{\infty\}$. In particular, $\overline{L}_n(a_n) \geq \overline{L}_n(i)$, and since $(\overline{L}_t)_t$ is non-decreasing we also have $\overline{L}_n(i) \geq \overline{L}_t(i)$. At the time $t$ when $i$ is expanded, we have $\overline{U}_t(a_n) \leq \overline{U}_t(i)$, and since $(\overline{U}_t)_t$ is non-increasing we also have $\overline{U}_n(a_n) \leq \overline{U}_t(a_n)$. We can conclude with \Cref{lem:expansion-bound} applied to $a_n$: $r_n \leq V^\star - V(a_n) \leq  \gamma^d(U(a_n)-L(a_n) = \overline{U}_n(a_n) - \overline{L}_n(a_n)  \leq \overline{U}_t(a_n) - \overline{L}_n(i) \leq \overline{U}_t(i) - \overline{L}_t(i) = \gamma^{d_n}(U_t(i) - L_t(i)$, which yields the claimed bound since $U(i) - L(i) \leq V_{\max}-0$.
 \qed\end{proof}
 
 
-\subsection{Proof of \Cref{thm:regret-gbop-t}}
+\subsection{Proof of \Cref{thm:regret-gbop}}
 
 \begin{proof}
 Let $\kappa'>\kappa_\infty$. Since $\kappa(L_n,U_n)\rightarrow\kappa_\infty$, there exists $n_0\in\Natural$ such that for all $n\geq n_0$, $\kappa(L_n,U_n) \leq \kappa'$.
-We can show that at each iteration $n$ the expanded node must belong to $\Tau^\infty(L_n,U_n)$, in the same way as \Cref{lem:near-optimal-nodes-U}.
-Let $n\geq n_0$, and define $d_0 = \min\{d\in\Natural: \exists t \in[n_0,n], b_t\in A^d \}$. By definition, for all $d\geq d_0$, any expanded node of depth $d$ was expanded at a time $t\geq n_0$, and thus $b_t\in\Tau^\infty_t \subset\Tau^\infty_{n_0}$. By denoting $n_d$ the number of expanded nodes of depth $d$, we obtain:
+By \Cref{lem:expansion-bound}, at each iteration $n$ the expanded node must belong to $\Tau^\infty(L_n,U_n)$.
+Let $n\geq n_0$, and define $d_0 = \min\{d\in\Natural: \exists t \in[n_0,n], b_t\in A^d \}$. By definition, for all $d\geq d_0$, any expanded node of depth $d$ was expanded at a time $t\geq n_0$, and thus $b_t\in\Tau^\infty_t \subset\Tau^\infty_{n_0}$. We denote $n_d$ the number of expanded nodes of depth $d$. If $d_n=\infty$,then $r_n = 0$ and the bound holds. Else, we obtain
 \[
 n = \sum_{d=0}^{d_0-1}n_d + \sum_{d=d_0}^{d_n} n_d \leq  C_0 + C_1\sum_{d=d_0}^{d_n} (\kappa')^d \leq C_0 + C_1' (\kappa')^{d_n}
 \]
 And since $r_n \leq \frac{\gamma^{d_n}}{1-\gamma}$ by \Cref{lem:recommendation-bound}, we obtain the claimed bound.
 
-Moreover, given a history of observed transitions up to iteration $n$, the bounds $U_n, L_n$ obtained from \eqref{eq:gbop-t-bounds} on the unrolled tree $T(\cG_n)$ are tighter than those of \eqref{eq:opd-bounds} since $T_n\subset T(\cG_n)$, which imply by \Cref{lem:shrink} that $\kappa(L_n, U_n) \leq \kappa$. We obtain $\kappa_\infty \leq \kappa$ at the limit. 
+Moreover, given a history of observed transitions up to iteration $n$, the bounds $U_n, L_n$ obtained from \eqref{eq:gbop-t-bounds} on the unrolled tree $T(\cG_n)$ are tighter than those of \eqref{eq:opd-bounds} since $T_n\subset T(\cG_n)$, which implies by \Cref{lem:shrink} that $\kappa(L_n, U_n) \leq \kappa$. We obtain $\kappa_\infty \leq \kappa$ at the limit. 
 \qed\end{proof}
 
 \subsection{Proof of \Cref{prop:illustrative-example}}
@@ -788,15 +790,16 @@ We can directly conclude that $\kappa \geq \limsup{|\{a_2,\dots,a_K\}^h|^{1/h}} 
 
 Now, consider the nodes expanded by \GBOPD. The first expansion is that of the root, which discovers $s^\star$ and $s^+$. In the absence of information on these two state, the bound $V_{\max}$ is used and the first action $a_1$ gets a higher $\overline{U}$ that any other action $a_2,\dots,a_K$ since $r^\star \geq r^-$. Hence, at the second iteration, the node $a_1$ gets expanded. At this point, the self-loop of the state $s^\star$ is discovered, which means that form now on the bounds verify $L_n(a_1) = V^\star = U_n(a_1)$ for $n\geq2$, which means that $L_n(a_1A^*)-U_n(a_1A^*) = 0$. The nodes $a_2,\dots,a_K$ can be expanded at most once before the entire MDP is discovered and $L_n=V=U_n$ over the entire tree, which means that $\Tau_n^\infty$ is the set of optimal nodes, i.e. the nodes in the only optimal sequence $a_1^\star$. Hence, $\kappa_\infty = 1.$ 
 
-\section{Efficient Implementation}
+\section{Implementation Details}
 \label{sec:implementation}
-
 
 \subsection{Termination}
 
-$\cB_n^\infty$ can converge in infinite time whenever $\cG_n$ contains a loop, as shown in \Cref{fig:simple_loop}
+\subsubsection{Bounds computation}
 
-\begin{figure}[H]
+$\cB_n^\infty$ can converge in infinite time whenever $\cG_n$ contains a loop, as shown in \Cref{fig:simple_loop}. We consider the effect of stopping early after a fixed number of iterations $k(\varepsilon,\gamma)$.
+
+\begin{figure}[th]
 	\centering
 	\includegraphics[trim=2.5cm 1cm 9cm 2cm, clip, width=0.1\linewidth]{img/loop.pdf}\\
 	\begin{tabular}{lccccc}
@@ -811,41 +814,48 @@ $\cB_n^\infty$ can converge in infinite time whenever $\cG_n$ contains a loop, a
 	\label{fig:simple_loop}
 \end{figure}
 
-
-
-\el{prop early stopping here.}
-Proof of \Cref{prop:early-stopping}
-\begin{proof}
-	Let $a\in A^h$. We consider the sequence $(\overline{U}_n)_{n\in\Natural}$.
-	Notice that for any $U,V\in\Real^\Tau$, we have $\overline{U}(a)-\overline{V}(a)=\gamma^h(U(a)-V(a))$.
-	
-	Hence, if the premise holds,
-	\begin{align*}
-	|\overline{U}_{k+1}(a) - \overline{U}_{k}(a)| &\leq \gamma^h\varepsilon (1-\gamma)\gamma^{-h-1} = \varepsilon (1-\gamma)\gamma^{-1}
-	\end{align*}
-	
-	And then,
-	\begin{align*}
-	|\overline{U}_{k+1}(a) - \overline{U}_\infty(a)| &= \gamma^h |U_{k+1}(a) - U_\infty(a)|\\
-	&\leq \gamma^{h+1}|U_{k}(a) - U_\infty(a)| \text{ since $LA$ is a $\gamma$-contraction}\\
-	&\leq \gamma^{h+1}|U_{k}(a) - U_{k+1}(a)| + \gamma^{h+1}|U_{k+1}(a) - U_\infty(a)|\\
-	&= \gamma|\overline{U}_{k}(a) - \overline{U}_{k+1}(a)| + \gamma |\overline{U}_{k+1}(a) - \overline{U}_\infty(a)|\\
-	&\leq \frac{\gamma}{1-\gamma} |\overline{U}_{k}(a) - \overline{U}_{k+1}(a)|\\
-	&\leq\varepsilon
-	\end{align*}
-	\qed\end{proof}
-
-
-\subsection{Time complexity}
-
-\begin{proposition}[Time complexity]
-The number of iterations $k(\epsilon,\gamma)$ required to compute $\cL_n$, $\cU_n$ with an accuracy $\varepsilon$ is $$k(\epsilon,\gamma) = \log_\gamma\frac{1}{\varepsilon(1-\gamma)}.$$ 
+\begin{proposition}[Time complexity of bounds computation]
+An $\varepsilon$-approximation of $(\cL_n, \cU_n)$ can be computed by applying $\cB_n$ for a finite number $k(\epsilon,\gamma)$ of iterations, with $$k(\epsilon,\gamma) = \log_\gamma\frac{1}{\varepsilon(1-\gamma)}.$$ 
 \end{proposition}
+\begin{proof}
+	$\cB_n$ is a $\gamma$-contraction by \Cref{lem:properties-b-graph}, and $\cU_n$ (resp $\cL_n$) is at a distance (in $\|\dot\|_\infty$) at most $V_{\max}$ of the initial value bound $V_{\max}$ (resp $0$). Thus, the $k^{\text{th}}$ application of $\cB_n$ decreases this error by a factor $\gamma^k$, which gives the result.
+\qed\end{proof}
 
-\el{Number of udpates vs epsilon}
+The impact of using an $\varepsilon$-approximation of $(\cL_n, \cU_n)$ during planning is the following:
+\begin{proposition}[Effect of early stopping]
+	\label{prop:early-stopping}
+Denote the approximate bounds $(\hat{\cL}_n, \hat{\cU}_n)$ obtained by applying $\cB_n^{k(\varepsilon,\gamma)}$ instead of $\cB_n^\infty$, and likewise $(\hat{L}_n, \hat{U}_n)$ in their tree version obtained by applying $B_n^{k(\varepsilon,\gamma)}$ instead of $B_n^\infty$.
+Then, running \GBOPD with $\hat{\cL}_n, \hat{\cU}_n$ gives the following regret:
+\begin{align*}
+r_n = \tilde{\cO}\left(n^{-\log \frac{1}{\gamma}/\hlob{\log \hat{\kappa}_\infty}}\right),
+\end{align*}
+with $$\hlgb{{\kappa}_\infty} \leq \hlob{\hat{\kappa}_\infty \eqdef \lim_{n\rightarrow\infty} \kappa(\hat{L}_n, \hat{U}_n)} \leq \hlrb{\kappa}.$$
+Moreover, the approximation gap $\hlgb{\kappa_\infty} - \hlob{\hat{\kappa}_\infty}$ is non-increasing with respect to $\varepsilon$.
+\end{proposition}
+It is difficult to control more explicitly the gap between $\hlgb{\kappa_\infty}$ and $\hlob{\hat{\kappa}_\infty}$, which might be discontinuous with $\varepsilon$.
 
+\begin{proof}
+	Note that $\hat{L}_n$ and $\hat{U}_n$ are valid monotonic bounds on $V$, verifying
+	\[0\leq \hat{L}_n\leq {L}_n \leq V \leq {U}_n\leq \hat{U}_n \leq V_{\max}.\]
+	Thus, \Cref{lem:bounds} holds with the difference that we only have an inequality $\overline{U_n}(a) \geq \max_{a'\in a A^\infty} \overline{U}(a')$ rather than an equality, by monotonicity but non-invariance by $B_n$. However, this was the actual inequality used in \Cref{lem:expansion-bound}, which still holds by replacing $L_n,U_n$ by their approximation $\hat{L}_n,\hat{U}_n$. Likewise, \Cref{lem:recommendation-bound} holds. The proof of \Cref{thm:regret-gbop}, can be written with the modification that expanded nodes belong to $T_h^\infty(\hat{L}_n, \hat{U}_n))$, which gives the claimed bound.
+	
+	As $\varepsilon$ decreases, $k(\epsilon,\gamma)$ increases, which means by \Cref{lem:properties-b-tree} that $(\hat{\cL}_n, \hat{\cU}_n)$ get tighter and $\hlob{\hat{\kappa}_\infty}$ shrinks by \Cref{lem:shrink}. It reaches its minimum $\hlgb{\kappa_\infty}$ when $\varepsilon=0$.
+\qed\end{proof}
 
-\subsection{Lazy Bellman update $\cB_n$}
+\subsubsection{Sampling rule}
+
+The sampling rule of \GBOPD (line 2) can take yield to an infinite sequence $b_n$. We propose to stop the sampling after a fixed depth $d^+_n$.
+
+\begin{proposition}[Time complexity of sampling]
+	Consider the variant of \GBOPD where we stop the sampling rule when reaching a fixed depth $d^+_n$ that is chosen polynomial with $n$:
+	\[d^+_n = \ceil{\alpha n^\beta},\; \text{with }\alpha,\beta > 0\]
+	Then, the regret bound of \Cref{thm:regret-gbop} (or that of \Cref{prop:early-stopping} when using early stopping in the bounds computation) still holds.
+\end{proposition}
+\begin{proof}
+	Let $\kappa'>\hlgb{{\kappa}_\infty}$ (or $\kappa'>\hlob{\hat{\kappa}_\infty}$ under approximate bounds). In the proof of \Cref{thm:regret-gbop}, it is shown that the maximum depth $d_n$ of an expanded node is at least $d^-_n \eqdef \log_{\kappa'}\frac{n-C_0}{C_1'}$, which allows to conclude with \Cref{lem:recommendation-bound} that $r_n = \cO(\gamma^d_n) = \cO(\gamma^{d^-_n})$. By choosing $d^+_n$ polynomial, we have that $d^+_n$ is greater than $d^-_n$ for $n$ sufficiently high. Thus, by stopping the sampling after reaching a depth $d^+_n$, we have that $r_n \leq \gamma^{\min\{d_n, d^+_n\}} / (1-\gamma) = \cO(\gamma^{d^-_n}) = \cO(n^{\frac{-\log 1/\gamma}{\log \kappa'}})$
+\qed\end{proof}
+
+\subsection{Partial Bellman update $\cB_n$}
 
 Instead of executing $\cB_n$ on the entire graph $\cG_n$, we can keep track of the nodes to update in a queue, and propagate these updates to their predecessors.
 
