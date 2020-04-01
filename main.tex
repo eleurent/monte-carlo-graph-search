@@ -348,8 +348,8 @@ where $f_n = \tilde{\cO}(n^{-\alpha})$ means that for any $\alpha'<\alpha$, $f_n
 
 \end{theorem}
 
-The near-optimal branching factor $\hlrb{\kappa}$ is related \citep{Bubeck2010open} to the near-optimality dimension studied in the online optimisation literature \citep[see e.g.][]{DOO HOO SOO POO}. \todo{TODO}
-It is typically small in problems where there is one single optimal trajectory, of which any deviation can be quickly dismissed as suboptimal. Conversely, $\kappa$ is large when there are many sub-optimal trajectories that cannot be distinguished easily based on their values, which requires the uniform exploration of a large part of the tree $T$ with its original branching factor $K$. 
+The near-optimal branching factor $\hlrb{\kappa}$ is related \citep{Bubeck2010open} to the near-optimality dimension studied in the online optimisation literature \citep[see e.g.][]{Munos2011,Bubeck2011Xarmed}.
+It is typically small in problems where there is one single optimal trajectory, of which any deviation can be quickly dismissed as suboptimal. Conversely, $\kappa$ is large when many sub-optimal trajectories cannot be distinguished easily based on their values, which requires the exploration of a large part of the tree $T$ of branching factor $K$. 
 
 
 \subsection{Motivation for an improved regret bound}
@@ -577,13 +577,13 @@ In a second experiment, a boat is sailing in $K=8$ directions to reach a goal, a
 \begin{figure}[ht]
 	\centering
 	\begin{subfigure}[b]{0.49\textwidth}
-		\includegraphics[trim = {0 0 0 0}, clip, width=\linewidth]{img/score.pdf}
+		\includegraphics[trim = {1.6cm 0.cm 2cm 1.5cm}, clip, width=\linewidth]{img/score.pdf}
 		\caption{Exploration score in the gridworld domain for several algorithms.}
 		\label{fig:exploration}
 	\end{subfigure}
 	\hfill%
 	\begin{subfigure}[b]{0.49\textwidth}
-		\includegraphics[trim = {0 0 0 0}, clip, width=\linewidth]{img/simple_regret.pdf}
+		\includegraphics[trim = {0.2cm 0.2cm 0.7cm 0.5cm}, clip, width=\linewidth]{img/simple_regret.pdf}
 		\caption{Mean simple regret $r_n$ in the sailing domain, with its $95\%$ confidence interval.}
 		\label{fig:sailing}
 	\end{subfigure}
