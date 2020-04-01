@@ -25,6 +25,7 @@
 \usepackage{cleveref}
 \usepackage{placeins}
 \usepackage{mathtools}
+\usepackage{siunitx}
 
 \usepackage[ruled,vlined]{algorithm2e}
 %\newcommand\mycommfont[1]{\footnotesize\ttfamily\textcolor{blue}{#1}}
@@ -347,7 +348,7 @@ where $f_n = \tilde{\cO}(n^{-\alpha})$ means that for any $\alpha'<\alpha$, $f_n
 
 \end{theorem}
 
-The near-optimal branching factor $\hlrb{\kappa}$ is related [ref OLOP] to the near-optimality dimension studied in the online optimisation literature \citep[see e.g.][]{DOO HOO SOO POO}. \todo{TODO}
+The near-optimal branching factor $\hlrb{\kappa}$ is related \citep{Bubeck2010open} to the near-optimality dimension studied in the online optimisation literature \citep[see e.g.][]{DOO HOO SOO POO}. \todo{TODO}
 It is typically small in problems where there is one single optimal trajectory, of which any deviation can be quickly dismissed as suboptimal. Conversely, $\kappa$ is large when there are many sub-optimal trajectories that cannot be distinguished easily based on their values, which requires the uniform exploration of a large part of the tree $T$ with its original branching factor $K$. 
 
 
@@ -740,8 +741,7 @@ We start by showing a preliminary lemma.
 	The bounds $(\overline{L}_n, \overline{U}_n)$ on the value of sequences of actions verify are respectively non-decreasing and non-increasing with respect to $n$, and verify: for all $a\in A^*$, $\overline{U_n}(a) = \max_{a'\in a A^\infty} \overline{U}(a')$.
 \end{lemma}
 \begin{proof}
-	\el{TODO}
-	 Since $U_t=B_t(U_t)$ and $L_t=B_t(L_t)$, 
+	The second property can be easily shown by induction using the fact that $U_n$ and $L_n$ are fixed-points of $B_n$ by definition. Applying this equation at each depth $h$ gives the result. From this observation, we can deduce that $\overline{L}_n$ is increasing with $n$. Indeed, since when $T(\cG_n)$ is expanded with additional nodes compared to $T(\cG_{n-1})$, the leaves $a$ of $T(\cG_{n-1})$ with previous value $L_{n-1}(a)=0$ are updated to $L_n(a) = \max_b r(s(a), b) \geq 0 = L_{n-1}(a)$, and this increase at the leaves is then propagated through $\max_{a'\in a A^\infty}$ to any internal node $a$. Thus, $L_n$ is non-decreasing and likewise, $U_n$ is non-increasing with respect to $n$. The same is obtained directly of the bounds on sequence values $(\overline{L}_n, \overline{U}_n)$.
 \qed\end{proof}
 
 Which enables us to proceed to the proof of \Cref{lem:expansion-bound}.
@@ -901,35 +901,36 @@ $\|\cB_n^k - \cB_n^\infty\| \leq \gamma\| \cB_n^{k+1} - \cB_n^\infty\| \leq \gam
 	\Return $\cU_n$\;
 \end{algorithm}
 
-\section{Experiments}
+\section{Experimental Details}
 
-\subsection{Parameters}
+In this section, we provide additional details and results about the experiments discussed in \Cref{sec:experiments}.
 
-Since the rewards are deterministic and the transitions are stochastic, we used $\beta^r(n_t(s,a), n) = 0$ and $\beta^p(n_t(s,a), n) = \log n$.
+\paragraph{Parameters.} In every experiment, we used $\gamma=0.95$. In \GBOPD and \GBOP, the fixed accuracy $\varepsilon=\num{1e-2}$ was used for computing $\cB_n^\infty$, and the sampling ruled was stopped after reaching the depth $d^+_n = n$ (see \Cref{sec:implementation}).
+Regarding the tuning of confidence intervals in \GBOP, since the rewards are deterministic and the transitions are stochastic in both domains we used $\beta^r(n_t(s,a), n) = 0$ and $\beta^p(n_t(s,a), n) = \log n$, following the recommendations of \citep{Leurent2019practical,MDPGapE2020}. The maximal size $B$ of the support of the transitions $\probability{s'|s,a}$ was also used ($B=4$ in the gridworld domain and $B=3$ in the sailing domain) to accelerate the computations of the confidence region $\cC_t$ for transitions, as explained in \citep{MDPGapE2020}.
 
-\subsection{State occupancies}
+\paragraph{Additional results.}
 
-We show the number of times each state is visited by other stochastic planning algorithms, in the stochastic gridworld domain.
+We show in \Cref{fig:suppl-occupancies} some  occupancy plots for additional planning algorithms in the stochastic Gridworld domain.
+In \Cref{fig:suppl-trees}, we compare the trees $T_n$ expanded by \OPD and \texttt{KL-OLOP} to the unrolled graph $T(\cG_n)$ of \GBOPD in the deterministic gridworld domain. For clarity of the figure, we only display the nodes selected for expansion and not the entire $T(\cG_n)$ as in \Cref{fig:unroll}, since it is infinite and fractal. We observe that \OPD explores uniformly in the space of sequences, which results in a concentrated exploration in the state space as seen in \Cref{fig:deterministic-gridworld}. This phenomenon is similar to the concentration properties of martingales. \texttt{KL-OLOP} behaves similarly, but allocates its bugdet $n$ in fewer trajectories of higher length than \OPD, which results in a sparser tree and slightly better exploration (compare \Cref{fig:deterministic-gridworld} to \Cref{fig:suppl-occupancies}). In contrast, \GBOPD expands a very sparse and unbalanced tree $T(\cG_n)$ which corresponds to uniform exploration in the state space, and allows to explore deeper for the same budget $n$ (The tree is only shown up to depth $12$, but continues much deeper since the optimal transition is sampled indefinitely once it is discovered). In particular, the paths towards the goal are sampled many times, while other algorithms are still balanced at the root in terms of number of visits.
 
-\begin{figure}[H]
+\begin{figure}[th]
 	\centering
 	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_KL-OLOP.pdf}
 	\hfill
 	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_BRUE.pdf}\\
 	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_MDP-GapE.pdf}
 	\caption{State occupancies of other planning algorithms in a stochastic gridworld.}
+	\label{fig:suppl-occupancies}
 \end{figure}
 
-\subsection{Expanded trees}
-We compare the tree $T_n$ expanded by \OPD to the unrolled graph $T(\cG_n)$ of \GBOPD in the deterministic gridworld domain. For clarity of the figure, we only display the nodes selected for expansion and not the automatic expansions as in \Cref{fig:unroll}. \Cref{fig:trees_expanded} shows that \OPD explored uniformly in the space of sequences, which results in contentrated exploration in the state space as seen in \Cref{fig:deterministic-gridworld}. Conversely, \GBOPD expands a sparse unbalanced tree which actually corresponds to uniform exploration in the state space, and allows to explore much deeper for the some budget $n$.
 
-\begin{figure}[H]
+\begin{figure}[tp]
 	\centering
-	\includegraphics[width=0.44\linewidth]{img/tree_OPD.pdf}
-%    \includegraphics[width=0.44\linewidth]{img/tree_KL-OLOP.pdf}
-	\includegraphics[width=0.44\linewidth]{img/tree_GBOP-T.pdf}
-	\caption{Tree expanded by \OPD, and unrolled graph expanded by \GBOP}
-	\label{fig:trees_expanded}
+	\includegraphics[trim={0 0.5cm 0 0.5cm}, clip, width=0.85\linewidth]{img/tree_OPD.pdf}
+    \includegraphics[trim={0 0.5cm 0 0.5cm}, clip, width=0.85\linewidth]{img/tree_KL-OLOP.pdf}
+	\includegraphics[trim={0 0.5cm 0 0.5cm}, clip, width=0.85\linewidth]{img/tree_GBOP-D.pdf}
+	\caption{Trees expanded by \OPD, by \texttt{KL-OLOP}, and sequences of actions sampled by \GBOPD. The width of edges is proportional to the number of visits.}
+	\label{fig:suppl-trees}
 \end{figure}
 
 \end{document}
