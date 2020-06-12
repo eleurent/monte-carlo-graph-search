@@ -54,7 +54,7 @@
 \jmlryear{2020}
 \jmlrworkshop{ACML 2020}
 
-\title[Graph-Based Optimistic Planning]{Graph-Based Optimistic Planning}
+\title[Monte-Carlo Graph Search]{Monte-Carlo Graph Search:\\the Value of Merging Similar States}
 
 % Use \Name{Author Name} to specify the name.
 % If the surname contains spaces, enclose the surname
@@ -101,7 +101,7 @@
 	\maketitle
 	
 	\begin{abstract}
-		We consider the problem of planning in a Markov Decision Process (MDP) with a generative model and limited computational budget. Despite the underlying MDP transitions having a graph structure, the popular \emph{tree-based} planning algorithms such as \texttt{UCT} rely on a tree structure to represent their value estimates. That is, they either ignore the states crossed along a trajectory, or they do not identify with each other two similar states met at different places in the tree. In this work, we propose the first \emph{graph-based} planning algorithm, which takes into account this state similarity. For the sake of analysis and explicit comparison, we first study our algorithm by framing it as a tree-based planner acting on the {unrolled} graph, in the simple case of deterministic systems. We provide a regret bound that depends on a novel problem-dependent measure of difficulty. This measure improves on the previous one in MDPs where the trajectories overlap, and recovers it otherwise. Then, we show that this methodology can be adapted to existing planning algorithms that deal with stochastic systems. Finally, numerical simulations illustrate the benefits of our approach.
+		We consider the problem of planning in a Markov Decision Process (MDP) with a generative model and limited computational budget. Despite the underlying MDP transitions having a graph structure, the popular Monte-Carlo Tree Search algorithms such as \texttt{UCT} rely on a tree structure to represent their value estimates. That is, they either ignore the states crossed along a trajectory, or they do not identify with each other two similar states met at different places in the tree. In this work, we propose a \emph{graph-based} planning algorithm, which takes into account this state similarity. We analyse the benefits of this ... provide a regret bound that depends on a novel problem-dependent measure of difficulty. This measure improves on the previous one in MDPs where the trajectories overlap, and recovers it otherwise. Then, we show that this methodology can be adapted to existing planning algorithms that deal with stochastic systems. Finally, numerical simulations illustrate the benefits of our approach.
 	\end{abstract}
 	\begin{keywords}
 		Online Planning, Tree-search, Reinforcement Learning.
@@ -109,31 +109,47 @@
 
 \section{Introduction}
 
-In a \emph{Markov Decision Process} (MDP), an agent observes its current state $s$ from a state space $S$ and picks an action $a$ from an action space $A$ of size $K$, before transitioning to a next state $s'$ drawn from a transition kernel $P\left(s'\condbar s,a\right)$ and receiving a bounded reward $r\in[0, 1]$ drawn from a reward distribution $P\left(r \condbar s,a\right)$.
-%The transition kernel can be seen as a \emph{graph}, where the nodes correspond to states $s\in S$, and the edges to transition probabilities between two states.
+
+Monte Carlo tree search (MCTS) algorithms are a popular approach to online decision-making in Markov decision processes (MDPs). 
+MCTS algorithms: trajectory-based, when the MDP parameters are unknown but a generative model is available, 
+l
+
+Algorithms for planning with a generative model dates back at least to the work of \citet{Kearns02SS} who proposed the \texttt{Sparse} \texttt{Sampling} algorithm using a tree structure to represent the value estimate and uniform sampling of trajectories. This strategy was further analysed in \citep{Feldman14BRUE} where the \texttt{BRUE} algorithm provides an enhanced value estimation. Another family of algorithms rely on the principle of \emph{Optimism in the Face of Uncertainty} \citep[surveyed by][]{Munos14}, inspired from the Multi-Armed Bandit problem. This principle was first used in the context of planning in the \texttt{CrazyStone} software \citep{Coulom2006} for computer Go. It was later formalized with the \texttt{UCT} algorithm \citep{Kocsis06UCT}, but was shown by \citet{Coquelin2007} to have a doubly-exponential complexity in the worst case. The {Optimistic Planning for Deterministic Systems} (\texttt{OPD}) algorithm introduced by \citet{Hren2008optimistic} was the first to provide a polynomial regret bound, but was limited to systems with deterministic rewards and dynamics. It was then extended to the case stochastic rewards \citep{Bubeck2010open,Leurent2019practical} with deterministic transitions.
+Known stochastic transitions were handled by \citet{Busoniu2012optimistic}. For MDPs with stochastic and unknown transitions, polynomial sample complexities have been obtained for \texttt{StOP} \citep{Szorenyi14}, \texttt{TrailBlazer} \citep{Grill16} and \texttt{SmoothCruiser} \citep{Grill19} but the three algorithms are intractable in practice: \texttt{StOP} requires the expensive storage of policies, while \texttt{TrailBlazer} and \texttt{SmoothCruiser} only terminate after a prohibitive amount of samples, even for very small MDPs. \citep{Huang2017,Kaufmann2017} proposed two algorithms for planning in a maxmin game with stochastic rewards in the leaves of a known game tree. The latter was recently extended by \citet{MDPGapE2020} as the \texttt{MDP-GapE} for planning in unknown stochastic MDPs.
+
+Monte-Carlo Tree Search algorithms \emph{do not merge information across states}. That is, if a state $s$ can be reached by two different trajectories, it will be represented twice in the look-ahead tree. For instance, in \Cref{fig:structures} (left), two different paths lead to the same state represented in red. None of the mentioned algorithms would use the information of both trajectories to update a shared value estimate $V(s)$. 
+
+\paragraph{Related work}
+
+This idea is realised in \citep{Silver18}, where a shared Neural Network is used to approximate the value of each state, but this network is merely updated between two planning instances and not during the planning procedure itself.
+Another work of interest is that of \citet{Hostetler14}, who propose to partition the state space $S$ into a smaller set $\cX$ of equivalence classes. By aggregating similar states within a class, they reduce the branching factor of the search tree from $|S||A|$ to $|\cX||A|$. However, this aggregation only concerns local deformations around trajectories but fails to aggregate trajectories that do not traverse the same sequence of classes, and comes with a (bounded) loss of optimality.
+The closest work to ours is that of \citet{Ballesteros2013}, in the context of partially observable MDPs, who identify similar belief states and use a graph structure, where some belief points are visited more than once through different observation-action histories. However, they compare empirically of several similarity measures, but do not provide any theoretical analysis of the effect of aggregation. 
+
+% Dynamic Programming requires the knowledge of the MDP parameters.
+% The complexity of MF/MB RL algorithms scale with S.
+
+\paragraph{Contributions}
+
+Our contributions are the following: first, we propose in \Cref{sec:gbopd} a planning algorithm named \GBOPD, a graph-based version of the tree-based \OPD algorithm for deterministic systems. Second, we analyse the benefits of our graph-based formulation in \Cref{sec:analysis}, and show in \Cref{thm:regret-gbop} that its regret scales with a novel problem-dependent difficulty measure that can only improve over the performance of \OPD, while providing an example where it does. Third, \Cref{sec:stochastic} discusses an extension of our method to stochastic MDPs, called \GBOP. Finally, \Cref{sec:experiments} illustrates the benefits of our approach in two numerical simulations.
+
+\section{Background}
+
+In a \emph{Markov Decision Process} (MDP), an agent observes its current state $s$ from a state space $S$ and picks an action $a$ from an action space $A$ of size $K$, before transitioning to a next state $s'$ drawn from a transition distribution $P\left(s'\condbar s,a\right)$ and receiving a bounded reward $r\in[0, 1]$ drawn from a reward distribution $P\left(r \condbar s,a\right)$.
+%The transition distribution can be seen as a \emph{graph}, where the nodes correspond to states $s\in S$, and the edges to transition probabilities between two states.
 The goal of the agent is to maximise in expectation its cumulative discounted rewards $\sum_{t=0}^\infty \gamma^t r_t$, where $\gamma\in(0, 1)$ is a discount factor. This amounts to choosing at each step the action that maximises the state-action value function %$Q$ defined as:
 $
 Q(s, a) \eqdef \max_\pi  \expectedvalue_{\tau\sim\pi} \left[\sum_{t=0}^\infty \gamma^t r_t\condbar s_0 = s, a_0 = a\right]
 $
-where $\pi$ is a policy mapping states to actions and $\tau = (s_0, a_0, \dots)$ is a trajectory generated by following $\pi$. In an \emph{online planning} setting, the underlying MDP is \emph{unknown} to the agent which only has access to a \emph{generative model} that provides samples $s'$ of $P\left(s' \condbar s, a\right)$ when queried. Then, under computational constraints known as \emph{fixed-budget}, the agent is only allowed a limited budget $n$ of queries to the generative model before recommending a good action $a_n$ to take next.
+where $\pi$ is a policy mapping states to actions and $\tau = (s_0, a_0, \dots)$ is a trajectory generated by following $\pi$. In \emph{monte-carlo planning}, the underlying MDP is \emph{unknown} to the agent which only has access to a forward \emph{generative model} that provides samples $s'$ of $P\left(s' \condbar s, a\right)$ when queried. Then, under computational constraints known as \emph{fixed-budget}, the agent is only allowed a limited budget $n$ of queries to the generative model before recommending a good action $a_n$ to take next.
 The quality of that action is assessed in terms of the \emph{simple regret}
 \begin{align}
-	r_n \eqdef V(s) - Q(s, {a}_n), \; \mbox{where} \; V(s) \eqdef  \max_a Q(s, a).
+r_n \eqdef V(s) - Q(s, {a}_n), \; \mbox{where} \; V(s) \eqdef  \max_a Q(s, a).
 \end{align}
-
-Algorithms for planning with a generative model dates back at least to the work of \citet{Kearns02SS} who proposed the \texttt{Sparse} \texttt{Sampling} algorithm using a tree structure to represent the value estimate and uniform sampling of trajectories. This strategy was further analysed in \citep{Feldman14BRUE} where the \texttt{BRUE} algorithm provides an enhanced value estimation. Another family of algorithms rely on the principle of \emph{Optimism in the Face of Uncertainty} \citep[surveyed by][]{Munos14}, inspired from the Multi-Armed Bandit problem. This principle was first used in the context of planning in the \texttt{CrazyStone} software \citep{Coulom2006} for computer Go. It was later formalized with the \texttt{UCT} algorithm \citep{Kocsis06UCT}, but was shown by \citet{Coquelin2007} to have a doubly-exponential complexity in the worst case. The {Optimistic Planning for Deterministic Systems} (\texttt{OPD}) algorithm introduced by \citet{Hren2008optimistic} was the first to provide a polynomial regret bound, but was limited to systems with deterministic rewards and dynamics. It was then extended to the case stochastic rewards \citep{Bubeck2010open,Leurent2019practical} with deterministic transitions.
-Known stochastic transitions were handled by \citet{Busoniu2012optimistic}. For MDPs with stochastic and unknown transitions, polynomial sample complexities have been obtained for \texttt{StOP} \citep{Szorenyi14}, \texttt{TrailBlazer} \citep{Grill16} and \texttt{SmoothCruiser} \citep{Grill19} but the three algorithms are intractable in practice: \texttt{StOP} requires the expensive storage of policies, while \texttt{TrailBlazer} and \texttt{SmoothCruiser} only terminate after a prohibitive amount of samples, even for very small MDPs. 
-\citep{Huang2017,Kaufmann2017} proposed two algorithms for planning in a maxmin game with stochastic rewards in the leaves of a known game tree. The latter was recently extended by \citet{MDPGapE2020} as the \texttt{MDP-GapE} for planning in unknown stochastic MDPs, in the fixed-confidence setting.
-
-To our knowledge, all the planning algorithms mentioned so far have one thing in common: they \emph{do not merge information across states}. That is, if a state $s$ can be reached by two different trajectories, it will be represented twice in the look-ahead tree. For instance, in \Cref{fig:structures} (left), two different paths lead to the same state represented in red. None of the mentioned algorithms would use the information of both trajectories to update a shared value estimate $V(s)$. The closest attempt to do so is that of \citet{Silver18} which uses a shared Neural Network to approximate the value of each state, but this network is merely updated between two planning instances and not during the planning procedure itself.
-% Also DP and RL, but not with generative model
-
-Our contributions are the following: first, in \Cref{sec:gbopd} we recall the \OPD tree-based planning algorithm in the simple context of deterministic MDPs, and propose a graph-based version named \GBOPD. Second, we analyse the benefits of our approach in \Cref{sec:analysis}, by framing \GBOPD as a tree-based algorithm running on the unrolled graph. We show in \Cref{thm:regret-gbop} that its regret scales with a novel problem-dependent difficulty measure that can only improve over the existing one, and provide an example where it does. Third, \Cref{sec:stochastic} discusses an extension of our method to stochastic MDPs, called \GBOP. Finally, \Cref{sec:experiments} demonstrates the applicability of our approach in two numerical experiments.
 
 \section{Graph-Based Planning for Deterministic Systems}
 \label{sec:gbopd}
 
-We consider the simple setting of MDPs with deterministic dynamics and rewards, and will denote $r(s,a)$ and $P(s,a)$ the unique reward $r$ and next state $s'$ sampled from $P\left(r,s'|s,a\right)$, respectively.
+We first consider the simple setting of MDPs with deterministic dynamics and rewards, and will denote $r(s,a)$ the unique reward $r$ sampled from $R\left(r|s,a\right)$ and $P(s,a)$ the unique next state $s'$ sampled from $P\left(s'|s,a\right)$.
 We start by giving some background on the interplay of data structures and optimistic planning algorithms.
 
 \subsection{Data structures}
@@ -196,7 +212,7 @@ A popular approach is to follow the principle of \emph{Optimism in the Face of U
 Following the OFU principle, at iteration $n$ we must leverage available information to design an upper-bound $U_n$ (or $\cU_n$) on $V$ as tight as possible. Then, in order to select a promising external node to expand, the sampling rule starts from the root (or source) and follows the optimistic strategy of always selecting the action which maximises $U_n$ (or $\cU_n$), until reaching an optimistic leaf (or sink) to expand. This strategy was used in \citep[e.g.][]{Kocsis06UCT, Hren2008optimistic, Bubeck2010open, Busoniu2012optimistic}.
 
 For instance, since we assume that the rewards are bounded in [0, 1], trivial bounds on $V(s)$ are
-$0 \leq V(s) \leq V_{\max} \eqdef {1}/({1-\gamma})$. But these trivial bounds are the same for every node, which makes them non-informative, and do not make use of the observed information. However, they can be used as a valid starting point. Every observed transition stored can then be used to tightened these bounds, by resorting to the Bellman optimality operator.
+$0 \leq V(s) \leq V_{\max} \eqdef \sum_t \gamma^t 1 = {1}/({1-\gamma})$. But these trivial bounds are the same for every node, which makes them non-informative, and do not make use of the observed information. However, they can be used as a valid starting point. Each observed transition can then be used to tightened these bounds, by resorting to the Bellman optimality operator.
 
 \begin{definition}[Bellman optimality operator]
 	\label{def:bellman}
@@ -205,18 +221,19 @@ $0 \leq V(s) \leq V_{\max} \eqdef {1}/({1-\gamma})$. But these trivial bounds ar
 	\label{eq:bellman-tree}
 	B_n(f)(a) \eqdef \begin{cases}
 	\max_{b\in A} r(s(a), b) + \gamma f({ab})
-	& \text{if $a\in\inte{\Tau}_n$.} \\
+	& \text{if $a\in\inte{\Tau}_n$;} \\
 	f(a) & \text{if $a\in\ext{\Tau}_n$;}
 	\end{cases}
 	\end{equation}
-	
-	\textbf{On graphs.} Likewise, we define the Bellman optimality operator $\cB_n$ on the graph $\cG_n$ as:
+	where $f:\Tau_n \rightarrow \Real$ is a real-valued function of tree nodes, such as the value bounds $L,U$.
+	 
+	\textbf{On graphs.} Likewise, we define the Bellman optimality operator $\cB_n$ on the graph $\cG_n$:
 	\begin{equation}
 	\label{eq:bellman-graph}
 	\cB_n(f)(s) \eqdef \begin{cases}
 	\max_{b\in A} r(s, b) + \gamma f(P(s,b))
-	& \text{if $s\in\inte{\cG}_n$.} \\
-	f(s) & \text{if $s\in\ext{\cG}_n$;}
+	& \text{if $s\in\inte{\cG}_n$;} \\
+	f(s) & \text{if $s\in\ext{\cG}_n$.}
 	\end{cases}
 	\end{equation}
 	The updates of both Bellman operators are depicted in \Cref{fig:bellman}.
@@ -280,13 +297,15 @@ which motivates us to propose \Cref{alg:gbop-d}, following the approach of \Cref
 	\For{each iteration $n$}{
 		Compute the bounds $L_n = B_n^{d_n}(0)$ and $U_n = B_n^{d_n}(V_{\max})$.\; 
 		
-		$b_n$ = $\emptyset$\;
+		$b_n\gets \emptyset$\;
+		
 		\While{$b_n\in\inte{\Tau}_n$}{
 			$b_n\gets \displaystyle\argmax_{a'\in b_n A} r(a') + \gamma U(a')$ \Comment*[r]{Optimistic sampling rule}
 		}
 		\For(\Comment*[f]{Node expansion}){action $a\in A$}{
 			Simulate $r, s' \sim P\left(r, s' \condbar s(b_n), a\right)$.\;
-			Add a new leaf $b_n a$ to $\Tau_{n+1}$, with associated reward $r$.
+			
+			Add a new leaf $b_n a$ to $\Tau_{n+1}$, with associated reward $r$.\;
 		}
 	}
 	\Return $\displaystyle\argmax_{a\in A} r(s, a) + \gamma L_n(a)$. \Comment*[r]{Conservative recommendation rule}\;
@@ -299,13 +318,15 @@ which motivates us to propose \Cref{alg:gbop-d}, following the approach of \Cref
 	\For{each iteration $n$}{
 		\nl Compute the bounds $\cL_n = \cB_n^{\infty}(0)$ and $\cU_n = \cB_n^\infty(V_{\max})$.\; 
 		
-		$\hat{s}_n$ = $s_0$\;
-		\nl \While{$s_n\in\inte{\cG}_n$}{
-			$s_n\gets \displaystyle\argmax_{s'} r(s_n, a) + \gamma \cU_n(s')$ \Comment*[r]{Optimistic sampling rule}
+		$\hat{s}_n \gets s_0$\;
+		
+		\While{$s_n\in\inte{\cG}_n$}{
+			\nl $s_n\gets \displaystyle\argmax_{s'} r(s_n, a) + \gamma \cU_n(s')$ \Comment*[r]{Optimistic sampling rule}
 		}
 		\For(\Comment*[f]{Node expansion}){action $a\in A$}{
 			Simulate $r, s' \sim P\left(r, s' \condbar s_n, a\right)$.\;
-			Get or create the node $s'$ in $\cG_{n+1}$, and add the transition $(s_n,a) \rightarrow s', r$.
+			
+			Get or create the node $s'$ in $\cG_{n+1}$, and add the transition $(s_n,a) \rightarrow s', r$.\;
 		}
 	}
 	\Return $\displaystyle\argmax_{a\in A} r(s,a) + \gamma \cL_n(s(a))$. \Comment*[r]{Conservative recommendation rule}
@@ -435,7 +456,7 @@ T(\cG_n) = \{a\in A^h: s_{t+1} \in \cG_n \text{ with } s_{t+1} = P(s_{t}, a_t)\t
 \begin{figure}[htp]
 	\centering
 	\includegraphics[trim={2.cm 1cm 2.5cm 1cm}, clip, width=0.44\textwidth]{img/tree_5.pdf}
-	\caption{The tree $T(\cG_n)$ obtained by unrolling $\cG_n$. Contrary to $T_n$ shown in \Cref{fig:structures}, the red leaf $a$ is expanded at the same time as the internal red node, which enables to tighten its value bounds $(L_n(a), U_n(a))$ by applying $B_n$.}
+	\caption{The tree $T(\cG_n)$ obtained by unrolling $\cG_n$. Contrary to $T_n$ shown in \Cref{fig:structures}, the orange leaf $a$ is expanded at the same time as the internal orange node, which enables to tighten its value bounds $(L_n(a), U_n(a))$ by applying $B_n$.}
 	\label{fig:unroll}
 \end{figure}
 We analyse \GBOPD though the prism of $T(\cG_n)$, which is only used as a theoretical tool. 
@@ -496,7 +517,7 @@ We consider a toy MDP $\cM$ shown in \Cref{fig:mdp}. The transitions are describ
 \begin{figure}[htp]
     \centering
     \includegraphics[trim={0.5cm 0.0cm 0.3cm 0.6cm}, clip, width=0.35\textwidth]{img/mdp.pdf}
-    \caption{A toy MDP with three states and $K \geq 2$ actions. We start in the top state. The first action $a_1$ is represented by \textcolor{green}{green} arrows, and all other actions $a_2, \dots, a_K$ are represented by \textcolor{orange}{orange} arrows. The rewards are shown next to the transitions.}
+    \caption{A toy MDP with three states and $K \geq 2$ actions. We start in the top state. The first action $a_1$ is represented by \textcolor{Green}{green} arrows, and all other actions $a_2, \dots, a_K$ are represented by \textcolor{Orange}{orange} arrows. The rewards are shown next to the transitions.}
     \label{fig:mdp}
 \end{figure}
 
@@ -519,27 +540,27 @@ The approach developed in \Cref{sec:gbopd,sec:analysis} consists in using state 
 
 \paragraph{Confidence intervals for rewards.}
 
-When the reward kernel $P\left(r \condbar s,a\right)$ is stochastic, deviation inequalities can be used to design a confidence interval $[\ell_t(s,a), u_t(s,a)]$ over its expected value $\expectedvalue\left[r | s,a\right]$. For instance, the Chernoff-Hoeffding deviation inequality was used to design confidence intervals in \citep{Kocsis06UCT,Bubeck2010open,Kaufmann2017}.
+When the reward distribution $P\left(r \condbar s,a\right)$ is stochastic, deviation inequalities can be used to design a confidence interval $[\ell_t(s,a), u_t(s,a)]$ over its expected value $\expectedvalue\left[r | s,a\right]$. For instance, the Chernoff-Hoeffding deviation inequality was used to design confidence intervals in \citep{Kocsis06UCT,Bubeck2010open,Kaufmann2017}.
 In recent works \citep{Leurent2019practical, MDPGapE2020}, the tighter Kullback-Leibler confidence interval is preferred:
 \begin{align*}
 u_t(s,a) &\eqdef \max \left\{v : \kl\!\big(\hat{r}_t(s,a),v\big) \leq \frac {\beta^r(n_t(s,a), n)} {n_t(s,a)} \right\},\\
 \ell_t(s,a) &\eqdef\min \left\{v : \kl\!\big(\hat{r}_t(s,a),v\big) \leq \frac {\beta^r(n_t(s,a), n)} {n_t(s,a)} \right\},
 \end{align*}
-where $\hat{r}_t(s,a)$ is the sample mean, $\beta^r$ is an exploration function and $\kl(u,v)$ is the binary Kullback-Leibler divergence between Bernoulli distributions: $\kl(u,v) = u \log \tfrac {u} {v} + (1-u) \log \tfrac {1-u} {1-v}$.
+where $n_t(s,a)$ is the number of times the transition $(s,a)$ was visited, $\hat{r}_t(s,a)$ is the empirical mean reward, $\beta^r$ is an exploration function and $\kl(u,v)$ is the binary Kullback-Leibler divergence between Bernoulli distributions: $\kl(u,v) = u \log \tfrac {u} {v} + (1-u) \log \tfrac {1-u} {1-v}$.
 
 \paragraph{Confidence region for transitions.}
 
-Likewise, when the transition kernel $P\left(s' \condbar s,a\right)$ is stochastic, a confidence set on the probability vector $p(\cdot|s,a)$ can be defined as
+Likewise, when the transition distribution $P\left(s' \condbar s,a\right)$ is stochastic, a confidence set on the probability vector $p(\cdot|s,a)$ can be defined as
 $\cC_t(s,a) \eqdef \left\{p\in \Sigma_S :  \KL\!\big(\hp_t(\cdot|s,a),p\big) \leq \frac {\beta^p(n_t(s,a), n)} {n_t(s,a)}\right\}$,
-where $\Sigma_S$ is the probability simplex over $S$, $\beta^p$ is an exploration function and $\KL(p,q)= \sum_{s \in S}  p(s) \log \tfrac{ p(s)} {{q}(s)}$ is the Kullback-Leibler divergence between categorical distributions.
+where $\Sigma_S$ is the probability simplex over $S$, $\hp_t(\cdot|s,a)$ is the empirical probability distribution $n_t(s,a,\cdot) / n_t(s,a)$, $\beta^p$ is an exploration function and $\KL(p,q)= \sum_{s \in S}  p(s) \log \tfrac{ p(s)} {{q}(s)}$ is the Kullback-Leibler divergence between categorical distributions.
 
 \paragraph{Bellman operator with stochasticity.}
 
 In this work, we do not discuss the tuning of $\beta^r$, $\beta^p$, but simply assume that they are chosen such that the rewards and transitions belong to their confidence regions with sufficiently high probability to obtain performance guarantees for the  planning algorithm. For more details on such a choice, refer to \citep[e.g.][]{Leurent2019practical, MDPGapE2020}. We modify the Definition \ref{def:bellman} of the Bellman operator on graphs as:
 
 \begin{align*}
-\cB_t^+(\cU)(s) &= \max_{a\in A} \left[u_t(s,a) + \gamma \max_{p \in \cC_t(s,a)} \sum_{s'} p(s'|s,a) \cU(s')\right], \\
-\cB_t^-(\cL)(s) &= \max_{a\in A} \left[\ell_t(s,a) + \gamma \min_{p \in \cC_t(s,a)} \sum_{s'} p(s'|s,a)\cL(s')\right],
+\cB_t^+(\cU)(s) &= \max_{a\in A} \left[u_t(s,a) + \gamma \max_{q \in \cC_t(s,a)} \sum_{s'} q(s'|s,a) \cU(s')\right], \\
+\cB_t^-(\cL)(s) &= \max_{a\in A} \left[\ell_t(s,a) + \gamma \min_{q \in \cC_t(s,a)} \sum_{s'} q(s'|s,a)\cL(s')\right],
 \end{align*}
 for all $s\in\inte{\cG_n}$, where the maximum and minimum over these Kullback-Leibler confidence regions $\cC_t(s,a)$ can be computed as explained in \citep[Appendix A of][]{Filippi2010optimism}. Under the event that every confidence regions $[\ell_t(s,a), u_t(s,a)]$ and $\cC_t(s,a)$ are valid at time $t$, the Lemma \ref{lem:properties-b-graph} still holds for $\cB_t^-, \cB_t^+$.
 
