@@ -44,6 +44,7 @@
 \newcommand{\qed}{}
 
 
+
 %%  weird fix for \includegraphics
 %  https://tex.stackexchange.com/questions/513300/unable-to-compile-with-includegraphics-using-jmlr-cls
 \makeatletter
@@ -549,16 +550,18 @@ where $n_t(s,a)$ is the number of times the transition $(s,a)$ was visited, $\ha
 
 \paragraph{Confidence region for transitions.}
 
-Likewise, when the transition distribution $P\left(s' \condbar s,a\right)$ is stochastic, a confidence set on the probability vector $p(\cdot|s,a)$ can be defined as
+Likewise, when the transition distribution $P\left(s' | s,a\right)$ is stochastic, a confidence set on the probability vector $p(\cdot|s,a)$ can be defined as
 $\cC_t(s,a) \eqdef \left\{p\in \Sigma_S :  \KL\!\big(\hp_t(\cdot|s,a),p\big) \leq \frac {\beta^p(n_t(s,a), n)} {n_t(s,a)}\right\}$,
-where $\Sigma_S$ is the probability simplex over $S$, $\hp_t(\cdot|s,a)$ is the empirical probability distribution $n_t(s,a,\cdot) / n_t(s,a)$, $\beta^p$ is an exploration function and $\KL(p,q)= \sum_{s \in S}  p(s) \log \tfrac{ p(s)} {{q}(s)}$ is the Kullback-Leibler divergence between categorical distributions.
+where $\Sigma_S$ is the probability simplex over $S$, $\hp_t(\cdot|s,a) \eqdef n_t(s,a,\cdot) / n_t(s,a)$ is the empirical distribution, $\beta^p$ is an exploration function and $\KL(p,q)= \sum_{s \in S}  p(s) \log \tfrac{ p(s)} {{q}(s)}$ is the Kullback-Leibler divergence between categorical distributions.
 
 \paragraph{Bellman operator with stochasticity.}
 
-In this work, we do not discuss the tuning of $\beta^r$, $\beta^p$, but simply assume that they are chosen such that the rewards and transitions belong to their confidence regions with sufficiently high probability to obtain performance guarantees for the  planning algorithm. For more details on such a choice, refer to \citep[e.g.][]{Leurent2019practical, Jonsson2020planning}. We modify the Definition \ref{def:bellman} of the Bellman operator on graphs as:
+In this work, we do not discuss the tuning of $\beta^r$, $\beta^p$, but simply assume that they are chosen such that the rewards and transitions belong to their confidence regions with sufficiently high probability to obtain performance guarantees for the planning algorithm. For more details on such a choice, refer to \citep[e.g.][]{Leurent2019practical, Jonsson2020planning}. We modify the Definition \ref{def:bellman} of $\cB_t$ as:
 
 \begin{align*}
 \cB_t^+(\cU)(s) &= \max_{a\in A} \left[u_t(s,a) + \gamma \max_{q \in \cC_t(s,a)} \sum_{s'} q(s'|s,a) \cU(s')\right], \\
+\end{align*}
+\begin{align*}
 \cB_t^-(\cL)(s) &= \max_{a\in A} \left[\ell_t(s,a) + \gamma \min_{q \in \cC_t(s,a)} \sum_{s'} q(s'|s,a)\cL(s')\right],
 \end{align*}
 for all $s\in\inte{\cG_n}$, where the maximum and minimum over these Kullback-Leibler confidence regions $\cC_t(s,a)$ can be computed as explained in \citep[Appendix A of][]{Filippi2010optimism}. Under the event that every confidence regions $[\ell_t(s,a), u_t(s,a)]$ and $\cC_t(s,a)$ are valid at time $t$, the Lemma \ref{lem:properties-b-graph} still holds for $\cB_t^-, \cB_t^+$.
@@ -577,16 +580,16 @@ In the deterministic setting, once a transition has been observed, it is known w
 			Compute the bounds $\cL_n = (\cB_n^-)^{\infty}(0)$ and $\cU_n = (\cB_n^+)^\infty(V_{\max})$.\; 
 			$b_t\gets \displaystyle\argmax_{a\in A} r(s_t, a) + \gamma \cU_n(s')$ \Comment*[r]{Optimistic sampling rule}
 			Simulate $r_t, s_{t+1} \sim P\left(r, s_{t+1} \condbar s_t, b_t\right)$.\;
-			Get or create the node $s_{t+1}$ in $\cG_{n+1}$, and add an occurence of the transition $(s_t,b_t, r_t, s_{t+1})$.
+			Get or create the node $s_{t+1}$ in $\cG_{n+1}$, and add an occurrence of the transition $(s_t,b_t, r_t, s_{t+1})$.
 		}
 	}
-	\Return $\displaystyle\argmax_{a\in A} r(s,a) + \gamma \cL_n(s(a))$. \Comment*[r]{Conservative recommendation rule}
+	\Return $\argmax_{a\in A} r(s,a) + \gamma \cL_n(s(a))$. \Comment*[r]{Conservative recommendation rule}
 \end{algorithm}
 
 \section{Numerical Experiments}
 \label{sec:experiments}
 
-To evaluate the practical benefits of our approach, we compare graph-based and tree-based planning algorithms in various problems.
+To evaluate the practical benefits of our approach, we compare graph-based and tree-based planning algorithms on two domains.
 
 \paragraph{Gridworld domain.}
 We consider a grid in which the agent starts at $(0,0)$ and can move in $K=4$ directions. The reward function is $0$ everywhere, except in the vicinity of a goal located at $(10, 10)$, around which the reward decreases quadratically from $1$ to $0$ in a ball of radius $5$. %: $r(x, y) = \max(1 - \frac{1}{5^2}((x-10)^2 + (y-10)^2), 0)$. 
@@ -608,7 +611,8 @@ The \Cref{fig:deterministic-gridworld} shows number of times a state is sampled 
 \end{figure}
 
 \paragraph{Sailing domain \citep{Vanderbei1996}.}
-In a second experiment, a boat is sailing in $K=8$ directions to reach a goal, and suffers a cost (move duration) that depends on the direction of the wind which follows stochastic dynamics. \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls. We show the mean regret and its 95\% confidence interval computed over 500 simulations. The asymptotic log-log slope $\sigma$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithm. We measure that for $n>10^{3.5}$, $\sigma \approx-0.04$ and $\kappa_e \approx 3.6$ for \texttt{BRUE}, \texttt{KL-OLOP}, \texttt{MDP-GapE}, \texttt{UCT}. In contrast, we measure $\sigma \approx-0.3$ and $\kappa_e \approx 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop} might generalize to the stochastic setting. Additional results and experimental details are provided in the Supplementary Material.
+In a second experiment, a boat is sailing in $K=8$ directions to reach a goal, and suffers a cost (move duration) that depends on the direction of the wind which follows stochastic dynamics. \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls. We compute the mean regret and its 95\% confidence interval over 500 simulations. The asymptotic log-log slope $\sigma$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithm. We measure that %for $n>10^{3.5}$, 
+$\sigma \approx-0.04$ and $\kappa_e \approx 3.6$ for \texttt{BRUE}, \texttt{KL-OLOP}, \texttt{MDP-GapE}, \texttt{UCT}. In contrast, we measure $\sigma \approx-0.3$ and $\kappa_e \approx 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop} might generalize to the stochastic setting. Additional experimental results and details are provided in the Supplementary Material.
 
 \begin{figure}[ht]
 	\centering
@@ -625,7 +629,7 @@ In a second experiment, a boat is sailing in $K=8$ directions to reach a goal, a
 
 \section*{Conclusion}
 
-We proposed an algorithm that exploits a graph structure to plan in an MDP with a generative model under limited budget $n$. We showed that this graph structure provides a benefit compared to tree structure in the deterministic setting, in the form of an improved regret bound that depends on a smaller problem difficulty. This improvement translates to an enhanced performance in practice, and can be adapted to stochastic problems as we demonstrate experimentally.
+We proposed an algorithm that exploits a graph structure to plan in an MDP with a generative model under limited budget $n$. We showed that this graph structure provides a benefit compared to tree structures in the deterministic setting, in the form of an improved regret bound that depends on a smaller problem difficulty. This translates into an enhanced performance in practice, and can be adapted to stochastic problems as we show empirically.
 
 \FloatBarrier
 \bibliography{references}
