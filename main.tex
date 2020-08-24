@@ -624,6 +624,10 @@ The \Cref{fig:deterministic-gridworld} shows number of times a state is sampled 
 In a second experiment, a boat is sailing in $K=8$ directions to reach a goal, and suffers a cost (move duration) that depends on the direction of the wind which follows stochastic dynamics. \Cref{fig:sailing} shows the evolution of the simple regret $r_n$ of stochastic planning algorithms with respect to the number $n$ of oracle calls. We compute the mean regret and its 95\% confidence interval over 500 simulations. The asymptotic log-log slope $\sigma$ provides an empirical measurement of the effective branching factor $\kappa_e = \exp(-\log(1/\gamma)/\sigma)$ for each algorithm. We measure that %for $n>10^{3.5}$, 
 $\sigma \approx-0.04$ and $\kappa_e \approx 3.6$ for \texttt{BRUE}, \texttt{KL-OLOP}, \texttt{MDP-GapE}, \texttt{UCT}. In contrast, we measure $\sigma \approx-0.3$ and $\kappa_e \approx 1.2$ for \GBOP, which suggests that our result of \Cref{thm:regret-gbop} might generalize to the stochastic setting. Additional experimental results and details are provided in the Supplementary Material.
 
+\section*{Acknowledgement}
+
+This work was supported by the French Ministry of Higher Education and Research, and CPER Nord-Pas de Calais/FEDER DATA Advanced data science and technologies 2015-2020.
+We thank Mathieu Seurin and {\'E}milie Kaufmann for the helpful discussions and proofreading.
 
 \FloatBarrier
 \section*{Conclusion}
