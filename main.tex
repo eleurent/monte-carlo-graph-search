@@ -51,9 +51,10 @@
 \def\set@curr@file#1{\def\@curr@file{#1}} %temp workaround for 2019 latex release
 \makeatother
 
-\jmlrvolume{xx}
+\jmlrvolume{129}
 \jmlryear{2020}
 \jmlrworkshop{ACML 2020}
+\setcounter{page}{577}
 
 \title[Monte-Carlo Graph Search]{Monte-Carlo Graph Search:\\the Value of Merging Similar States}
 
@@ -88,14 +89,12 @@
 
 
 % Authors with different addresses:
-\author{\Name{Author Name1} \Email{abc@sample.com}\\
-	\addr Address 1
-	\AND
-	\Name{Author Name2} \Email{xyz@sample.com}\\
-	\addr Address 2
+\author{\Name{Edouard Leurent} \Email{edouard.leurent@inria.fr}\\
+	\Name{Odalric-Ambrym Maillard} \Email{odalric.maillard@inria.fr}\\
+	\addr Inria Lille -- Nord Europe, 40 avenue Halley, 59650 Villeneuve d'Ascq, France
 }
 
-\editors{Wee Sun Lee and Taiji Suzuki}
+\editors{Sinno Jialin Pan and Masashi Sugiyama}
 
 \begin{document}
 
@@ -199,6 +198,7 @@ A popular approach is to follow the principle of \emph{Optimism in the Face of U
 \begin{equation*}
     \forall a\in\Tau_n, \qquad L(a) \leq V(s(a)) \leq U(a).
 \end{equation*}
+In the sequel, we abuse notations and denote this inequality as $L \leq V \leq U$.
 
 \textbf{On graphs.} Likewise, we denote by $\cL:\cG_n \rightarrow \Real$ and  $\cU:\cG_n \rightarrow \Real$ a lower-bound and upper-bound for the state value $V$ defined on the graph $\cG_n$, such that
 \begin{equation*}
@@ -246,7 +246,7 @@ $0 \leq V(s) \leq V_{\max} \eqdef \sum_t \gamma^t 1 = {1}/({1-\gamma})$. But the
 	\includegraphics[trim={2.0cm 2.9cm 2.5cm 3.1cm}, clip,width=0.44\linewidth]{img/tree_2}
 	\hfill
 	\includegraphics[trim={2.7cm 2.7cm 2.7cm 1.1cm}, clip,width=0.44\linewidth]{img/graph_2}
-	\caption{Illustration of the Bellman backup operators $B$ (left) and $\cB$ (right). Notice that $B_n$ only propagates information upward in the tree.}
+	\caption{Black arrows depict how the Bellman backup operators $B_n$ (left) and $\cB_n$ (right) propagate value estimates from successor nodes to their parents. Information travels freely in a graph, but only upwards in a tree.}
 	\label{fig:bellman}
 \end{figure}
 
@@ -276,7 +276,9 @@ L_n \eqdef B_n^{d_n}(0), \qquad U_n \eqdef B_n^{d_n}(V_{\max}),
 \end{align}
 where $0$ is the null function. The corresponding \texttt{OPD} algorithm is described in \Cref{alg:opd}.
 
+
 \begin{algorithm}[ht]
+	\SetAlgoNoEnd%
 	\caption{The \emph{Optimistic Planning of Deterministic Systems} (\OPD) algorithm from \citep{Hren2008optimistic}.}
 	\label{alg:opd}
 	\DontPrintSemicolon
@@ -310,6 +312,7 @@ Likewise, we show that the graph version $\cB_n$ verifies similar properties.
 This motivates us to propose \Cref{alg:gbop-d}, following the approach of \Cref{alg:opd} adapted to a graph structure.
 
 \begin{algorithm}[ht]
+	\SetAlgoNoEnd%
 	\caption{Our proposed \emph{Graph-Based Optimistic Planning for Deterministic systems} (\GBOPD) algorithm.}
 	\label{alg:gbop-d}
 	\DontPrintSemicolon
@@ -561,21 +564,25 @@ In this work, we do not discuss the tuning of $\beta^r$, $\beta^p$, but simply a
 \cB_t^+(\cU)(s) &= \max_{a\in A} \left[u_t(s,a) + \gamma \max_{q \in \cC_t(s,a)} \sum_{s'} q(s'|s,a) \cU(s')\right], \\
 \cB_t^-(\cL)(s) &= \max_{a\in A} \left[\ell_t(s,a) + \gamma \min_{q \in \cC_t(s,a)} \sum_{s'} q(s'|s,a)\cL(s')\right],
 \end{align*}
-for all $s\in\inte{\cG_n}$, where the maximum and minimum over these Kullback-Leibler confidence regions $\cC_t(s,a)$ can be computed as explained in \citep[Appendix A of][]{Filippi2010optimism}. Under the event that every confidence regions $[\ell_t(s,a), u_t(s,a)]$ and $\cC_t(s,a)$ are valid at time $t$, the Lemma \ref{lem:properties-b-graph} still holds for $\cB_t^-, \cB_t^+$.
+for all $s\in\inte{\cG_n}$, where the extremums over these KL confidence regions $\cC_t(s,a)$ can be computed as explained in \citep[][Appendix A]{Filippi2010optimism}. Under the event that all confidence regions $[\ell_t(s,a), u_t(s,a)]$ and $\cC_t(s,a)$ are valid, the Lemma \ref{lem:properties-b-graph} still holds for $\cB_t^-, \cB_t^+$.
 
 \paragraph{Structure of the planning algorithm}
 
-In the deterministic setting, once a transition has been observed, it is known with certainty and doesn't need to be sampled ever again, which is why only external nodes $\ext{\cG_n}$ are sampled in \GBOPD. Conversely, in the stochastic setting the expected reward and transition probabilities must be estimated from samples, which implies that internal nodes $\inte{\cG_n}$ must be sampled as well. Then, it is common to adopt and episodic setting where we sample trajectories of a fixed horizon $H$, tuned depending on the budget $n$. This is the case in  \citep[e.g.][]{Kearns02SS,Kocsis06UCT,Bubeck2010open,Feldman14BRUE,Leurent2019practical,Jonsson2020planning}. We also follow this scheme in our proposed \GBOP
+In the deterministic setting, once a transition has been observed, it is known with certainty and doesn't need to be sampled ever again, which is why only external nodes $\ext{\cG_n}$ are sampled in \GBOPD. Conversely, in the stochastic setting the expected reward and transition probabilities must be estimated from samples, which implies that internal nodes $\inte{\cG_n}$ must be sampled as well. Then, it is common to adopt and episodic setting where we sample trajectories of a fixed horizon $H$, tuned depending on the budget $n$. This is the case in  \citep[e.g.][]{Kearns02SS,Kocsis06UCT,Bubeck2010open,Feldman14BRUE,Leurent2019practical,Jonsson2020planning}. We also follow this scheme in our proposed \GBOP algorithm.
 
 \begin{algorithm}[ht]
+	\SetAlgoNoEnd%
 	\caption{\emph{Graph-Based Optimistic Planning} (\GBOP) algorithm.}
 	\label{alg:gbop}
 	\DontPrintSemicolon
 	\For{trajectory $m$ in $[1, M]$}{
 		\For{time $t$ in $[1, H]$}{
 			$n \gets (m - 1)H + t$.\;
+			
 			Compute the bounds $\cL_n = (\cB_n^-)^{\infty}(0)$ and $\cU_n = (\cB_n^+)^\infty(V_{\max})$.\; 
+			
 			$b_t\gets \displaystyle\argmax_{a\in A} r(s_t, a) + \gamma \cU_n(s')$ \Comment*[r]{Optimistic sampling rule}
+			
 			Simulate $r_t, s_{t+1} \sim P\left(r, s_{t+1} \condbar s_t, b_t\right)$.\;
 			Get or create the node $s_{t+1}$ in $\cG_{n+1}$, and add an occurrence of the transition $(s_t,b_t, r_t, s_{t+1})$.
 		}
@@ -627,7 +634,7 @@ $\sigma \approx-0.04$ and $\kappa_e \approx 3.6$ for \texttt{BRUE}, \texttt{KL-O
 \section*{Acknowledgement}
 
 This work was supported by the French Ministry of Higher Education and Research, and CPER Nord-Pas de Calais/FEDER DATA Advanced data science and technologies 2015-2020.
-We thank Mathieu Seurin and {\'E}milie Kaufmann for the helpful discussions and proofreading.
+We thank Mathieu Seurin and {\'E}milie Kaufmann for their valuable comments.
 
 \FloatBarrier
 \section*{Conclusion}
@@ -899,9 +906,24 @@ It is difficult to control more explicitly the gap between $\hlgb{\kappa_\infty}
 	As $\varepsilon$ decreases, $k(\epsilon,\gamma)$ increases, which means by Lemma \ref{lem:properties-b-tree} that $(\hat{\cL}_n, \hat{\cU}_n)$ get tighter and $\hlob{\hat{\kappa}_\infty}$ shrinks by Lemma \ref{lem:shrink}. It reaches its minimum $\hlgb{\kappa_\infty}$ when $\varepsilon=0$.
 \qed\end{proof}
 
-Thus, we observe that there is a \emph{tradeoff} between the time complexity $k(\varepsilon)$ and the sample complexity $\hlob{\hat{\kappa}_\infty}$: decreasing one increases the other.
+Thus, we observe that there is a \emph{trade-off} between the time complexity $k(\varepsilon)$ and the sample complexity $\hlob{\hat{\kappa}_\infty}$: decreasing one increases the other. We illustrate this trade-off empirically in \Cref{fig:approximation}.
 
 Note that \OPD uses $d_n$ iterations of $B_n$, which corresponds to a tuning of $\varepsilon$ with $n$: $\varepsilon_n = \frac{\gamma^{d_n}}{1-\gamma} = \cO(n^{-\frac{\log 1/\gamma}{\log \kappa}})$. 
+
+\begin{figure}
+\begin{center}
+\includegraphics[trim={1.8cm 0.4cm 1.8cm 0.4cm}, clip, width=0.24\linewidth]{img/epsilon/updates_GBOP-D_1e-2}
+\includegraphics[trim={1.8cm 0.4cm 1.8cm 0.4cm}, clip, width=0.24\linewidth]{img/epsilon/updates_GBOP-D_1e0}
+\includegraphics[trim={1.8cm 0.4cm 1.8cm 0.4cm}, clip, width=0.24\linewidth]{img/epsilon/updates_GBOP-D_1e1}
+\includegraphics[trim={1.8cm 0.4cm 1.8cm 0.4cm}, clip, width=0.24\linewidth]{img/epsilon/updates_GBOP-D_1e2}\\
+\includegraphics[trim={1.8cm 0.4cm 1.8cm 0.4cm}, clip, width=0.24\linewidth]{img/epsilon/occupations_GBOP-D_1e-2}
+\includegraphics[trim={1.8cm 0.4cm 1.8cm 0.4cm}, clip, width=0.24\linewidth]{img/epsilon/occupations_GBOP-D_1e0}
+\includegraphics[trim={1.8cm 0.4cm 1.8cm 0.4cm}, clip, width=0.24\linewidth]{img/epsilon/occupations_GBOP-D_1e1}
+\includegraphics[trim={1.8cm 0.4cm 1.8cm 0.4cm}, clip, width=0.24\linewidth]{img/epsilon/occupations_GBOP-D_1e2}
+\end{center}
+\caption{\textbf{Top row}: Map showing the number of updates triggered by $\cB$ at each expanded state, and for various values of $\varepsilon$. \textbf{Bottom row}: Map showing corresponding. The rightmost column corresponds to $\epsilon \geq V_{\max} = 20$, \emph{i.e.} every approximation stops after a single iteration.}
+\label{fig:approximation}
+\end{figure}
 
 
 \subsubsection{Sampling rule}
@@ -928,9 +950,9 @@ Two ideas can be used to increase the efficiency of both steps:
 	\item Instead of starting the iteration with the trivial bounds, the previous estimate $\cL_{n-1}, \cU_{n-1}$ can be used instead at iteration $n$. Since these bounds are closer to their limit ($0\leq \cL_{n-1}\leq \cL_n$ and $\cU_n\leq \cU_{n-1} \leq V_{\max}$), the fixed-point iteration will converge quicker.
 	\item In particular, since $\cL_{n-1}$ and $\cU_{n-1}$ are invariant by $\cB_n$, the the only nodes modified by a supplementary application of $\cB_n$ are the parents of only updated node: the expanded state $s_n$. Once its value is updated by $\cB_n$, the same reasoning can be applied for the next iteration of $\cB_n$: only its predecessors can be updated. Thus, we can keep track of a set $q$ of states that can be updated, for every application of $\cB_n$.
 \end{enumerate}
-These idea are formalised in \Cref{alg:queue-b-inf}. Note that the criterion $\|\cB_n^{k+1} - \cB_n^k\| \leq \frac{1-\gamma}{\gamma}\varepsilon$ is used to detect that the limit $\cB_n^\infty$ is approximated with accuracy $\varepsilon$, and stems from $\cB_n$ being a $\gamma$-contraction:
+These idea are formalised in \Cref{alg:queue-b-inf}. Note that the criterion $\|\cU_n^{k+1} - \cU_n^k\| \leq \frac{1-\gamma}{\gamma}\varepsilon$ is used to detect that the limit $\cU_n^\infty$ is approximated with accuracy $\varepsilon$, and stems from $\cB_n$ being a $\gamma$-contraction:
 \begin{proof}
-$\|\cB_n^k - \cB_n^\infty\| \leq \gamma\| \cB_n^{k+1} - \cB_n^\infty\| \leq \gamma \|\cB_n^{k+1} - \cB_n^{k}\| + \gamma \|\cB_n^{k} - \cB_n^\infty\|$, with $\| \cB_n^{k+1} - \cB_n^{k}\| \leq \frac{1-\gamma}{\gamma}\varepsilon$, thus $\|\cB_n^{k} - \cB_n^\infty\| \leq \varepsilon$.
+$\|\cU_n^k - \cU_n^\infty\| \leq \gamma\| \cU_n^{k+1} - \cU_n^\infty\| \leq \gamma \|\cU_n^{k+1} - \cU_n^{k}\| + \gamma \|\cU_n^{k} - \cU_n^\infty\|$, with $\| \cU_n^{k+1} - \cU_n^{k}\| \leq \frac{1-\gamma}{\gamma}\varepsilon$, thus $\|\cU_n^{k} - \cU_n^\infty\| \leq \varepsilon$.
 \qed\end{proof}
 
 \begin{algorithm}
@@ -940,9 +962,12 @@ $\|\cB_n^k - \cB_n^\infty\| \leq \gamma\| \cB_n^{k+1} - \cB_n^\infty\| \leq \gam
 	\KwOut{An $\varepsilon$-approximation of $\cU_{n}$}
 	\DontPrintSemicolon
 	$\cU_n \gets \cU_{n-1}$\;
+	
 	$q\gets [s_n]$\;
+	
 	\While{$q$ is not empty}{
 		$s'\gets$ Pop the first node from the queue $q$\;
+		
 		$\cU' \gets \cB_n(\cU_n)(s')$\Comment*[r]{Node backup}
 		\If(\Comment*[f]{Stopping rule}){$\cU' - \cU_n > \frac{1-\gamma}{\gamma}\varepsilon$}{
 			Push the predecessors $s$ of $s'$ to the queue $q$ \Comment*[r]{Propagation rule}
@@ -962,9 +987,6 @@ Regarding the tuning of confidence intervals in \GBOP, since the rewards are det
 
 \paragraph{Additional results.}
 
-We show in \Cref{fig:suppl-occupancies} some  occupancy plots for additional planning algorithms in the stochastic Gridworld domain.
-In \Cref{fig:suppl-trees}, we compare the trees $T_n$ expanded by \OPD and \texttt{KL-OLOP} to the unrolled graph $T(\cG_n)$ of \GBOPD in the deterministic gridworld domain. For clarity of the figure, we only display the nodes selected for expansion and not the entire $T(\cG_n)$ as in \Cref{fig:unroll}, since it is infinite and fractal. We observe that \OPD explores uniformly in the space of sequences, which results in a concentrated exploration in the state space as seen in \Cref{fig:deterministic-gridworld}. This phenomenon is similar to the concentration properties of martingales. \texttt{KL-OLOP} behaves similarly, but allocates its bugdet $n$ in fewer trajectories of higher length than \OPD, which results in a sparser tree and slightly better exploration (compare \Cref{fig:deterministic-gridworld} to \Cref{fig:suppl-occupancies}). In contrast, \GBOPD expands a very sparse and unbalanced tree $T(\cG_n)$ which corresponds to uniform exploration in the state space, and allows to explore deeper for the same budget $n$ (The tree is only shown up to depth $12$, but continues much deeper since the optimal transition is sampled indefinitely once it is discovered). In particular, the paths towards the goal are sampled many times, while other algorithms are still balanced at the root in terms of number of visits.
-
 \begin{figure}[th]
 	\centering
 	\includegraphics[trim={1.8cm 0.7cm 1.8cm 0.7cm}, clip, width=0.49\linewidth]{img/occupations_KL-OLOP.pdf}
@@ -978,12 +1000,15 @@ In \Cref{fig:suppl-trees}, we compare the trees $T_n$ expanded by \OPD and \text
 
 \begin{figure}[tp]
 	\centering
-	\includegraphics[trim={0 0.5cm 0 0.5cm}, clip, width=0.85\linewidth]{img/tree_OPD.pdf}
-    \includegraphics[trim={0 0.5cm 0 0.5cm}, clip, width=0.85\linewidth]{img/tree_KL-OLOP.pdf}
-	\includegraphics[trim={0 0.5cm 0 0.5cm}, clip, width=0.85\linewidth]{img/tree_GBOP-D.pdf}
+	\includegraphics[trim={0 0.5cm 0 0.5cm}, clip, width=0.65\linewidth]{img/tree_OPD.pdf}
+	\includegraphics[trim={0 0.5cm 0 0.5cm}, clip, width=0.65\linewidth]{img/tree_KL-OLOP.pdf}
+	\includegraphics[trim={0 0.5cm 0 0.5cm}, clip, width=0.65\linewidth]{img/tree_GBOP-D.pdf}
 	\caption{Trees expanded by \OPD, by \texttt{KL-OLOP}, and sequences of actions sampled by \GBOPD. The width of edges is proportional to the number of visits.}
 	\label{fig:suppl-trees}
 \end{figure}
+
+We show in \Cref{fig:suppl-occupancies} some  occupancy plots for additional planning algorithms in the stochastic Gridworld domain.
+In \Cref{fig:suppl-trees}, we compare the trees $T_n$ expanded by \OPD and \texttt{KL-OLOP} to the unrolled graph $T(\cG_n)$ of \GBOPD in the deterministic gridworld domain. For clarity of the figure, we only display the nodes selected for expansion and not the entire $T(\cG_n)$ as in \Cref{fig:unroll}, since it is infinite and fractal. We observe that \OPD explores uniformly in the space of sequences, which results in a concentrated exploration in the state space as seen in \Cref{fig:deterministic-gridworld}. This phenomenon is similar to the concentration properties of martingales. \texttt{KL-OLOP} behaves similarly, but allocates its budget $n$ in fewer trajectories of higher length than \OPD, which results in a sparser tree and slightly better exploration (compare \Cref{fig:deterministic-gridworld} to \Cref{fig:suppl-occupancies}). In contrast, \GBOPD expands a very sparse and unbalanced tree $T(\cG_n)$ which corresponds to uniform exploration in the state space, and allows to explore deeper for the same budget $n$ (The tree is only shown up to depth $12$, but continues much deeper since the optimal transition is sampled indefinitely once it is discovered). In particular, the paths towards the goal are sampled many times, while other algorithms are still balanced at the root in terms of number of visits.
 
 %\end{comment}
 
