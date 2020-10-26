@@ -1,0 +1,278 @@
+\documentclass[slideopt,A4,showboxes,svgnames]{beamer}
+
+%% list of packages here
+\usepackage[absolute,showboxes,overlay]{textpos}
+\usepackage{booktabs}
+\usepackage{mathtools}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{pifont}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{array, makecell}
+\usepackage{blkarray}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\usepackage[backend=biber, style=authoryear]{biblatex}
+\renewcommand*{\nameyeardelim}{\addcomma\addspace}
+\addbibresource{../references.bib}
+
+\usepackage{theme/beamerthemeinria}
+\input{mathdef}
+\input{theme/style}
+
+\title[Monte-Carlo Graph Search]{Monte-Carlo Graph Search:}
+\subtitle{the Value of Merging Similar States}
+\date[date]{date}
+\author[Edouard Leurent]{\textbf{Edouard Leurent}\inst{1,2},\\
+	Odalric-Ambrym Maillard\inst{1}}
+\institute{
+	\inst{1} Univ. Lille, Inria, CNRS, \\ ~Centrale Lille, UMR 9189 – CRIStAL,\\
+	\inst{2} Renault Group}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Motivation}
+\begin{alertblock}{Monte-Carlo Tree Search algorithms}
+\begin{itemize}[<+->]
+	\item rely on a \alert{tree structure} to represent their value estimates.
+	\begin{center}
+		\includegraphics[trim={1.8cm 2.2cm 1.9cm 2.7cm}, clip, width=0.38\linewidth]{img/tree_simple}
+	\end{center}
+	\item performance {\green independent} of the {\red size $S$ of the state space}%, but with the branching factor $K$ and planning horizon $H$ / budget $n$.
+\begin{center}
+	\begin{tabular}{lcc}
+		Tabular RL & (\texttt{UCBVI}) & $\sqrt{H{\red S}{\green A}n}$ \\
+		MCTS & (\texttt{OPD}) & $n^{-\log\frac{1}{\gamma}/\log {\green A}}$
+	\end{tabular}
+\end{center}
+\end{itemize}
+\end{alertblock} 
+\end{frame}
+
+\begin{frame}{Limitation}
+	\begin{itemize}
+		\item There can be several paths to the same state {\orange $s$}
+		\begin{center}
+			\includegraphics<1>[trim={3cm 8cm 3cm 4cm}, clip, width=0.85\linewidth]{img/paths_1}%
+			\includegraphics<2>[trim={3cm 8cm 3cm 4cm}, clip, width=0.85\linewidth]{img/paths_2}%
+			\includegraphics<3>[trim={3cm 8cm 3cm 4cm}, clip, width=0.85\linewidth]{img/paths_3}%
+			\includegraphics<4-6>[trim={3cm 8cm 3cm 4cm}, clip, width=0.85\linewidth]{img/paths_4}%
+		\end{center}
+		\item<5-6>  {\orange $s$} is represented several times in the tree
+		\item<6> {\red No information is shared} between these paths
+	\end{itemize}	
+\end{frame}
+
+\begin{frame}{Motivating example 1/2}
+\begin{alertblock}{Not accounting for state similarity hinders exploration}
+	\pause
+	Sparse gridworld: reward of 0 everywhere
+	\pause
+	\begin{itemize}
+		\item[\incarrow] \alert{Uniform planning} in the space of sequences of actions %  (UCT, OPD, OLOP, etc.) which seems reasonable
+	\end{itemize}
+	\begin{center}
+		\includegraphics[trim={0 1cm 0 1.5cm},clip,width=0.7\linewidth]{../img/tree_OPD}
+
+		OPD, budget of $n=5460$ moves
+	\end{center}
+\end{alertblock}
+\end{frame}
+
+\begin{frame}{Motivating example 2/2}
+\begin{alertblock}{Concentration}
+\begin{itemize}[<+->]
+\item Does not lead to uniform exploration of the state space
+% but that does not lead to uniform exploration in the state space, because many overlaps between the explored paths
+% it spends a lot of time to move mack and forth to states already visited through other trajectories
+\item 2D random walk $\sim$ Rayleigh distribution
+$P(d) = \frac{2d}{H}e^{-\frac{-d^2}{H}}$
+% similar to random walk: if you sample moves with a uniform distribution, you will not explore far and concentrate around the initial position. Probability to reach a distance d is (1/4)^d
+
+\begin{center}
+	\includegraphics[width=0.6\linewidth]{../img/occupations_OPD}
+	
+	budget of $5460$ samples, maximum distance $d=6$
+\end{center}
+\end{itemize}
+\end{alertblock}
+\end{frame}
+
+\begin{frame}{Goal}
+\begin{exampleblock}{Better exploit this wasted information}
+	\begin{itemize}
+		\item<2-4> By \alert{merging} similar states \only<3-4>{into a {\green graph}}
+	\end{itemize}
+	\begin{center}
+		\includegraphics<1>[trim={1.8cm 2.2cm 1.9cm 2.7cm}, clip, width=0.55\linewidth]{img/tree_simple}%
+		\includegraphics<2>[trim={1.8cm 2.2cm 1.9cm 2.7cm}, clip, width=0.55\linewidth]{img/tree_merging}%
+		\includegraphics<3>[trim={1.8cm 2.2cm 1.9cm 2.7cm}, clip, width=0.55\linewidth]{img/tree_merged}%
+		\includegraphics<4>[trim={1.8cm 1.2cm 1.9cm 0.8cm}, clip, width=0.55\linewidth]{img/graph_simple}%
+	\end{center}
+\end{exampleblock}
+\end{frame}
+
+\begin{frame}{Questions}
+\begin{center}
+	\includegraphics[trim={1.8cm 2.2cm 1.9cm 2.7cm}, clip,width=0.46\linewidth]{img/tree_simple}
+	\includegraphics[trim={1.8cm 1.2cm 1.9cm 0.8cm}, clip,width=0.46\linewidth]{img/graph_simple}
+\end{center}
+\begin{itemize}
+	\item How to \alert{adapt} MCTS algorithms to work on graphs?
+	\item Can we \alert{quantify} the benefit of using graphs over trees?
+\end{itemize}
+\end{frame}
+
+\begin{frame}{MCTS for Deterministic MDPs}
+\begin{center}
+	\includegraphics<1-3>[trim={1.8cm 1.5cm 1.9cm 2.7cm}, clip,width=0.35\linewidth]{../img/tree_1}%
+	\includegraphics<4>[trim={1.8cm 1.5cm 1.9cm 2.7cm}, clip,width=0.35\linewidth]{img/tree_sample}%
+	\includegraphics<5>[trim={1.8cm 1.5cm 1.9cm 2.7cm}, clip,width=0.35\linewidth]{img/tree_expand}%
+\end{center}
+\vspace*{-0.5cm}
+\begin{block}{Optimism in the Face of Uncertainty: \texttt{OPD}}
+\pause
+\begin{enumerate}[<+->]
+	\item Build \alert{confidence bounds} $L(a)\leq V(a) \leq U(a)$ on the value $V(a)$ of every sequence of action $a$
+	\item Select a candidate for expansion \begin{itemize}
+		\item Start from the root, follow \alert{optimistic} actions, down to a leaf $b$
+	\end{itemize}
+	\item \alert{Expand} the leaf $b\in\ext{T}_n$
+\end{enumerate}
+\end{block}
+\end{frame}
+
+
+\begin{frame}{On a graph...}
+
+\begin{center}
+	\includegraphics<1-2>[trim={1.0cm 0.8cm 1.9cm 0.8cm}, clip,width=0.35\linewidth]{../img/graph_1}%
+	\includegraphics<3>[trim={1.0cm 0.8cm 1.9cm 0.8cm}, clip,width=0.35\linewidth]{img/graph_sample}%
+	\includegraphics<4-6>[trim={0.8cm 0.8cm 1.9cm 0.8cm}, clip,width=0.35\linewidth]{img/graph_expand}%
+\end{center}
+
+\begin{block}{Same principle: \texttt{GBOP-D}}
+	\pause
+	\begin{enumerate}[<+->]
+		\item Build \alert{confidence bounds} $L(s)\leq V(s) \leq U(s)$
+		\item Follow \alert{optimistic} actions \textcolor<6>{red}{until an external node $s$ is reached}
+		\item \alert{Expand} the external node $s\in\ext{\cG}_n$
+		\begin{itemize}
+			\item[\incarrow] any state $s$ can {\green only be expanded once}
+		\end{itemize}
+	\end{enumerate}
+\end{block}
+\end{frame}
+
+\begin{frame}{How to build the bounds $L,U$?}
+$$ V(s) = \sup \sum_{t=0}^{\infty} \gamma^t r_t $$
+\begin{itemize}[<+->]
+	\item Initialize with trivial bounds
+	$$L=0,\qquad U=\frac{1}{1-\gamma}$$
+	\item Apply the Bellman operator $B$ at every internal nodes $a$:
+		$$V(a) \leq B(U)(a) = \max_{b\in A} r(ab) + \gamma U({ab}) \leq U(a)$$
+		$$V(a) \geq B(L)(a) = \max_{b\in A} r(ab) + \gamma L({ab}) \geq L(a)$$
+	\item Converges in {\green $d_n$ steps} for trees
+	\item Converges in {\red $\infty$ steps} on graphs, when there is a loop
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Analysis}
+Is \texttt{GBOP-D} more efficient than \texttt{OPD}?
+\pause
+\begin{theorem}[Sample complexity of \texttt{OPD}, \cite{Hren2008optimistic}]
+	\[r_n = \tilde{\cO}\left( n^{-\log \frac{1}{\gamma}/{\red \log\kappa}}\right),\]
+	where ${\red \kappa}$ is a problem-dependent difficulty measure.
+\end{theorem}
+\pause
+\begin{theorem}[Sample complexity of \texttt{GBOP-D}]
+	\[r_n = \tilde{\cO}\left(n^{-\log \frac{1}{\gamma}/{\green \log \kappa_\infty}}\right),\]
+	where ${\green \kappa_\infty}$ is a {\green tighter} problem-dependent difficulty measure:
+	\[ {\green \kappa_\infty}\leq {\red \kappa} \]
+\end{theorem}
+\end{frame}
+
+\begin{frame}{Comparing difficulty measures}
+\begin{itemize}[<+->]
+	\item ${\green \kappa_\infty} = {\red \kappa}$ if the MDP has a tree structure
+	\item ${\green \kappa_\infty} < {\red \kappa}$ when trajectories overlap a lot
+	\begin{itemize}
+		\item actions cancel each-other out (e.g. moving left or right)
+		\item actions are commutative (e.g. placing pawns on a board)
+	\end{itemize}
+\end{itemize}
+\pause[\thebeamerpauses]
+\begin{exampleblock}{Illustrative example: 3 states, $K>2$ actions}
+	\begin{center}
+    \includegraphics[trim={0.5cm 0.0cm 0.3cm 0.6cm}, clip, width=0.35\textwidth]{../img/mdp.pdf}
+	\end{center}
+	 $${\green \kappa_\infty = 1} < {\red \kappa = K-1}$$
+\end{exampleblock}
+\end{frame}
+
+\begin{frame}{Experiment: sparse gridworld}
+Rewards in a ball around $(10, 10)$ of radius $5$, with quadratic decay
+\begin{center}
+	\includegraphics[trim={1.8cm 0.4cm 1.8cm 0.7cm}, clip, width=0.43\linewidth]{../img/occupations_OPD.pdf}
+	\includegraphics[trim={1.8cm 0.4cm 1.8cm 0.7cm}, clip, width=0.43\linewidth]{../img/occupations_GBOP-D.pdf}
+
+	$n = 5640$ samples
+\end{center}
+\end{frame}
+
+\begin{frame}{Extension to stochastic MDPs}
+\begin{alertblock}{What we did for deterministic MDPs\dots}
+Use state similarity to \alert{tighten} the bounds $(L,\,U)$ for the value $V$.
+\end{alertblock}
+\pause
+\begin{exampleblock}{\dots we can do too for stochastic MDPs}
+\begin{itemize}
+	\item The same can be done for any stochastic planning algorithm based on such bounds
+	\item We adapt MDP-GapE (\cite{Jonsson2020planning}) to obtain GBOP
+\end{itemize}
+\end{exampleblock}
+\end{frame}
+
+
+\begin{frame}{Experiment: stochastic gridworld}
+Noisy transitions with probability $p=10\%$
+\begin{center}
+	\includegraphics[trim={1.8cm 0.4cm 1.8cm 0.7cm}, clip, width=0.43\linewidth]{../img/occupations_UCT.pdf}
+	\includegraphics[trim={1.8cm 0.4cm 1.8cm 0.7cm}, clip, width=0.43\linewidth]{../img/occupations_GBOP.pdf}
+	
+	$n = 5640$ samples
+\end{center}
+\end{frame}
+
+\begin{frame}{Exploration-Exploitation score}
+$$S = \sum_{t=1}^n \underbrace{d(s_t, s_0)}_{\text{Exploration}} - \underbrace{d(s_t, s_g)}_{\text{Exploitation}}$$
+\begin{center}
+	\includegraphics[trim = {1.4cm 0.cm 2cm 1.5cm}, clip, width=0.7\linewidth]{../img/score.pdf}
+
+	$n = 5640$ samples
+\end{center}
+\end{frame}
+
+\begin{frame}{Sailing Domain (\cite{Vanderbei1996})}
+\begin{center}
+	\includegraphics[trim = {0.2cm 0.2cm 0.7cm 0.5cm}, clip, width=0.6\linewidth]{../img/simple_regret.pdf}
+\end{center}
+\pause
+\vspace*{-0.5cm}
+Effective branching factor $\kappa_e$:
+\begin{itemize}
+	\item $\kappa_e \approx {\red 3.6}$, for \texttt{BRUE}, \texttt{KL-OLOP}, \texttt{MDP-GapE}, \texttt{UCT}
+	\item $\kappa_e \approx {\green 1.2}$ for \texttt{GBOP}, which suggests our results may still hold
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\centering \LARGE Thank You!
+\end{frame}
+
+
+\end{document}
