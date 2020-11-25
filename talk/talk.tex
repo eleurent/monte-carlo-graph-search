@@ -118,7 +118,7 @@ $P(d) = \frac{2d}{H}e^{-\frac{-d^2}{H}}$
 		\includegraphics<1>[trim={1.8cm 2.2cm 1.9cm 2.7cm}, clip, width=0.55\linewidth]{img/tree_simple}%
 		\includegraphics<2>[trim={1.8cm 2.2cm 1.9cm 2.7cm}, clip, width=0.55\linewidth]{img/tree_merging}%
 		\includegraphics<3>[trim={1.8cm 2.2cm 1.9cm 2.7cm}, clip, width=0.55\linewidth]{img/tree_merged}%
-%		\includegraphics<4>[trim={1.8cm 1.2cm 1.9cm 0.8cm}, clip, width=0.55\linewidth]{img/graph_simple}%
+		\includegraphics<4>[trim={1.8cm 1.2cm 1.9cm 0.8cm}, clip, width=0.55\linewidth]{img/graph_simple}%
 	\end{center}
 \end{exampleblock}
 \end{frame}
@@ -157,36 +157,39 @@ $P(d) = \frac{2d}{H}e^{-\frac{-d^2}{H}}$
 \begin{center}
 	\includegraphics<1-2>[trim={1.0cm 0.8cm 1.9cm 0.8cm}, clip,width=0.35\linewidth]{../img/graph_1}%
 	\includegraphics<3>[trim={1.0cm 0.8cm 1.9cm 0.8cm}, clip,width=0.35\linewidth]{img/graph_sample}%
-	\includegraphics<4>[trim={0.8cm 0.8cm 1.9cm 0.8cm}, clip,width=0.35\linewidth]{img/graph_expand}%
+	\includegraphics<4-6>[trim={0.8cm 0.8cm 1.9cm 0.8cm}, clip,width=0.35\linewidth]{img/graph_expand}%
 \end{center}
 
 \begin{block}{Same principle: \texttt{GBOP-D}}
 	\pause
 	\begin{enumerate}[<+->]
 		\item Build \alert{confidence bounds} $L(s)\leq V(s) \leq U(s)$
-		\item Follow \alert{optimistic} actions \textcolor{red}{until an external node $s$ is reached}
+		\item Follow \alert{optimistic} actions \textcolor<6>{red}{until an external node $s$ is reached}
 		\item \alert{Expand} the external node $s\in\ext{\cG}_n$
+		\begin{itemize}
+			\item We are guaranteed to expand any state {\green only once}.
+		\end{itemize}
 	\end{enumerate}
 \end{block}
 \end{frame}
 
-%\begin{frame}{How to build the bounds $L,U$?}
-%How to bound $V(s) = \sup \sum_{t=0}^{\infty} \gamma^t r_t$?
-%\begin{itemize}[<+->]
-%	\item Initialize with trivial bounds:
-%	$\quad{\red L}=0,\quad {\orange U}=\frac{1}{1-\gamma}$
-%	\item Apply the Bellman operator ${\blue B}:V\to max_a R(s,a) + \gamma V(s')$
-%		$${\red L}(a) \leq {\blue B}({\red L})(a) \leq V(a) \leq {\blue B}({\orange U})(a) \leq {\orange U}(a)$$
-%
-%	\item[] \begin{center}
-%\includegraphics[trim={2.0cm 2.9cm 2.5cm 3.1cm}, clip,width=0.3\linewidth]{../img/tree_2}
-%\hspace*{1cm}
-%\includegraphics[trim={2.7cm 2.7cm 2.7cm 1.1cm}, clip,width=0.3\linewidth]{../img/graph_2}
-%	\end{center}
-%	\item \textbf{Trees}: Converges in {\green $d_n$ steps}
-%	\item \textbf{Graphs}: May converge in {\red $\infty$ steps} when there is a loop
-%\end{itemize}
-%\end{frame}
+\begin{frame}{How to build the bounds $L,U$?}
+How to bound $V(s) = \sup \sum_{t=0}^{\infty} \gamma^t r_t$?
+\begin{itemize}[<+->]
+	\item Initialize with trivial bounds:
+	$\quad{\red L}=0,\quad {\orange U}=\frac{1}{1-\gamma}$
+	\item Apply the Bellman operator ${\blue B}:V\to max_a R(s,a) + \gamma V(s')$
+		$${\red L}(a) \leq {\blue B}({\red L})(a) \leq V(a) \leq {\blue B}({\orange U})(a) \leq {\orange U}(a)$$
+
+	\item[] \begin{center}
+\includegraphics[trim={2.0cm 2.9cm 2.5cm 3.1cm}, clip,width=0.3\linewidth]{../img/tree_2}
+\hspace*{1cm}
+\includegraphics[trim={2.7cm 2.7cm 2.7cm 1.1cm}, clip,width=0.3\linewidth]{../img/graph_2}
+	\end{center}
+	\item \textbf{Trees}: Converges in {\green $d_n$ steps}
+	\item \textbf{Graphs}: May converge in {\red $\infty$ steps} when there is a loop
+\end{itemize}
+\end{frame}
 
 \begin{frame}{Analysis}
 Is \texttt{GBOP-D} more efficient than \texttt{OPD}?
@@ -209,7 +212,7 @@ Performance: $r_n = V^\star - V(a_n)$
 \begin{frame}{Comparing difficulty measures}
 \begin{itemize}[<+->]
 	\item ${\green \kappa_\infty} = {\red \kappa}$ if the MDP has a tree structure
-	\item ${\green \kappa_\infty} < {\red \kappa}$ when trajectories overlap a lot
+	\item ${\green \kappa_\infty} < {\red \kappa}$ when trajectories intersect a lot
 	\begin{itemize}
 		\item actions cancel each-other out (e.g. moving left or right)
 		\item actions are commutative (e.g. placing pawns on a board)
@@ -235,7 +238,7 @@ Rewards in a ball around $(10, 10)$ of radius $5$, with quadratic decay
 \end{frame}
 
 \begin{frame}{Extension to stochastic MDPs}
-\begin{exampleblock}{Same principle}
+\begin{exampleblock}{Extension to stochastic MDPs}
 \begin{itemize}
 	\item Use state similarity to \alert{tighten} the bounds $L\leq V\leq U$.
 	\item We adapt \texttt{MDP-GapE} (\cite{Jonsson2020planning}) to obtain \texttt{GBOP}
