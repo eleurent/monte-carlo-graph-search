@@ -1,0 +1,30 @@
+\BOOKMARK [1][-]{section.0.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.0.2}{Background}{}% 2
+\BOOKMARK [1][-]{section.0.3}{Graph-Based Planning for Deterministic Systems}{}% 3
+\BOOKMARK [2][-]{subsection.0.3.1}{Data structures}{section.0.3}% 4
+\BOOKMARK [2][-]{subsection.0.3.2}{Optimistic planning}{section.0.3}% 5
+\BOOKMARK [1][-]{section.0.4}{Analysis}{}% 6
+\BOOKMARK [2][-]{subsection.0.4.1}{Background on the sample complexity of [alg:opd]OPD}{section.0.4}% 7
+\BOOKMARK [2][-]{subsection.0.4.2}{Motivation for an improved regret bound}{section.0.4}% 8
+\BOOKMARK [2][-]{subsection.0.4.3}{Unrolling the tree to tighten the bounds}{section.0.4}% 9
+\BOOKMARK [2][-]{subsection.0.4.4}{Regret guarantee}{section.0.4}% 10
+\BOOKMARK [2][-]{subsection.0.4.5}{Illustrative example}{section.0.4}% 11
+\BOOKMARK [1][-]{section.0.5}{Extension to Stochastic Systems}{}% 12
+\BOOKMARK [1][-]{section.0.6}{Numerical Illustration}{}% 13
+\BOOKMARK [1][-]{section.0.A}{Proofs}{}% 14
+\BOOKMARK [2][-]{subsection.0.A.1}{Proof of Lemma 4}{section.0.A}% 15
+\BOOKMARK [2][-]{subsection.0.A.2}{Proof of Lemma 5}{section.0.A}% 16
+\BOOKMARK [2][-]{subsection.0.A.3}{Proof of thm:regret-opd}{section.0.A}% 17
+\BOOKMARK [2][-]{subsection.0.A.4}{Proof of Lemma 11}{section.0.A}% 18
+\BOOKMARK [2][-]{subsection.0.A.5}{Proof of thm:regret-bound-U}{section.0.A}% 19
+\BOOKMARK [2][-]{subsection.0.A.6}{Proof of Lemma 13}{section.0.A}% 20
+\BOOKMARK [2][-]{subsection.0.A.7}{Proof of Lemma 14}{section.0.A}% 21
+\BOOKMARK [2][-]{subsection.0.A.8}{Proof of Lemma 15}{section.0.A}% 22
+\BOOKMARK [2][-]{subsection.0.A.9}{Proof of thm:regret-gbop}{section.0.A}% 23
+\BOOKMARK [2][-]{subsection.0.A.10}{Proof of Proposition 17}{section.0.A}% 24
+\BOOKMARK [1][-]{section.0.B}{Implementation Details}{}% 25
+\BOOKMARK [2][-]{subsection.0.B.1}{Termination}{section.0.B}% 26
+\BOOKMARK [3][-]{subsubsection.0.B.1.1}{Bounds computation}{subsection.0.B.1}% 27
+\BOOKMARK [3][-]{subsubsection.0.B.1.2}{Sampling rule}{subsection.0.B.1}% 28
+\BOOKMARK [2][-]{subsection.0.B.2}{Efficient implementation of Bn}{section.0.B}% 29
+\BOOKMARK [1][-]{section.0.C}{Experimental Details}{}% 30

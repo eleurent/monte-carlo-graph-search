@@ -1,0 +1,7 @@
+@InProceedings{leurent20,
+  title = {Monte-Carlo Graph Search: the Value of Merging Similar States},
+  author = {Edouard Leurent and Odalric-Ambrym Maillard},
+  crossref = {acml20},
+  abstract = {We consider the problem of planning in a Markov Decision Process (MDP) with a generative model and limited computational budget. Despite the underlying MDP transitions having a graph structure, the popular Monte-Carlo Tree Search algorithms such as UCT rely on a tree structure to represent their value estimates. That is, they do not identify together two similar states reached via different trajectories and represented in separate branches of the tree. In this work, we propose a graph-based planning algorithm, which takes into account this state similarity. In our analysis, we provide a regret bound that depends on a novel problem-dependent measure of difficulty, which improves on the original tree-based bound in MDPs where the trajectories overlap, and recovers it otherwise. Then, we show that this methodology can be adapted to existing planning algorithms that deal with stochastic systems. Finally, numerical simulations illustrate the benefits of our approach.},
+  pages = {577 - 592},
+}

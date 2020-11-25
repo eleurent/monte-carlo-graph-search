@@ -1,0 +1,150 @@
+\begin{thebibliography}{23}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Ballesteros et~al.(2013)Ballesteros, Merino, Trujillo, Viguria, and
+  Ollero]{Ballesteros2013}
+Joaquin Ballesteros, Luis Merino, Miguel~Angel Trujillo, Antidio Viguria, and
+  Anibal Ollero.
+\newblock {Improving the efficiency of online POMDPs by using belief similarity
+  measures}.
+\newblock In \emph{Proc. of ICRA}, 2013.
+
+\bibitem[Bubeck and Munos(2010)]{Bubeck2010open}
+S.~Bubeck and R.~Munos.
+\newblock Open loop optimistic planning.
+\newblock In \emph{Proc. of COLT}, 2010.
+
+\bibitem[Bubeck et~al.(2009)Bubeck, Stoltz, Szepesv\'{a}ri, and
+  Munos]{Bubeck2009}
+S\'{e}bastien Bubeck, Gilles Stoltz, Csaba Szepesv\'{a}ri, and R\'{e}mi Munos.
+\newblock Online optimization in x-armed bandits.
+\newblock In \emph{Advances in NIPS}, 2009.
+
+\bibitem[Busoniu and Munos(2012)]{Busoniu2012optimistic}
+Lucian Busoniu and R{\'e}mi Munos.
+\newblock Optimistic planning for markov decision processes.
+\newblock In \emph{Artificial Intelligence and Statistics}, pages 182--189,
+  2012.
+
+\bibitem[Coquelin and Munos(2007)]{Coquelin2007}
+P.-A. Coquelin and R.~Munos.
+\newblock {Bandit Algorithms for Tree Search}.
+\newblock \emph{Proc. of UAI}, 2007.
+
+\bibitem[Coulom(2006)]{Coulom2006}
+R{\'e}mi Coulom.
+\newblock {Efficient Selectivity and Backup Operators in Monte-Carlo Tree
+  Search}.
+\newblock In \emph{{Proc. of ICCG}}, 2006.
+
+\bibitem[Feldman and Domshlak(2014)]{Feldman14BRUE}
+Zohar Feldman and Carmel Domshlak.
+\newblock Simple regret optimization in online planning for markov decision
+  processes.
+\newblock \emph{Journal of Artifial Intelligence Research}, 51:\penalty0
+  165--205, 2014.
+
+\bibitem[Filippi et~al.(2010)Filippi, Capp{\'e}, and
+  Garivier]{Filippi2010optimism}
+S.~Filippi, O.~Capp{\'e}, and A.~Garivier.
+\newblock {Optimism in Reinforcement Learning and {K}ullback-{L}eibler
+  Divergence}.
+\newblock In \emph{{Allerton Conference on Communication, Control, and
+  Computing}}, 2010.
+
+\bibitem[Grill et~al.(2016)Grill, Valko, and Munos]{Grill16}
+J.-B. Grill, M.~Valko, and R.~Munos.
+\newblock Blazing the trails before beating the path: Sample-efficient
+  monte-carlo planning.
+\newblock In \emph{Advances in NIPS}, 2016.
+
+\bibitem[Grill et~al.(2019)Grill, Domingues, M{\'{e}}nard, Munos, and
+  Valko]{Grill19}
+Jean{-}Bastien Grill, Omar~Darwiche Domingues, Pierre M{\'{e}}nard, R{\'{e}}mi
+  Munos, and Michal Valko.
+\newblock Planning in entropy-regularized markov decision processes and games.
+\newblock In \emph{Advances in NeurIPS}, 2019.
+
+\bibitem[Hostetler et~al.(2014)Hostetler, Fern, and Dietterich]{Hostetler14}
+Jesse Hostetler, Alan Fern, and Tom Dietterich.
+\newblock State aggregation in monte carlo tree search.
+\newblock In \emph{Proc. of AAAI}, 2014.
+
+\bibitem[Hren and Munos(2008)]{Hren2008optimistic}
+Jean-Francois Hren and Rémi Munos.
+\newblock {Optimistic planning of deterministic systems}.
+\newblock In \emph{Proc. of EWRL}, 2008.
+
+\bibitem[Huang et~al.(2017)Huang, Ajallooeian, Szepesvári, and
+  Müller]{Huang2017}
+Ruitong Huang, Mohammad~M. Ajallooeian, Csaba Szepesvári, and Martin Müller.
+\newblock Structured best arm identification with fixed confidence.
+\newblock In \emph{Proc. of ALT}, 2017.
+
+\bibitem[Jonsson et~al.(2020)Jonsson, Kaufmann, Ménard, Domingues, Leurent,
+  and Valko]{Jonsson2020planning}
+Anders Jonsson, Emilie Kaufmann, Pierre Ménard, Omar~Darwiche Domingues,
+  Edouard Leurent, and Michal Valko.
+\newblock Planning in markov decision processes with gap-dependent sample
+  complexity, 2020.
+
+\bibitem[Kaufmann and Koolen(2017)]{Kaufmann2017}
+Emilie Kaufmann and Wouter~M Koolen.
+\newblock Monte-carlo tree search by best arm identification.
+\newblock In \emph{Advances in NIPS}, pages 4897--4906, 2017.
+
+\bibitem[Kearns et~al.(2002)Kearns, Mansour, and Ng]{Kearns02SS}
+Michael~J. Kearns, Yishay Mansour, and Andrew~Y. Ng.
+\newblock A sparse sampling algorithm for near-optimal planning in large markov
+  decision processes.
+\newblock \emph{Machine Learning}, 49\penalty0 (2-3):\penalty0 193--208, 2002.
+
+\bibitem[Kocsis and Szepesv\'{a}ri(2006)]{Kocsis06UCT}
+Levente Kocsis and Csaba Szepesv\'{a}ri.
+\newblock Bandit based monte-carlo planning.
+\newblock In \emph{Proc. of ECML}, 2006.
+
+\bibitem[Leurent and Maillard(2019)]{Leurent2019practical}
+Edouard Leurent and Odalric-Ambrym Maillard.
+\newblock Practical open-loop optimistic planning.
+\newblock In \emph{Proc. of ECML-PKDD}, 2019.
+
+\bibitem[Munos(2014)]{Munos14}
+R.~Munos.
+\newblock \emph{From bandits to Monte-Carlo Tree Search: The optimistic
+  principle applied to optimization and planning.}
+\newblock Foundations and Trends in Machine Learning, 2014.
+
+\bibitem[Munos(2011)]{Munos2011}
+R\'{e}mi Munos.
+\newblock Optimistic optimization of a deterministic function without the
+  knowledge of its smoothness.
+\newblock In \emph{Advances in NIPS}, 2011.
+
+\bibitem[Silver et~al.(2018)Silver, Hubert, Schrittwieser, Antonoglou, Lai,
+  Guez, Lanctot, Sifre, Kumaran, Graepel, Lillicrap, Simonyan, and
+  Hassabis]{Silver18}
+David Silver, Thomas Hubert, Julian Schrittwieser, Ioannis Antonoglou, Matthew
+  Lai, Arthur Guez, Marc Lanctot, Laurent Sifre, Dharshan Kumaran, Thore
+  Graepel, Timothy~P. Lillicrap, Karen Simonyan, and Demis Hassabis.
+\newblock A general reinforcement learning algorithm that masters chess, shogi,
+  and go through self-play.
+\newblock \emph{Science}, 362, 2018.
+
+\bibitem[Szorenyi et~al.(2014)Szorenyi, Kedenburg, and Munos]{Szorenyi14}
+B.~Szorenyi, G.~Kedenburg, and R.~Munos.
+\newblock Optimistic planning in markov decision processes using a generative
+  model.
+\newblock In \emph{Advances in NIPS}, 2014.
+
+\bibitem[Vanderbei(1996)]{Vanderbei1996}
+Robert Vanderbei.
+\newblock Optimal sailing strategies, statistics and operations research
+  program.
+\newblock \url{https://vanderbei.princeton.edu/sail/sail.html}, 1996.
+
+\end{thebibliography}

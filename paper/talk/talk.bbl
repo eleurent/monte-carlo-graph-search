@@ -1,0 +1,143 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.1 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nyt/global//global/global}
+    \entry{Hren2008optimistic}{inproceedings}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=dff6be95aa5683052d85745b5a036b1c}{%
+           family={Hren},
+           familyi={H\bibinitperiod},
+           given={Jean-Francois},
+           giveni={J\bibinithyphendelim F\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=5d8fa91764a27bf97b87fdcac885745d}{%
+           family={Munos},
+           familyi={M\bibinitperiod},
+           given={Rémi},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{ed40900f5f2eb1ed32b9350631aceb15}
+      \strng{fullhash}{ed40900f5f2eb1ed32b9350631aceb15}
+      \strng{bibnamehash}{ed40900f5f2eb1ed32b9350631aceb15}
+      \strng{authorbibnamehash}{ed40900f5f2eb1ed32b9350631aceb15}
+      \strng{authornamehash}{ed40900f5f2eb1ed32b9350631aceb15}
+      \strng{authorfullhash}{ed40900f5f2eb1ed32b9350631aceb15}
+      \field{sortinit}{H}
+      \field{sortinithash}{6db6145dae8dc9e1271a8d556090b50a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proc. of EWRL}
+      \field{title}{{Optimistic planning of deterministic systems}}
+      \field{year}{2008}
+    \endentry
+    \entry{Jonsson2020planning}{misc}{}
+      \name{author}{6}{}{%
+        {{un=0,uniquepart=base,hash=04e29da5671d1500b96ab2d0d4b1c2c3}{%
+           family={Jonsson},
+           familyi={J\bibinitperiod},
+           given={Anders},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=683862f7c5a46983931337e8f299a0fd}{%
+           family={Kaufmann},
+           familyi={K\bibinitperiod},
+           given={Emilie},
+           giveni={E\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c495148805b37d5218dbadf746a4eda7}{%
+           family={Ménard},
+           familyi={M\bibinitperiod},
+           given={Pierre},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=7d087420f7fc959771e4a27e85d12a78}{%
+           family={Domingues},
+           familyi={D\bibinitperiod},
+           given={Omar\bibnamedelima Darwiche},
+           giveni={O\bibinitperiod\bibinitdelim D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=7b53512730787663ca2ecd7377cdf557}{%
+           family={Leurent},
+           familyi={L\bibinitperiod},
+           given={Edouard},
+           giveni={E\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=e25b9b55e0d33d8e554fb428b0122ba9}{%
+           family={Valko},
+           familyi={V\bibinitperiod},
+           given={Michal},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{60c506896e61f5615c590ba3190dab94}
+      \strng{fullhash}{8408d4e73cfc24c082e2a5557e0a3a7a}
+      \strng{bibnamehash}{60c506896e61f5615c590ba3190dab94}
+      \strng{authorbibnamehash}{60c506896e61f5615c590ba3190dab94}
+      \strng{authornamehash}{60c506896e61f5615c590ba3190dab94}
+      \strng{authorfullhash}{8408d4e73cfc24c082e2a5557e0a3a7a}
+      \field{sortinit}{J}
+      \field{sortinithash}{c45040a764d616897e7f5b30174d7b92}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{cs.LG}
+      \field{eprinttype}{arXiv}
+      \field{title}{Planning in Markov Decision Processes with Gap-Dependent Sample Complexity}
+      \field{year}{2020}
+      \verb{eprint}
+      \verb 2006.05879
+      \endverb
+    \endentry
+    \entry{Vanderbei1996}{misc}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=44ee5b1c815a7ac5aedb9895cf68b2d2}{%
+           family={Vanderbei},
+           familyi={V\bibinitperiod},
+           given={Robert},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{publisher}{1}{%
+        {University of Princeton}%
+      }
+      \strng{namehash}{44ee5b1c815a7ac5aedb9895cf68b2d2}
+      \strng{fullhash}{44ee5b1c815a7ac5aedb9895cf68b2d2}
+      \strng{bibnamehash}{44ee5b1c815a7ac5aedb9895cf68b2d2}
+      \strng{authorbibnamehash}{44ee5b1c815a7ac5aedb9895cf68b2d2}
+      \strng{authornamehash}{44ee5b1c815a7ac5aedb9895cf68b2d2}
+      \strng{authorfullhash}{44ee5b1c815a7ac5aedb9895cf68b2d2}
+      \field{sortinit}{V}
+      \field{sortinithash}{02432525618c08e2b03cac47c19764af}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://vanderbei.princeton.edu/sail/sail.html}}
+      \field{title}{Optimal sailing strategies, statistics and operations research program}
+      \field{year}{1996}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

@@ -1,0 +1,119 @@
+%\documentclass[wcp,gray]{jmlr} % test grayscale version
+\documentclass[wcp]{jmlr}
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+%\usepackage{rotating}% for sideways figures and tables
+\usepackage{longtable}% for long tables
+
+% The booktabs package is used by this sample document
+% (it provides \toprule, \midrule and \bottomrule).
+% Remove the next line if you don't require it.
+\usepackage{booktabs}
+% The siunitx package is used by this sample document
+% to align numbers in a column by their decimal point.
+% Remove the next line if you don't require it.
+%\usepackage[load-configurations=version-1]{siunitx} % newer version
+%\usepackage{siunitx}
+%\usepackage{natbib}
+
+% The following command is just for this sample document:
+\newcommand{\cs}[1]{\texttt{\char`\\#1}}
+
+%%  weird fix for \includegraphics
+%  https://tex.stackexchange.com/questions/513300/unable-to-compile-with-includegraphics-using-jmlr-cls
+\makeatletter
+\def\set@curr@file#1{\def\@curr@file{#1}} %temp workaround for 2019 latex release
+\makeatother
+\usepackage[load-configurations=version-1]{siunitx} % newer version
+
+
+\jmlrvolume{xx}
+\jmlryear{2020}
+\jmlrworkshop{ACML 2020}
+
+\title[Short Title]{Full Title of Article}
+
+ % Use \Name{Author Name} to specify the name.
+ % If the surname contains spaces, enclose the surname
+ % in braces, e.g. \Name{John {Smith Jones}} similarly
+ % if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+ % If the first letter in the forenames is a diacritic
+ % enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+ % Two authors with the same address
+ % \author{\Name{Author Name1} \Email{abc@sample.com}\and
+ %  \Name{Author Name2} \Email{xyz@sample.com}\\
+ %  \addr Address}
+
+ % Three or more authors with the same address:
+ % \author{\Name{Author Name1} \Email{an1@sample.com}\\
+ %  \Name{Author Name2} \Email{an2@sample.com}\\
+ %  \Name{Author Name3} \Email{an3@sample.com}\\
+ %  \Name{Author Name4} \Email{an4@sample.com}\\
+ %  \Name{Author Name5} \Email{an5@sample.com}\\
+ %  \Name{Author Name6} \Email{an6@sample.com}\\
+ %  \Name{Author Name7} \Email{an7@sample.com}\\
+ %  \Name{Author Name8} \Email{an8@sample.com}\\
+ %  \Name{Author Name9} \Email{an9@sample.com}\\
+ %  \Name{Author Name10} \Email{an10@sample.com}\\
+ %  \Name{Author Name11} \Email{an11@sample.com}\\
+ %  \Name{Author Name12} \Email{an12@sample.com}\\
+ %  \Name{Author Name13} \Email{an13@sample.com}\\
+ %  \Name{Author Name14} \Email{an14@sample.com}\\
+ %  \addr Address}
+
+
+ % Authors with different addresses:
+  \author{\Name{Author Name1} \Email{abc@sample.com}\\
+  \addr Address 1
+  \AND
+  \Name{Author Name2} \Email{xyz@sample.com}\\
+  \addr Address 2
+ }
+
+\editors{Wee Sun Lee and Taiji Suzuki}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This is the abstract for this article.
+\end{abstract}
+\begin{keywords}
+List of keywords
+\end{keywords}
+
+\section{Section Title}
+Main contents here.
+
+\subsection{Subsection Title}
+A figure in Fig.~\ref{fig:spiral}. Please use high quality graphics for your camera-ready submission -- if you can use a vector graphics format such as \texttt{.eps} or \texttt{.pdf}.
+\begin{figure}[htp]
+\begin{center}
+\includegraphics[width=0.5\textwidth]{spiral.eps}
+\caption{A spiral.}\label{fig:spiral}
+\end{center}
+\end{figure}
+
+An example of citation~\cite{DBLP:conf/acml/2009}.
+
+\acks{Acknowledgements should go at the end, before appendices and references.}
+
+%\bibliographystyle{plain}
+\bibliography{acml19}
+
+\appendix
+
+\section{First Appendix}\label{apd:first}
+
+This is the first appendix.
+
+\section{Second Appendix}\label{apd:second}
+
+This is the second appendix.
+
+
+\end{document}
