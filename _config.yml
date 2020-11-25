@@ -1,5 +1,6 @@
 theme: jekyll-theme-cayman
-title: "Monte-Carlo Graph Search: the Value of Merging Similar States"
+title: "Monte-Carlo Graph Search:"
+description: "the Value of Merging Similar States"
 
 github:
   repository_url: https://github.com/eleurent/monte-carlo-graph-search
