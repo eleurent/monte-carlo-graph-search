@@ -1,28 +1,22 @@
 theme: jekyll-theme-cayman
-title: "Robust-Adaptive Control of Linear Systems: beyond Quadratic Costs"
-# description: "beyond Quadratic Costs"
+title: "Monte-Carlo Graph Search: the Value of Merging Similar States"
 
 github:
-  repository_url: https://github.com/eleurent/robust-beyond-quadratic
+  repository_url: https://github.com/eleurent/monte-carlo-graph-search
 
 
 publication:
-  name: NeurIPS 2020 (oral)
-  url: https://nips.cc/Conferences/2020/
+  name: ACML 2020
+  url: http://www.acml-conf.org/2020/
 
-paper_url: https://arxiv.org/abs/2002.10816
-slides_url: paper/oral/
-poster_url: paper/poster/poster.pdf
+paper_url: http://proceedings.mlr.press/v129/leurent20a.html
+slides_url: paper/talk/talk.pdf
 
 authors:
   - name: Edouard Leurent
     url: http://edouardleurent.com
-    affiliation: INRIA SEQUEL & VALSE,<br>Renault
-
-  - name: Denis Efimov
-    url: http://researchers.lille.inria.fr/~efimov/
-    affiliation: INRIA VALSE
-    affiliation_url: https://team.inria.fr/valse/
+    affiliation: INRIA SEQUEL, Renault
+    affiliation_url: https://team.inria.fr/sequel/
 
   - name: Odalric-Ambrym Maillard
     url: http://odalricambrymmaillard.neowordpress.fr/
